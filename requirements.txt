@@ -33,6 +33,9 @@ python-dateutil
 # --- Visualization (visualize_results.py) ---
 matplotlib
 
+# --- Layer analysis (layer_analysis.py: t-SNE, linear probe, silhouette) ---
+scikit-learn
+
 # --- Optional speedup (NOT required; model defaults to sdpa attention) ---
 # Uncomment only if you want flash-attention-2 and are willing to wait for the build:
 # flash-attn --no-build-isolation
