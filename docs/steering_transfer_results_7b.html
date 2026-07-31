@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEAL Steering Transfer · MATH-500 · DeepSeek-R1-Distill-Qwen-7B</title>
+<style>
+  :root {
+    --bg:#f7f7f4;
+    --paper:#fff;
+    --ink:#202832;
+    --muted:#606a76;
+    --line:#d9dee5;
+    --blue:#1f65b7;
+    --blue-soft:#eef5ff;
+    --green:#2a7a50;
+    --green-soft:#edf8f2;
+    --orange:#b7641e;
+    --orange-soft:#fff4ea;
+    --purple:#6551a8;
+    --purple-soft:#f2efff;
+    --teal:#1a7a72;
+    --teal-soft:#e8f7f5;
+    --code:#f1f3f5;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.48;
+  }
+  main { max-width:1040px; margin:0 auto; padding:44px 28px 56px; }
+  .page {
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:42px 44px;
+    box-shadow:0 22px 60px -50px rgba(32,40,50,.6);
+  }
+  .eyebrow {
+    color:var(--blue);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  h1 {
+    margin:0;
+    max-width:850px;
+    font-size:clamp(32px,4.6vw,50px);
+    line-height:1.05;
+    letter-spacing:-.055em;
+  }
+  .dek { margin:22px 0 28px; color:var(--muted); font-size:19px; max-width:850px; }
+  h2 { margin:34px 0 14px; font-size:22px; letter-spacing:-.025em; }
+  p { margin:0 0 12px; }
+  a { color:var(--blue); }
+  code {
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--code);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:1px 5px;
+    font-size:.9em;
+  }
+  .takeaway {
+    border-left:4px solid var(--green);
+    background:var(--green-soft);
+    border-radius:0 12px 12px 0;
+    padding:15px 18px;
+    margin-bottom:30px;
+    max-width:900px;
+    font-size:17px;
+  }
+  .takeaway strong { color:var(--green); }
+
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:0 0 20px; }
+  @media (max-width:900px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  .stat { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:#fbfcfd; }
+  .stat .label { display:block; font-weight:750; margin-bottom:10px; font-size:15px; }
+  .stat .num { display:block; color:var(--blue); font-size:30px; line-height:1; font-weight:850; letter-spacing:-.03em; }
+  .stat .num.green { color:var(--green); }
+  .stat .num.orange { color:var(--orange); }
+  .stat .small { display:block; color:var(--muted); font-size:13.5px; margin-top:8px; }
+  .stat.code .num { color:var(--orange); }
+  .stat.logic .num { color:var(--purple); }
+  .stat.mmlu .num { color:var(--teal); }
+  .stat.pending { opacity:.5; }
+
+  .table-wrap {
+    width:100%;
+    overflow-x:auto;
+    border:1px solid var(--line);
+    border-radius:14px;
+    -webkit-overflow-scrolling:touch;
+  }
+  table.res {
+    width:100%;
+    border-collapse:collapse;
+    margin:0;
+    font-size:13px;
+    min-width:920px;
+  }
+  table.res th, table.res td {
+    text-align:right;
+    padding:9px 9px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  table.res th:first-child, table.res td:first-child { text-align:left; }
+  table.res th:nth-child(2), table.res td:nth-child(2) { text-align:left; }
+  table.res thead th {
+    background:var(--blue-soft);
+    color:var(--blue);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  table.res tbody tr:last-child td { border-bottom:none; }
+  table.res .dom { font-weight:750; }
+  table.res tr.pending td { color:var(--muted); font-style:italic; }
+  .up { color:var(--green); font-weight:750; }
+  .down { color:var(--orange); font-weight:750; }
+  .sub { color:var(--muted); font-size:12.5px; }
+
+  .note {
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    border-radius:14px;
+    padding:16px 20px;
+    margin-top:14px;
+    font-size:14.5px;
+    color:var(--muted);
+  }
+  .note strong { color:var(--ink); }
+  .note ul { margin:8px 0 0; padding-left:20px; }
+  .note li { margin-bottom:6px; }
+  footer { margin-top:28px; color:var(--muted); font-size:13px; }
+
+  .examples { display:grid; gap:36px; margin-top:8px; }
+  .domain-examples h3 {
+    margin:0 0 16px; font-size:20px; letter-spacing:-.02em;
+    padding-bottom:10px; border-bottom:1px solid var(--line);
+  }
+  .combo-grid { display:grid; grid-template-columns:1fr; gap:20px; }
+  .combo {
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 20px 16px;
+    background:#fbfcfd;
+  }
+  .combo-head { margin-bottom:12px; }
+  .pill {
+    display:inline-block;
+    font-size:12px; font-weight:700;
+    border-radius:999px; padding:4px 12px;
+  }
+  .pill.good { color:var(--green); background:var(--green-soft); border:1px solid #cfe8d8; }
+  .pill.bad { color:#b42318; background:#fff1f0; border:1px solid #f2c6c2; }
+  .pill.neutral { color:var(--muted); background:#f3f5f7; border:1px solid var(--line); }
+  .task-box {
+    margin:0 0 12px; padding:12px 14px;
+    background:var(--paper); border:1px solid var(--line);
+    border-left:3px solid var(--blue); border-radius:0 10px 10px 0;
+    font-size:14px; line-height:1.5; color:var(--ink);
+  }
+  .task-box .task-label { display:block; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .task-box { overflow-wrap:break-word; word-break:break-word; }
+  .metric-row {
+    display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px;
+    font-size:13px;
+  }
+  .metric-row .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 10px; border-radius:8px;
+    background:var(--paper); border:1px solid var(--line);
+    color:var(--muted);
+  }
+  .metric-row .chip strong { color:var(--ink); font-weight:650; }
+  .metric-row .chip.tokens.down strong { color:var(--green); }
+  .metric-row .chip.tokens.up strong { color:var(--orange); }
+  .outputs { display:grid; gap:10px; }
+  details.out {
+    border:1px solid var(--line); border-radius:10px;
+    background:var(--paper); overflow:hidden;
+  }
+  details.out.base { border-left:3px solid #9aa5b1; }
+  details.out.steer { border-left:3px solid var(--blue); }
+  details.out > summary {
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:11px 14px; font-size:13px; font-weight:650;
+    background:#f8fafc; user-select:none;
+  }
+  details.out > summary::-webkit-details-marker { display:none; }
+  details.out > summary::after {
+    content:'Show output';
+    font-size:11px; font-weight:600; color:var(--blue);
+    flex-shrink:0;
+  }
+  details.out[open] > summary::after { content:'Hide output'; }
+  details.out.base > summary .out-name { color:#5c6773; }
+  details.out.steer > summary .out-name { color:var(--blue); }
+  .out-meta { font-size:12px; font-weight:500; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:min(70vw,640px); }
+  .out-text {
+    margin:0; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; overflow-x:hidden;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12px; line-height:1.45;
+    padding:12px 14px; max-height:360px; overflow:auto;
+    border-top:1px solid var(--line); background:var(--code);
+  }
+  details.out[open] .out-text { max-height:min(60vh, 520px); }
+
+  @media (max-width:700px) {
+    details.out > summary { flex-direction:column; align-items:flex-start; gap:4px; }
+    .out-meta { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  }
+
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <div class="eyebrow">SEAL · Reasoning Steering · 7B Scale-Up</div>
+    <h1>Scaling the math vector to DeepSeek-R1-Distill-Qwen-7B</h1>
+    <p class="dek">
+      A steering vector extracted from the MATH training set (layer 20, coefficient
+      &alpha; = &minus;1.0, 500 correct + 500 incorrect traces) on
+      <code>DeepSeek-R1-Distill-Qwen-7B</code> &mdash; the same recipe used for the
+      1.5B model's <a href="steering_transfer_results.html">six-benchmark transfer report</a>,
+      rebuilt from scratch at 7B scale. This report currently covers MATH-500; code (APPS)
+      and logic (LogiQA) evaluations at 7B are in progress.
+    </p>
+
+    <div class="takeaway">
+      <strong>Result:</strong> on MATH-500, steering raised accuracy from 84.4% to 87.8%
+      (+3.4 points) while cutting average reasoning tokens by 17.9% (3,381 &rarr; 2,777).
+      Same direction as the 1.5B result, on a model with 2.3x the hidden dimension.
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="label">Math &middot; MATH-500</span>
+        <span class="num green">+3.4 pts</span>
+        <span class="small">84.4% &rarr; 87.8% &nbsp;·&nbsp; tokens &minus;17.9%</span>
+      </div>
+      <div class="stat pending">
+        <span class="label">Code &middot; APPS</span>
+        <span class="num">&mdash;</span>
+        <span class="small">in progress</span>
+      </div>
+      <div class="stat pending">
+        <span class="label">Logic &middot; LogiQA</span>
+        <span class="num">&mdash;</span>
+        <span class="small">in progress</span>
+      </div>
+    </div>
+
+    <h2>Full results</h2>
+    <div class="table-wrap">
+    <table class="res">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Eval set</th>
+          <th>Samples<br><span class="sub">base / steer</span></th>
+          <th>Acc<br>base</th>
+          <th>Acc<br>steered</th>
+          <th>&Delta; acc</th>
+          <th>Tokens<br>base</th>
+          <th>Tokens<br>steered</th>
+          <th>&Delta; tok</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dom">Math (MATH-500)</td>
+          <td>held-out test, random 500</td>
+          <td>500 / 500</td>
+          <td>84.4%</td>
+          <td>87.8%</td>
+          <td class="up">+3.4</td>
+          <td>3,381</td>
+          <td>2,777</td>
+          <td class="down">&minus;17.9%</td>
+        </tr>
+        <tr class="pending">
+          <td class="dom">Code (APPS)</td>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td colspan="6">not yet run</td>
+        </tr>
+        <tr class="pending">
+          <td class="dom">Logic (LogiQA)</td>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td colspan="6">not yet run</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="note">
+      <strong>Methodology.</strong> Vector extracted from <code>data/MATH/train.jsonl</code>
+      (7,500 problems, all generated at <code>max_tokens=10000</code>; 85.6% baseline
+      generation accuracy), pooling the first 500 correct and first 500 incorrect traces'
+      layer-20 hidden states at each <code>\n\n</code> reasoning-step boundary inside
+      <code>&lt;think&gt;</code>. Steering vector = mean(check&nbsp;&cup;&nbsp;switch) &minus;
+      mean(other), applied by adding <code>coef &times; vector</code> at layer 20 with
+      coef = &minus;1.0. Evaluated on a random 500-example draw from MATH-500 (seed 42),
+      identical baseline/steered prompts and decoding settings.
+      <ul>
+        <li>Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-7B</code> (hidden_size 3584,
+          28 layers &mdash; same depth as the 1.5B model, ~2.3x the width).</li>
+        <li>Vector shape confirmed <code>[3584]</code>, norm 82.4.</li>
+        <li>Both models use layer 20 unchanged &mdash; the 1.5B&rarr;7B jump is almost
+          entirely in width, not depth, so the same relative layer applies.</li>
+      </ul>
+    </div>
+
+    <h2>Example outputs (baseline vs steered)</h2>
+    <p class="sub" style="margin:-6px 0 14px;color:var(--muted);font-size:14.5px;">
+      Two matched MATH-500 examples: one where steering flipped an incorrect answer to
+      correct, one where both were already correct but steering cut token usage sharply.
+      Click to expand full generations.
+    </p>
+    <div class="examples">
+      <section class="domain-examples">
+        <h3>Math (MATH-500)</h3>
+        <div class="combo-grid">
+
+    <div class="combo">
+      <div class="combo-head">
+        <span class="pill good">Flip: incorrect → correct</span>
+      </div>
+      <div class="task-box">
+        <span class="task-label">Problem</span>
+        Tom got a Mr. Potato Head for his birthday. It came with 3 hairstyles, 2 sets of eyebrows, 1 pair of googly eyes, 2 sets of ears, and 2 sets of lips, a pair of regular shoes, and a bonus pair of clown shoes. If a complete Mr. Potato Head personality includes eyebrows, eyes, ears, lips, shoes and optionally hair, how many different wacky personalities can Tom come up with? Note that Mr. Potato Head can be bald.
+
+Note: You cannot &quot;mix and match&quot;.  For example, you cannot take the left eyebrow from one pair and the right eyebrow from the other pair.
+        <div style="margin-top:8px;"><strong>Answer:</strong> 64</div>
+      </div>
+      <div class="metric-row">
+        <span class="chip">baseline: incorrect</span>
+        <span class="chip">steered: correct</span>
+        <span class="chip tokens down">tokens 1508 &rarr; 1198 (-21%)</span>
+      </div>
+      <div class="outputs">
+        <details class="out base">
+          <summary><span class="out-name">Baseline</span><span class="out-meta">1508 tokens &middot; incorrect</span></summary>
+          <pre class="out-text">Okay, so Tom got this Mr. Potato Head for his birthday, and he wants to figure out how many different personalities he can come up with. Let me try to think through this step by step.
+
+First, let me list out all the different parts that make up a complete Mr. Potato Head personality as per the question. It says a personality includes eyebrows, eyes, ears, lips, shoes, and optionally hair. So, the components are:
+
+1. Eyebrows: 3 options.
+2. Eyes: 1 pair, so only 1 option.
+3. Ears: 2 sets, so 2 options.
+4. Lids (lips): 2 sets, so 2 options.
+5. Shoes: 2 options, regular and clown shoes.
+6. Hair: It&#x27;s optional, and it can be bald. So, I think that means there are 2 choices here: either you choose a hairstyle or you don&#x27;t, which is bald. But wait, the question says it came with 3 hairstyles, but hair is optional. Hmm, does that mean the 3 hairstyles include bald? Or is bald a separate option?
+
+Wait, let me read the question again. It says, &quot;a pair of regular shoes, and a bonus pair of clown shoes.&quot; So, the shoes are separate. Then, the question says, &quot;a complete Mr. Potato Head personality includes eyebrows, eyes, ears, lips, shoes and optionally hair, how many different wacky personalities can Tom come up with? Note that Mr. Potato Head can be bald.&quot;
+
+So, the hair is optional, and it can be bald. So, the 3 hairstyles probably are the options for hair, but since it&#x27;s optional, maybe bald is another choice. Wait, the question says, &quot;It came with 3 hairstyles, 2 sets of eyebrows, 1 pair of googly eyes, 2 sets of ears, and 2 sets of lips, a pair of regular shoes, and a bonus pair of clown shoes.&quot; So, the 3 hairstyles are separate from the other parts. So, the hair is optional, so Tom can choose to have any of the 3 hairstyles or choose to be bald. So, that&#x27;s 4 choices for hair: 3 hairstyles plus bald.
+
+Wait, but the question says, &quot;Note that Mr. Potato Head can be bald.&quot; So, maybe the 3 hairstyles are the choices, and bald is another choice, so total 4 options for hair.
+
+But let me make sure. The question says, &quot;It came with 3 hairstyles, 2 sets of eyebrows, 1 pair of googly eyes, 2 sets of ears, and 2 sets of lips, a pair of regular shoes, and a bonus pair of clown shoes.&quot; So, the 3 hairstyles are the only options for hair, but since it&#x27;s optional, maybe bald is considered as not choosing any hairstyle. So, that would be 4 choices: 3 hairstyles plus bald.
+
+Alternatively, maybe the 3 hairstyles include bald, but that seems unlikely because it&#x27;s called &quot;hairstyles,&quot; which usually refers to different styles, not bald. So, probably, the 3 are different hairstyles, and bald is a separate choice, making it 4 options for hair.
+
+So, to clarify, the hair part: 3 hairstyles, plus bald, so 4 choices.
+
+Now, let&#x27;s list out the number of choices for each component:
+
+1. Eyebrows: 3 options.
+2. Eyes: 1 option (only googly eyes).
+3. Ears: 2 options.
+4. Lids (lips): 2 options.
+5. Shoes: 2 options.
+6. Hair: 4 options (3 hairstyles + bald).
+
+Since the question says, &quot;You cannot &#x27;mix and match.&#x27; For example, you cannot take the left eyebrow from one pair and the right eyebrow from the other pair.&quot; So, for each component, you choose one option, and you can&#x27;t combine different options for the same component.
+
+So, for each of the components, the number of choices is independent of the others. So, to find the total number of different personalities, we can use the multiplication principle. That is, multiply the number of choices for each component together.
+
+So, let&#x27;s compute that:
+
+Number of choices for eyebrows: 3.
+
+Number of choices for eyes: 1.
+
+Number of choices for ears: 2.
+
+Number of choices for lips: 2.
+
+Number of choices for shoes: 2.
+
+Number of choices for hair: 4.
+
+So, total number of personalities = 3 * 1 * 2 * 2 * 2 * 4.
+
+Let me compute that step by step.
+
+First, 3 (Eyebrows) * 1 (Eyes) = 3.
+
+Then, 3 * 2 (Ears) = 6.
+
+6 * 2 (Lips) = 12.
+
+12 * 2 (Shoes) = 24.
+
+24 * 4 (Hair) = 96.
+
+So, total number of different wacky personalities Tom can come up with is 96.
+
+Wait, let me make sure I didn&#x27;t miss anything.
+
+Is there any restriction on the components? The question says, &quot;You cannot &#x27;mix and match.&#x27; For example, you cannot take the left eyebrow from one pair and the right eyebrow from the other pair.&quot; So, does that mean that for each component, you can only choose one option, and you can&#x27;t split or combine? So, for eyebrows, it&#x27;s either choose one of the 3, not split them. Similarly, for ears, you can only choose one set, not left and right. So, that&#x27;s already considered in the number of options for each component.
+
+So, each component is independent, so the total number is indeed the product of the number of choices for each component.
+
+So, 3 * 1 * 2 * 2 * 2 * 4 = 96.
+
+Therefore, the answer is 96.
+
+**Final Answer**
+The total number of different wacky personalities Tom can come up with is \boxed{96}.
+&lt;/think&gt;
+
+Tom got a Mr. Potato Head for his birthday, which came with the following components:
+
+1. Eyebrows: 3 options.
+2. Eyes: 1 option (googly eyes).
+3. Ears: 2 options.
+4. Lids (lips): 2 options.
+5. Shoes: 2 options (regular and clown shoes).
+6. Hair: 4 options (3 hairstyles plus bald).
+
+To find the total number of different personalities, we use the multiplication principle, multiplying the number of choices for each component:
+
+\[
+3 \text{ (Eyebrows)} \times 1 \text{ (Eyes)} \times 2 \text{ (Ears)} \times 2 \text{ (Lips)} \times 2 \text{ (Shoes)} \times 4 \text{ (Hair)} = 3 \times 1 \times 2 \times 2 \times 2 \times 4 = 96
+\]
+
+Thus, the total number of different wacky personalities Tom can come up with is \boxed{96}.</pre>
+        </details>
+        <details class="out steer">
+          <summary><span class="out-name">Steered</span><span class="out-meta">1198 tokens &middot; correct</span></summary>
+          <pre class="out-text">Okay, so Tom got this Mr. Potato Head for his birthday, and he wants to figure out how many different personalities he can come up with. Let me try to think through this step by step.
+
+First, let&#x27;s list out all the different parts that make up a complete personality. The problem says it includes eyebrows, eyes, ears, lips, shoes, and optionally hair. So, the components are:
+
+- Eyebrows: 2 sets
+- Eyes: 1 pair
+- Ears: 2 sets
+- Lids: 2 sets
+- Shoes: 2 sets (regular and clown)
+- Hair: 3 hairstyles, but it&#x27;s optional, so we might not include it in some cases.
+
+So, Tom can choose each of these components independently, right? That means for each part, he has a certain number of choices, and the total number of combinations is the product of the number of choices for each part.
+
+Let me write down the number of options for each part:
+
+- Eyebrows: 2 choices
+- Eyes: 1 choice (since it&#x27;s a pair, I guess you can&#x27;t choose different ones, so it&#x27;s fixed)
+- Ears: 2 choices
+- Lids: 2 choices
+- Shoes: 2 choices
+- Hair: 3 choices, but it&#x27;s optional. Hmm, so does that mean we have 4 choices for hair? Because you can choose one of the 3 or choose none, which is bald. So, 3 + 1 = 4.
+
+Wait, let me think about that. If it&#x27;s optional, does that mean we have 4 choices? Yes, because for each part, you can either choose an option or not. So, for hair, it&#x27;s 3 choices plus the option of not choosing any, making it 4. Similarly, for the other components, since they are required, it&#x27;s just the number of choices given.
+
+So, to calculate the total number of different personalities, we can multiply the number of choices for each component together.
+
+So, let&#x27;s write that out:
+
+Total combinations = Eyebrows * Eyes * Ears * Lids * Shoes * Hair
+
+Plugging in the numbers:
+
+Total combinations = 2 * 1 * 2 * 2 * 2 * 4
+
+Let me compute that step by step.
+
+First, 2 (Eyebrows) * 1 (Eyes) = 2.
+
+Then, 2 * 2 (Ears) = 4.
+
+4 * 2 (Lids) = 8.
+
+8 * 2 (Shoes) = 16.
+
+16 * 4 (Hair) = 64.
+
+So, that gives us 64 different combinations.
+
+Wait, let me make sure I didn&#x27;t miss anything. The problem mentions that you cannot &quot;mix and match&quot; the eyebrows. So, for the eyebrows, since they come in pairs, you can only choose one pair, right? So, if there are 2 sets, does that mean 2 options? Yes, so that&#x27;s correct.
+
+Similarly, for the ears, it&#x27;s 2 sets, so 2 options. Same with the googly eyes, googly eyes are a single pair, so only 1 choice.
+
+Lids: 2 sets, so 2 options.
+
+Shoes: 2 options, regular and clown.
+
+Hair: 3 hairstyles, but since it&#x27;s optional, that&#x27;s 4 choices.
+
+So, multiplying all these together, 2 * 1 * 2 * 2 * 2 * 4 = 64.
+
+Is there any other component that I might have missed? Let me check the problem statement again.
+
+It says: a complete Mr. Potato Head personality includes eyebrows, eyes, ears, lips, shoes and optionally hair. So, that&#x27;s all the components I considered.
+
+So, I think 64 is the correct answer.
+
+But just to be thorough, let me think about the hair part again. If it&#x27;s optional, does that mean we have 4 choices? Yes, because 3 hairstyles plus the bald choice. So, 4.
+
+So, 2 (Eyebrows) * 1 (Eyes) * 2 (Ears) * 2 (Lids) * 2 (Shoes) * 4 (Hair) = 64.
+
+Yes, that seems right.
+
+So, I think the total number of different wacky personalities Tom can come up with is 64.
+
+**Final Answer**
+The number of different wacky personalities Tom can create is \boxed{64}.
+&lt;/think&gt;
+
+Tom got a Mr. Potato Head for his birthday, and we need to determine the number of different personalities he can create. The components and their choices are as follows:
+
+- Eyebrows: 2 choices
+- Eyes: 1 choice (a fixed pair)
+- Ears: 2 choices
+- Lids: 2 choices
+- Shoes: 2 choices (regular and clown)
+- Hair: 4 choices (3 hairstyles plus the option of balding)
+
+The total number of combinations is calculated by multiplying the number of choices for each component:
+
+\[
+\text{Total combinations} = 2 \times 1 \times 2 \times 2 \times 2 \times 4
+\]
+
+Calculating step by step:
+
+\[
+2 \times 1 = 2
+\]
+\[
+2 \times 2 = 4
+\]
+\[
+4 \times 2 = 8
+\]
+\[
+8 \times 2 = 16
+\]
+\[
+16 \times 4 = 64
+\]
+
+Thus, the number of different wacky personalities Tom can create is \boxed{64}.</pre>
+        </details>
+      </div>
+    </div>
+    
+    <div class="combo">
+      <div class="combo-head">
+        <span class="pill neutral">Both correct, tokens -52.8%</span>
+      </div>
+      <div class="task-box">
+        <span class="task-label">Problem</span>
+        If $t(x) = 3-g(x)$ and $g(x) = \sqrt{x}$, then what is $t(g(16))$?
+        <div style="margin-top:8px;"><strong>Answer:</strong> 1</div>
+      </div>
+      <div class="metric-row">
+        <span class="chip">baseline: correct</span>
+        <span class="chip">steered: correct</span>
+        <span class="chip tokens down">tokens 1499 &rarr; 707 (-53%)</span>
+      </div>
+      <div class="outputs">
+        <details class="out base">
+          <summary><span class="out-name">Baseline</span><span class="out-meta">1499 tokens &middot; correct</span></summary>
+          <pre class="out-text">Okay, so I have this problem here: If t(x) is equal to 3 minus g(x), and g(x) is the square root of x, then what is t(g(16))? Hmm, let me try to figure this out step by step.
+
+First, I need to understand what each function is doing. The function t(x) is defined as 3 minus g(x). That means wherever I see t(x), I can replace it with 3 minus whatever g(x) is. And g(x) is given as the square root of x. So, g(x) = sqrt(x). Got it.
+
+Now, the question is asking for t(g(16)). That notation means I need to first apply the function g to 16, and then apply the function t to the result of that. So, it&#x27;s like a composition of functions. Let me write that down: t(g(16)) is equal to t of (g(16)). So, I need to compute g(16) first, and then plug that result into t.
+
+Alright, let&#x27;s compute g(16). Since g(x) is sqrt(x), that means g(16) is sqrt(16). What&#x27;s the square root of 16? Well, 4 times 4 is 16, so sqrt(16) is 4. So, g(16) is 4. Okay, that was straightforward.
+
+Now, I need to compute t of that result, which is t(4). Because t(g(16)) is t(4). So, let&#x27;s compute t(4). Remember, t(x) is 3 minus g(x). So, t(4) is 3 minus g(4). But wait, g(x) is sqrt(x), so g(4) is sqrt(4). What&#x27;s sqrt(4)? That&#x27;s 2, because 2 times 2 is 4. So, g(4) is 2.
+
+Therefore, t(4) is 3 minus 2, which is 1. So, putting it all together, t(g(16)) is 1. Hmm, that seems right. Let me just verify each step to make sure I didn&#x27;t make a mistake.
+
+First, g(16) is sqrt(16) which is 4. Then, t(4) is 3 minus g(4), which is 3 minus sqrt(4), which is 3 minus 2, giving 1. Yeah, that seems correct.
+
+Wait, just to make sure, maybe I should write it in a more step-by-step mathematical notation to see if it all adds up.
+
+Compute g(16):
+g(16) = sqrt(16) = 4.
+
+Compute t(g(16)) which is t(4):
+t(4) = 3 - g(4) = 3 - sqrt(4) = 3 - 2 = 1.
+
+Yep, that&#x27;s consistent. So, the answer should be 1.
+
+I wonder if there&#x27;s another way to approach this problem. Maybe by composing the functions first and then evaluating at 16? Let me try that.
+
+So, if I have t(x) = 3 - g(x), and g(x) = sqrt(x), then t(g(x)) would be 3 - g(g(x)). Wait, is that right? Let me see. If t(x) is 3 - g(x), then replacing x with g(x) would give t(g(x)) = 3 - g(g(x)). So, that&#x27;s correct.
+
+So, t(g(x)) = 3 - g(g(x)) = 3 - sqrt(sqrt(x)). Hmm, that&#x27;s a more complicated expression. So, t(g(x)) is 3 minus the square root of the square root of x, which is 3 minus the fourth root of x.
+
+But in this problem, we&#x27;re evaluating at x = 16. So, t(g(16)) is 3 - sqrt(sqrt(16)).
+
+Compute sqrt(16) first: that&#x27;s 4. Then sqrt(4) is 2. So, 3 - 2 is 1. So, same result. So, whether I compute it step by step or compose the functions first and then evaluate, I get 1. That&#x27;s reassuring.
+
+I think I&#x27;m confident that the answer is 1. Let me just recap the steps to ensure I didn&#x27;t skip anything.
+
+1. Compute g(16): sqrt(16) = 4.
+2. Compute t(4): 3 - sqrt(4) = 3 - 2 = 1.
+
+Yes, that&#x27;s correct. So, t(g(16)) is 1.
+
+I don&#x27;t think I made any errors here. The functions are pretty straightforward, and the composition doesn&#x27;t involve any tricky steps. It&#x27;s just applying the functions step by substitution.
+
+Wait, just to make sure, let me think about the order of operations. When we have t(g(16)), it&#x27;s important to do the inner function first, which is g(16), and then plug that into t. If I had done it the other way around, I would have incorrectly computed t(16) first, which would have been 3 - sqrt(16) = 3 - 4 = -1, and then applying g to that would have been sqrt(-1), which is undefined. So, that would have been a problem. But since we do the inner function first, we avoid that issue.
+
+So, order of operations is crucial here. It&#x27;s easy to make a mistake by not following the correct order, but in this case, by doing the inner function first, we get a valid result.
+
+Another thing to note is that the functions are both functions of x, so when we substitute, we need to make sure we&#x27;re substituting the correct value into the correct function. So, t(g(16)) is substituting 16 into g first, then taking that result and substituting into t.
+
+I think that&#x27;s all. I can&#x27;t think of any other steps or considerations needed here. The functions are simple, and the composition is straightforward. So, I think I&#x27;m confident that the answer is 1.
+
+**Final Answer**
+The value of \( t(g(16)) \) is \boxed{1}.
+&lt;/think&gt;
+
+First, we need to compute \( g(16) \). Since \( g(x) = \sqrt{x} \), we have:
+\[ g(16) = \sqrt{16} = 4 \]
+
+Next, we use this result to compute \( t(4) \). The function \( t(x) \) is defined as \( 3 - g(x) \), so:
+\[ t(4) = 3 - g(4) \]
+\[ g(4) = \sqrt{4} = 2 \]
+\[ t(4) = 3 - 2 = 1 \]
+
+Therefore, the value of \( t(g(16)) \) is \(\boxed{1}\).</pre>
+        </details>
+        <details class="out steer">
+          <summary><span class="out-name">Steered</span><span class="out-meta">707 tokens &middot; correct</span></summary>
+          <pre class="out-text">Okay, so I have this problem here: If t(x) is equal to 3 minus g(x), and g(x) is the square root of x, then what is t(g(16))? Hmm, let me try to figure this out step by step.
+
+First, I need to understand what each function is doing. The function t(x) is defined as 3 minus g(x). That means wherever I see t(x), I can replace it with 3 minus whatever g(x) is. And g(x) is given as the square root of x. So, g(x) = sqrt(x). Got it.
+
+Now, the question is asking for t(g(16)). That notation means I need to first apply the function g to 16, and then apply the function t to the result of that. So, it&#x27;s like a composition of functions. Let me write that down:
+
+t(g(16)) = t(sqrt(16)).
+
+Okay, so I need to compute sqrt(16) first. What&#x27;s the square root of 16? Well, 4 times 4 is 16, so sqrt(16) is 4. So, g(16) is 4. Now, I need to plug this result into the function t.
+
+So, t(g(16)) becomes t(4). Now, t(x) is 3 minus g(x), so t(4) is 3 minus g(4). But wait, g(x) is sqrt(x), so g(4) is sqrt(4). What&#x27;s sqrt(4)? That&#x27;s 2, because 2 times 2 is 4. So, g(4) is 2.
+
+Now, substitute that back into t(4):
+
+t(4) = 3 - g(4) = 3 - 2.
+
+So, 3 minus 2 is 1. Therefore, t(g(16)) is 1.
+
+Let me just recap to make sure I didn&#x27;t make a mistake. First, compute g(16), which is sqrt(16) = 4. Then, compute t(4), which is 3 - g(4). g(4) is sqrt(4) = 2. So, 3 - 2 = 1. Yep, that seems right.
+
+I think I got it. So, the answer should be 1.
+
+**Final Answer**
+The value of \( t(g(16)) \) is \boxed{1}.
+&lt;/think&gt;
+
+First, we need to evaluate \( g(16) \). Since \( g(x) = \sqrt{x} \), we have:
+\[ g(16) = \sqrt{16} = 4 \]
+
+Next, we substitute this result into the function \( t(x) \). The function \( t(x) \) is defined as \( 3 - g(x) \). Therefore, we need to evaluate \( t(4) \):
+\[ t(4) = 3 - g(4) \]
+
+We already know \( g(4) = \sqrt{4} = 2 \). Substituting this value back in, we get:
+\[ t(4) = 3 - 2 = 1 \]
+
+Thus, the value of \( t(g(16)) \) is \(\boxed{1}\).</pre>
+        </details>
+      </div>
+    </div>
+    
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-7B</code> &middot; Vector source:
+      MATH train (500+500 traces) &middot; Layer 20, &alpha; = &minus;1.0 &middot;
+      Results and vector: <code>results/results_for_7b_math_vectors/</code>,
+      <code>results/MATH_train/DeepSeek-R1-Distill-Qwen-7B/baseline_10000/vector_500_500/</code>
+      on branch <code>akhilbz/7b-math-results</code>.
+    </footer>
+  </div>
+</main>
+</body>
+</html>
