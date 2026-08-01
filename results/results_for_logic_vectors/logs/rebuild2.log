@@ -1,0 +1,11 @@
+[check] traces 2000 (none dropped) | correct 500 | incorrect 1500 (unfinished 792)
+[check] first-500 incorrect pool: 284 unfinished, 216 answered-wrong
+[check] OK to build 500+500
+[1/3] hidden states — incorrect (layer 20, includes unfinished) ...
+[2/3] hidden states — correct (layer 20) ...
+[3/3] build steering vector (layer 20) ...
+[new] dim (1536,) norm 55.291 finite True
+[prev shipped] norm 56.449  cos 0.9978
+[pool] correct   traces 500 | boundaries 5324 | check 1037 switch 87 other 4200
+[pool] incorrect traces 500 | boundaries 18039 | check 8110 switch 449 other 9480
+[pool] TOTAL 23363 | check 9147 (39.2%) switch 536 other 13680

@@ -1,0 +1,34 @@
+[preflight] S_logic norm 55.291 (expect ~55.29)
+[preflight] all vectors + selection present
+Thu Jul 30 14:44:29 UTC 2026
+########## 1/5 v_logic MATH500 ##########
+Thu Jul 30 14:44:29 UTC 2026
+@@DONE 1/5 v_logic MATH500
+Thu Jul 30 22:22:40 UTC 2026
+########## 2/5 v_logic APPS ##########
+Thu Jul 30 22:22:40 UTC 2026
+@@DONE 2/5 v_logic APPS
+Fri Jul 31 07:01:40 UTC 2026
+########## 3/5 v_logic LogiQA ##########
+Fri Jul 31 07:01:40 UTC 2026
+[logiqa] skipped 7182 non-MRC or malformed rows
+[logiqa] english_only: kept 1572/3166 rows (1594 skipped as CJK-heavy, threshold=0.1)
+[eval] explicit selection: 500 items from data/LogiQA/eval_rand42_500_clean.json
+@@DONE 3/5 v_logic LogiQA
+Fri Jul 31 14:31:50 UTC 2026
+########## 4/5 v_code LogiQA ##########
+Fri Jul 31 14:31:50 UTC 2026
+[logiqa] skipped 7182 non-MRC or malformed rows
+[logiqa] english_only: kept 1572/3166 rows (1594 skipped as CJK-heavy, threshold=0.1)
+[eval] explicit selection: 500 items from data/LogiQA/eval_rand42_500_clean.json
+@@DONE 4/5 v_code LogiQA
+Fri Jul 31 22:01:00 UTC 2026
+########## 5/5 v_math LogiQA ##########
+Fri Jul 31 22:01:00 UTC 2026
+[logiqa] skipped 7182 non-MRC or malformed rows
+[logiqa] english_only: kept 1572/3166 rows (1594 skipped as CJK-heavy, threshold=0.1)
+[eval] explicit selection: 500 items from data/LogiQA/eval_rand42_500_clean.json
+@@DONE 5/5 v_math LogiQA
+Sat Aug  1 05:30:42 UTC 2026
+########## ALL FIVE FINISHED ##########
+Sat Aug  1 05:30:42 UTC 2026
