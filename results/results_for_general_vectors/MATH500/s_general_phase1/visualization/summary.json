@@ -1,0 +1,24 @@
+{
+  "dataset": "MATH500",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+  "unit": "tokens",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.644,
+    "avg_total": 4817.97,
+    "median_total": 2764.5,
+    "avg_thinking": 4817.97
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.786,
+    "avg_total": 3170.352,
+    "median_total": 1714.0,
+    "avg_thinking": 3170.352
+  },
+  "delta": {
+    "accuracy_pts": 14.200000000000001,
+    "total_reduction_pct": 34.197348675894624,
+    "thinking_reduction_pct": 34.197348675894624
+  }
+}

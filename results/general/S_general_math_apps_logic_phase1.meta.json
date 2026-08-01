@@ -1,0 +1,79 @@
+{
+  "name": "S_general_math_apps_logic_phase1",
+  "created": "2026-07-31T01:50:50Z",
+  "phase": 1,
+  "balance": false,
+  "budget": null,
+  "seed": null,
+  "layer": 20,
+  "sign_convention": "vector = mean(check \u222a switch) \u2212 mean(other); apply by ADDING coef * vector with coef = -1.0",
+  "apply_coef": -1.0,
+  "domains": {
+    "math": {
+      "paths": [
+        "data/MATH/hidden_correct_0_500/hidden.pt",
+        "data/MATH/hidden_incorrect_0_500/hidden.pt"
+      ],
+      "counts": {
+        "check": 44724,
+        "switch": 6593,
+        "other": 101743,
+        "total": 153060,
+        "check_switch": 51317
+      }
+    },
+    "apps": {
+      "paths": [
+        "data/APPS/hidden_correct_0_500/hidden.pt",
+        "data/APPS/hidden_incorrect_0_500/hidden.pt"
+      ],
+      "counts": {
+        "check": 72933,
+        "switch": 3519,
+        "other": 113249,
+        "total": 189701,
+        "check_switch": 76452
+      }
+    },
+    "logic": {
+      "paths": [
+        "data/LogiQA/hidden_correct_0_500/hidden.pt",
+        "data/LogiQA/hidden_incorrect_0_500/hidden.pt"
+      ],
+      "counts": {
+        "check": 9147,
+        "switch": 536,
+        "other": 13680,
+        "total": 23363,
+        "check_switch": 9683
+      }
+    }
+  },
+  "pooled_counts": {
+    "check": 126804,
+    "switch": 10648,
+    "other": 228672,
+    "total": 366124,
+    "check_switch": 137452
+  },
+  "vector_dim": 1536,
+  "vector_norm": 55.78334045410156,
+  "comparisons": {
+    "math": {
+      "path": "results/results_for_math_vectors/MATH_train/DeepSeek-R1-Distill-Qwen-1.5B/baseline_10000/vector_500_500/layer_20_transition_reflection_steervec.pt",
+      "cosine": 0.9685508012771606,
+      "norm": 59.66563034057617
+    },
+    "apps": {
+      "path": "vectors/apps_v_code.pt",
+      "cosine": 0.9748204946517944,
+      "norm": 56.223934173583984
+    },
+    "logic": {
+      "path": "vectors/logiqa_v_logic.pt",
+      "cosine": 0.7968775033950806,
+      "norm": 55.29118347167969
+    }
+  },
+  "out": "results/general/S_general_math_apps_logic_phase1.pt"
+}
