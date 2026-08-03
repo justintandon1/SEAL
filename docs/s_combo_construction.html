@@ -239,6 +239,7 @@
         <li><a href="#sign">Guard — the sign-convention check</a></li>
         <li><a href="#result">The built vector</a></li>
         <li><a href="#next">What this does and doesn't answer</a></li>
+        <li><a href="#appendix">Appendix — what the singular values mean</a></li>
       </ol>
     </div>
 
@@ -485,6 +486,127 @@ S_combo = combo_unit × 20.431      → ‖S_combo‖ = 57.060</pre>
         to evaluate, not whether it works.</span>
       </div>
     </div>
+
+    <h2 id="appendix">Appendix — what the singular values mean</h2>
+    <p>
+      §2 quotes <code>[1.613, 0.541, 0.325]</code> and "86.7% of the variance"
+      without deriving them. Here's where those numbers come from, since they're
+      the mechanism behind Decision 1 (§3), not just a supporting statistic.
+    </p>
+
+    <h3>Stacking the vectors into a matrix</h3>
+    <p>
+      Take the three <em>unit</em> vectors — each a direction of length 1 in
+      1536-dimensional space — and stack them as rows:
+    </p>
+    <pre>      [ ← Ŝ_math →  ]
+M  =  [ ← Ŝ_code →  ]      shape (3, 1536)
+      [ ← Ŝ_logic → ]</pre>
+    <p>
+      Singular value decomposition factors any matrix as
+      <code>M = U Σ Vᵀ</code>, where <code>Σ</code> is diagonal with
+      non-negative entries <code>σ₁ ≥ σ₂ ≥ σ₃ ≥ …</code> sorted largest first —
+      the <strong>singular values</strong>. <code>M</code> has only 3 rows, so
+      there are at most 3 nonzero ones.
+      <code>torch.linalg.svdvals(M)</code> returns exactly that:
+      <code>[1.613, 0.541, 0.325]</code>.
+    </p>
+
+    <h3>What they mean geometrically</h3>
+    <p>
+      The three rows span a little subspace — at most 3-dimensional — sitting
+      inside the full 1536-dimensional space. SVD finds an orthonormal basis for
+      that subspace, ranked by how much of the three rows' combined length each
+      basis direction accounts for:
+    </p>
+    <table>
+      <tr><th>Singular value</th><th>What it captures</th></tr>
+      <tr>
+        <td><code>σ₁ = 1.613</code></td>
+        <td>The single strongest shared direction — the one axis that, alone,
+        best summarizes all three vectors.</td>
+      </tr>
+      <tr>
+        <td><code>σ₂ = 0.541</code></td>
+        <td>A second direction, orthogonal to the first, capturing what's left
+        after removing it.</td>
+      </tr>
+      <tr>
+        <td><code>σ₃ = 0.325</code></td>
+        <td>Whatever residual variation remains, orthogonal to both above.</td>
+      </tr>
+    </table>
+
+    <h3>"Energy" = squared length</h3>
+    <p>
+      By the Eckart–Young theorem, the sum of squared singular values equals the
+      total sum of squared entries across the matrix — the combined squared
+      length of the three rows:
+    </p>
+    <pre>σ₁² + σ₂² + σ₃²  =  ‖M‖²_F  =  ‖Ŝ_math‖² + ‖Ŝ_code‖² + ‖Ŝ_logic‖²  =  1 + 1 + 1  =  3</pre>
+    <p class="muted">
+      Check: <code>1.613² + 0.541² + 0.325² = 2.602 + 0.293 + 0.106 = 3.001</code>
+      ✓ (rounding).
+    </p>
+
+    <h3>Where 86.7% comes from</h3>
+    <pre>top-direction share  =  σ₁² / (σ₁² + σ₂² + σ₃²)
+                     =  2.602 / 3.001
+                     =  0.867</pre>
+    <div class="result">
+      If you approximated all three domain vectors by their single best-fit
+      shared direction — discarding <code>σ₂</code> and <code>σ₃</code>
+      entirely — you'd retain 86.7% of their combined squared length. Only
+      13.3% of what makes math, code, and logic vectors different from each
+      other lives outside that one shared axis.
+    </div>
+
+    <h3>Why this predicts the weight-sensitivity result (§3)</h3>
+    <p>
+      A matrix with one dominant singular value and two small ones is
+      <strong>numerically close to rank-1</strong> — as if built from a single
+      direction plus a bit of noise. Any weighted combination
+      <code>a·Ŝ_math + b·Ŝ_code + c·Ŝ_logic</code> is a linear combination of
+      the rows of <code>M</code>. When the rows nearly all point the same way,
+      changing the weights mostly rescales how far the sum moves
+      <em>along that one shared direction</em> — it can't rotate the sum far
+      off that axis, because there isn't much off-axis content
+      (<code>σ₂</code>, <code>σ₃</code>) for the weights to redistribute into.
+    </p>
+    <div class="decision">
+      <strong>This is the mechanism; the §3 grid sweep is the direct
+      confirmation.</strong> The SVD explains <em>why</em> reweighting is
+      constrained; the sweep measures <em>how much</em> — worst case cos 0.9847
+      over a 4× weight range.
+    </div>
+
+    <h3>The two bounding cases</h3>
+    <table>
+      <tr><th>If the three vectors were…</th><th class="num">Singular values</th><th class="num">Top-direction share</th></tr>
+      <tr>
+        <td><strong>identical</strong> (cos = 1 pairwise)</td>
+        <td class="num"><code>[√3, 0, 0]</code></td>
+        <td class="num">100%</td>
+      </tr>
+      <tr>
+        <td><strong>ours</strong> (measured)</td>
+        <td class="num"><code>[1.613, 0.541, 0.325]</code></td>
+        <td class="num"><strong>86.7%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>orthogonal</strong> (cos = 0 pairwise)</td>
+        <td class="num"><code>[1, 1, 1]</code></td>
+        <td class="num">33.3%</td>
+      </tr>
+    </table>
+    <p>
+      Identical vectors would make reweighting powerless to change direction at
+      all — only scale. Orthogonal vectors would let reweighting move the combo
+      substantially, since each vector contributes an independent axis. At
+      86.7%, these calibration vectors sit much closer to the identical end —
+      consistent with the §2 cosines (0.75–0.89) and the reason a weight grid
+      search over the combination isn't worth running.
+    </p>
 
     <footer>
       Reproduce every number on this page:
