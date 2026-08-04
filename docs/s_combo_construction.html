@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Building S_combo · Math and Decisions</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #1c2530;
+      --muted: #667281;
+      --line: #dfe4ea;
+      --blue: #1769aa;
+      --blue-soft: #eaf4ff;
+      --green: #24784b;
+      --green-soft: #eaf7f0;
+      --orange: #a45a19;
+      --orange-soft: #fff3e7;
+      --purple: #6849a8;
+      --purple-soft: #f2edff;
+      --code: #121a24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.62;
+    }
+    main {
+      width: min(880px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+    article {
+      padding: 42px 48px 52px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 20px 55px -48px rgba(28, 37, 48, .7);
+    }
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 8px 0 18px;
+      font-size: clamp(32px, 5.6vw, 46px);
+      line-height: 1.1;
+      letter-spacing: -.045em;
+    }
+    h2 {
+      margin: 40px 0 12px;
+      padding-top: 4px;
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: -.02em;
+    }
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 16px;
+      color: var(--blue);
+    }
+    p { margin: 0 0 13px; }
+    .lede {
+      color: var(--muted);
+      font-size: 18px;
+    }
+    code {
+      padding: 1px 5px;
+      background: #f1f3f5;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      margin: 14px 0 17px;
+      padding: 17px 19px;
+      overflow-x: auto;
+      color: #e8eef4;
+      background: var(--code);
+      border-radius: 11px;
+      font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    .answer {
+      margin: 25px 0 8px;
+      padding: 17px 19px;
+      background: var(--blue-soft);
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+    }
+    .step {
+      display: inline-grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      margin-right: 7px;
+      color: #fff;
+      background: var(--blue);
+      border-radius: 50%;
+      font-size: 13px;
+      vertical-align: 2px;
+    }
+    .result {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--green-soft);
+      border: 1px solid #c5e1d1;
+      border-radius: 11px;
+    }
+    .warning {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--orange-soft);
+      border: 1px solid #f0d3b6;
+      border-radius: 11px;
+    }
+    .decision {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--purple-soft);
+      border: 1px solid #ddd0f5;
+      border-radius: 11px;
+    }
+    .decision strong { color: var(--purple); }
+    .summary {
+      margin-top: 15px;
+      padding: 21px;
+      background: #f8f9fb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 48px 1.35fr;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .summary-row:last-child { border-bottom: 0; }
+    .symbol {
+      color: var(--purple);
+      font-size: 23px;
+      font-weight: 850;
+      text-align: center;
+    }
+    .muted { color: var(--muted); }
+    table {
+      width: 100%;
+      margin: 14px 0 18px;
+      border-collapse: collapse;
+      font-size: 14.5px;
+    }
+    th, td {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+    th {
+      background: #f8f9fb;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td strong { color: var(--ink); }
+    .toc {
+      margin: 22px 0 8px;
+      padding: 16px 19px;
+      background: #f8f9fb;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 14.5px;
+    }
+    .toc a { color: var(--blue); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc ol { margin: 6px 0 0; padding-left: 20px; }
+    .toc li { margin: 4px 0; }
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      margin-left: 6px;
+      background: var(--green-soft);
+      color: var(--green);
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      vertical-align: 2px;
+    }
+    .badge.todo { background: var(--orange-soft); color: var(--orange); }
+    footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+    @media (max-width: 620px) {
+      main { width: min(100% - 20px, 880px); padding: 18px 0 42px; }
+      article { padding: 27px 20px 34px; }
+      .summary-row { grid-template-columns: 1fr; gap: 3px; }
+      .symbol { text-align: left; }
+      table { font-size: 13px; }
+      th, td { padding: 7px 8px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <article>
+    <div class="eyebrow">Vector construction · worked math</div>
+    <h1>Building <code>S_combo</code>: the math and the decisions</h1>
+    <p class="lede">
+      <code>S_combo</code> is the "just add the three domain vectors together" baseline
+      that <code>S_general</code> gets measured against. Every number below comes
+      from the three vectors already in the repo — no model run, no GPU — via
+      <code>scripts/vector_geometry.py</code> and <code>build_combo_vector.py</code>.
+    </p>
+
+    <div class="toc">
+      <strong>On this page</strong>
+      <ol>
+        <li><a href="#ingredients">The three ingredient vectors</a></li>
+        <li><a href="#cosines">How aligned are they?</a></li>
+        <li><a href="#weights">Decision 1 — why equal weights</a></li>
+        <li><a href="#normalize">Decision 2 — why unit-normalize first</a></li>
+        <li><a href="#normmath">The weighted-sum norm, computed by hand</a></li>
+        <li><a href="#rescale">Decision 3 — why the result gets rescaled</a></li>
+        <li><a href="#sign">Guard — the sign-convention check</a></li>
+        <li><a href="#result">The built vector</a></li>
+        <li><a href="#next">What this does and doesn't answer</a></li>
+        <li><a href="#appendix">Appendix — what the singular values mean</a></li>
+      </ol>
+    </div>
+
+    <div class="answer">
+      <strong>Recipe:</strong>
+      <code>S_combo = rescale( Ŝ_math + Ŝ_code + Ŝ_logic )</code> — unit-normalize
+      each domain vector, sum with equal weight, then rescale the sum's
+      <em>magnitude</em> to match the domain vectors (their direction is untouched).
+    </div>
+
+    <h2 id="ingredients"><span class="step">1</span>The three ingredient vectors</h2>
+    <p>
+      Each domain vector is the SEAL contrast
+      <code>mean(check ∪ switch) − mean(other)</code> — reflection/transition
+      boundary states minus execution boundary states, layer 20,
+      DeepSeek-R1-Distill-Qwen-1.5B — applied by <em>adding</em>
+      <code>coef × vector</code> with <code>coef = −1.0</code>.
+    </p>
+    <table>
+      <tr><th>Domain</th><th>Source</th><th class="num">Dim</th><th class="num">Norm ‖S‖</th></tr>
+      <tr><td><strong>math</strong></td><td class="muted">MATH train · 500+500</td><td class="num">1536</td><td class="num">59.666</td></tr>
+      <tr><td><strong>code</strong></td><td class="muted">APPS train · 500+500 (v_code-SEAL)</td><td class="num">1536</td><td class="num">56.224</td></tr>
+      <tr><td><strong>logic</strong></td><td class="muted">LogiQA train · 500+500</td><td class="num">1536</td><td class="num">55.291</td></tr>
+    </table>
+    <p class="muted">
+      The three norms sit within 8% of each other. That closeness is why several
+      of the decisions below turn out not to matter much — flagged as we get to them.
+    </p>
+
+    <h2 id="cosines"><span class="step">2</span>How aligned are they?</h2>
+    <p>Pairwise cosine similarity between the raw (un-normalized) vectors:</p>
+    <table>
+      <tr><th></th><th class="num">math</th><th class="num">code</th><th class="num">logic</th></tr>
+      <tr><td><strong>math</strong></td><td class="num">1.000</td><td class="num">0.894</td><td class="num">0.761</td></tr>
+      <tr><td><strong>code</strong></td><td class="num">0.894</td><td class="num">1.000</td><td class="num">0.745</td></tr>
+      <tr><td><strong>logic</strong></td><td class="num">0.761</td><td class="num">0.745</td><td class="num">1.000</td></tr>
+    </table>
+    <p>
+      Stacking the three <em>unit</em> vectors into a 3×1536 matrix and taking its
+      singular values gives <code>[1.613, 0.541, 0.325]</code>. The top direction
+      alone explains <code>1.613² / (1.613² + 0.541² + 0.325²) = 86.7%</code> of the
+      variance — the three vectors are close to living on a single shared line,
+      with small domain-specific residuals on top.
+    </p>
+    <div class="decision">
+      <strong>Why this matters for reference:</strong> Ilharco et al.
+      (task arithmetic, ICLR 2023) found task vectors from <em>different tasks</em>
+      are typically close to <em>orthogonal</em> — that's why summing them in weight
+      space doesn't cause interference. These calibration vectors are the opposite:
+      0.75–0.89, nowhere near orthogonal. That contrast is the interesting part of
+      the geometry story, independent of anything below.
+    </div>
+
+    <h2 id="weights"><span class="step">3</span>Decision 1 — why equal weights, not a grid search</h2>
+    <p>
+      The natural instinct is to tune weights
+      <code>a·M̂ + b·Ĉ + c·L̂</code> the way van der Weij et al. (2024) did for
+      combining behaviour steering vectors. We tested this by fixing
+      <code>a = 1</code> and sweeping <code>b, c ∈ {0.5, 1, 2}</code> — a 4× ratio
+      between the smallest and largest weight in the grid — and measuring the
+      cosine of each reweighted combo against the equal-weight one.
+    </p>
+    <table>
+      <tr><th class="num">b (code)</th><th class="num">c (logic)</th><th class="num">cos vs. equal-weight</th></tr>
+      <tr><td class="num">0.5</td><td class="num">0.5</td><td class="num">0.9966</td></tr>
+      <tr><td class="num">0.5</td><td class="num">2</td><td class="num"><strong>0.9847</strong> ← worst case</td></tr>
+      <tr><td class="num">1</td><td class="num">1</td><td class="num">1.0000</td></tr>
+      <tr><td class="num">2</td><td class="num">0.5</td><td class="num">0.9883</td></tr>
+      <tr><td class="num">2</td><td class="num">2</td><td class="num">0.9978</td></tr>
+    </table>
+    <p class="muted">Full 3×3 grid in <code>scripts/vector_geometry.py</code>; only the extremes are shown here.</p>
+    <div class="result">
+      <strong>Worst case over the whole grid: cos = 0.9847.</strong> Because the
+      three vectors are close to rank-1 (§2), reweighting them cannot rotate the
+      sum by much — a grid search would spend GPU budget resolving direction
+      differences of about 0.015 in cosine.
+    </div>
+    <p>
+      Equal weights is also the <em>correct comparison object</em>, not just the
+      cheap one. As derived in
+      <a href="s_general_vs_s_combo.html">Will S_general Be the Same as S_combo?</a>,
+      a class-stratified, domain-balanced <code>S_general</code> equals the plain
+      average of the domain vectors. Equal weights on <code>S_combo</code> is what
+      makes the comparison test <em>pooling vs. combining</em> — the actual
+      research question — rather than <em>tuned vs. untuned</em>, which would be
+      an unfair comparison in the other direction.
+    </p>
+
+    <h2 id="normalize"><span class="step">4</span>Decision 2 — why unit-normalize before summing</h2>
+    <p>Two ways to combine the raw vectors:</p>
+    <pre>combo_raw  = S_math + S_code + S_logic
+combo_unit = Ŝ_math + Ŝ_code + Ŝ_logic     (each unit-normalized first)</pre>
+    <p>These differ whenever the domain vectors have different norms — and here they almost don't:</p>
+    <table>
+      <tr><th class="num">‖combo_raw‖</th><th class="num">‖combo_unit‖</th><th class="num">cos(raw, unit)</th></tr>
+      <tr><td class="num">159.461</td><td class="num">2.793</td><td class="num"><strong>0.999963</strong></td></tr>
+    </table>
+    <div class="result">
+      <strong>The two are the same direction.</strong> Only one needs to reach
+      the behavioral evaluation.
+    </div>
+    <div class="warning">
+      <strong>This is a property of these three vectors, not a general rule.</strong>
+      The earlier write-up
+      (<a href="s_general_vs_s_combo.html">S_general vs. S_combo</a>) shows a
+      worked example with <code>‖S_math‖ = 100</code>, <code>‖S_code‖ = 10</code> —
+      there, raw vs. unit normalization <em>does</em> change the direction, because
+      the 10× norm gap lets the larger vector dominate the raw sum. Our norms are
+      within 8% of each other, so that failure mode doesn't apply today. We
+      unit-normalize anyway, both because it's the more defensible default to
+      report and because it keeps the build correct if a future domain vector
+      arrives with a very different norm.
+    </div>
+
+    <h2 id="normmath"><span class="step">5</span>The weighted-sum norm, computed by hand</h2>
+    <p>
+      <code>scripts/vector_geometry.py</code> reports
+      <code>‖Ŝ_math + Ŝ_code + Ŝ_logic‖ = 2.7928</code>. Here's where that number
+      comes from — it's the vector norm expansion formula applied to three unit
+      vectors, using the cosines from §2.
+    </p>
+    <pre>‖a + b + c‖²  =  ‖a‖² + ‖b‖² + ‖c‖²  +  2(a·b + a·c + b·c)</pre>
+    <p>
+      Each unit vector has <code>‖·‖² = 1</code>, and for unit vectors
+      <code>a·b = cos(a, b)</code>. So:
+    </p>
+    <pre>‖combo_unit‖²  =  3  +  2(cos_MC + cos_ML + cos_CL)
+              =  3  +  2(0.894 + 0.761 + 0.745)
+              =  3  +  2(2.400)
+              =  7.800
+
+‖combo_unit‖  =  √7.800  =  2.793</pre>
+    <p>Two reference points make this number legible:</p>
+    <table>
+      <tr><th>If the three vectors were…</th><th class="num">‖sum‖ would be</th></tr>
+      <tr><td>perfectly <strong>orthogonal</strong> (cos = 0 pairwise)</td><td class="num">√3 = 1.732</td></tr>
+      <tr><td><strong>identical</strong> (cos = 1 pairwise)</td><td class="num">√9 = 3.000</td></tr>
+      <tr><td><strong>ours</strong> (measured)</td><td class="num"><strong>2.793</strong></td></tr>
+    </table>
+    <div class="result">
+      2.793 / 3.000 = <strong>93.1%</strong> of the maximum possible norm three
+      unit vectors could reach by summing. This is the same alignment finding as
+      §2, restated as one number: highly aligned vectors reinforce each other on
+      summation almost as if they were the same direction; near-orthogonal
+      vectors would partially cancel toward √3 instead.
+    </div>
+
+    <h2 id="rescale"><span class="step">6</span>Decision 3 — why the result gets rescaled</h2>
+    <p>
+      Steering applies <code>h ← h + coef · S</code>, so a vector's <em>norm</em>
+      sets how hard it pushes the model, independent of direction. The domain
+      vectors are applied at <code>coef = −1.0</code> with norms around 56–60.
+      <code>combo_unit</code> has norm 2.79.
+    </p>
+    <div class="warning">
+      <strong>If saved unscaled and applied at the same coefficient,
+      <code>S_combo</code> would be a ~20× weaker intervention</strong> than the
+      domain vectors. In an effect matrix, that would look almost exactly like a
+      genuine negative result — "combining vectors barely does anything" — when
+      really the model was barely nudged. That's a measurement artifact
+      indistinguishable from the finding it would masquerade as.
+    </div>
+    <p>The fix: rescale the summed direction to match the domain vectors' scale.</p>
+    <pre>target  = mean(‖S_math‖, ‖S_code‖, ‖S_logic‖)
+        = mean(59.666, 56.224, 55.291)
+        = 57.060
+
+scale   = target / ‖combo_unit‖
+        = 57.060 / 2.793
+        = 20.431
+
+S_combo = combo_unit × 20.431      → ‖S_combo‖ = 57.060</pre>
+    <div class="result">
+      Scaling a vector by a positive number never changes its direction — every
+      cosine and singular value from §2–§5 is untouched. It only makes
+      <code>coef = −1.0</code> mean a <em>comparable-sized push</em> for
+      <code>S_combo</code> as for <code>S_math</code>, <code>S_code</code>,
+      <code>S_logic</code>, which is what makes the eventual accuracy/token
+      comparison fair. This does not replace tuning <code>α</code> — it removes
+      a magnitude confound from the <code>α</code> sweep.
+    </div>
+    <p class="muted">
+      <code>build_combo_vector.py --norm</code> can override this
+      (<code>unit</code>, <code>none</code>, or an explicit value) if a
+      different comparability argument is preferred later.
+    </p>
+
+    <h2 id="sign"><span class="step">7</span>Guard — the sign-convention check</h2>
+    <p>
+      Every vector must be <code>mean(check ∪ switch) − mean(other)</code>. If
+      one input were built the opposite way round, it would point roughly
+      <em>opposite</em> the other two — summing would cancel signal instead of
+      accumulating it, silently.
+    </p>
+    <p>
+      <code>build_combo_vector.py</code> checks every pairwise cosine before
+      building anything and aborts if any pair is negative. Tested against a
+      deliberately negated vector during development — it fires. All three
+      current vectors agree in sign (§2: every cosine is positive).
+    </p>
+
+    <h2 id="result"><span class="step">8</span>The built vector</h2>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>weights</td><td><code>{math: 1.0, code: 1.0, logic: 1.0}</code></td></tr>
+      <tr><td>norm mode</td><td><code>mean-source</code> (×20.431)</td></tr>
+      <tr><td>output norm</td><td class="num">57.060</td></tr>
+      <tr><td>cosine vs. math</td><td class="num">0.9506</td></tr>
+      <tr><td>cosine vs. code</td><td class="num">0.9449</td></tr>
+      <tr><td>cosine vs. logic</td><td class="num">0.8973</td></tr>
+      <tr><td>apply</td><td><code>coef = −1.0</code>, layer 20</td></tr>
+      <tr><td>file</td><td><code>results/general/S_combo.pt</code> <span class="badge">built</span></td></tr>
+    </table>
+    <p class="muted">
+      Logic pulls the combo furthest from itself (0.897 vs. 0.95/0.945) — the
+      same outlier pattern as the raw cosine matrix in §2.
+    </p>
+
+    <h2 id="next">What this does and doesn't answer</h2>
+    <div class="summary">
+      <div class="summary-row">
+        <strong>Settled by this page</strong>
+        <span class="symbol">✓</span>
+        <span>Which combination to build: equal weights, unit-normalized,
+        rescaled to mean-source norm. No grid search needed — the direction is
+        insensitive to weighting.</span>
+      </div>
+      <div class="summary-row">
+        <strong>Not settled — still geometry</strong>
+        <span class="symbol">?</span>
+        <span>Whether <code>S_general</code> (pooled from boundary vectors
+        directly, not combined from the three finished vectors) lands on the
+        same direction as <code>S_combo</code>. That's a single number —
+        <code>cos(S_general, S_combo)</code> — available once
+        <code>S_general</code> is built.</span>
+      </div>
+      <div class="summary-row">
+        <strong>Not settled — needs behavior</strong>
+        <span class="symbol">✗</span>
+        <span>Whether <code>S_combo</code> actually steers well: accuracy and
+        token effects on held-out benchmarks, per-problem distributions, and an
+        <code>α</code> sweep. Vector-separation metrics are not a reliable
+        predictor of steering success — geometry narrows <em>which</em> vector
+        to evaluate, not whether it works.</span>
+      </div>
+    </div>
+
+    <h2 id="appendix">Appendix — what the singular values mean</h2>
+    <p>
+      §2 quotes <code>[1.613, 0.541, 0.325]</code> and "86.7% of the variance"
+      without deriving them. Here's where those numbers come from, since they're
+      the mechanism behind Decision 1 (§3), not just a supporting statistic.
+    </p>
+
+    <h3>Stacking the vectors into a matrix</h3>
+    <p>
+      Take the three <em>unit</em> vectors — each a direction of length 1 in
+      1536-dimensional space — and stack them as rows:
+    </p>
+    <pre>      [ ← Ŝ_math →  ]
+M  =  [ ← Ŝ_code →  ]      shape (3, 1536)
+      [ ← Ŝ_logic → ]</pre>
+    <p>
+      Singular value decomposition factors any matrix as
+      <code>M = U Σ Vᵀ</code>, where <code>Σ</code> is diagonal with
+      non-negative entries <code>σ₁ ≥ σ₂ ≥ σ₃ ≥ …</code> sorted largest first —
+      the <strong>singular values</strong>. <code>M</code> has only 3 rows, so
+      there are at most 3 nonzero ones.
+      <code>torch.linalg.svdvals(M)</code> returns exactly that:
+      <code>[1.613, 0.541, 0.325]</code>.
+    </p>
+
+    <h3>What they mean geometrically</h3>
+    <p>
+      The three rows span a little subspace — at most 3-dimensional — sitting
+      inside the full 1536-dimensional space. SVD finds an orthonormal basis for
+      that subspace, ranked by how much of the three rows' combined length each
+      basis direction accounts for:
+    </p>
+    <table>
+      <tr><th>Singular value</th><th>What it captures</th></tr>
+      <tr>
+        <td><code>σ₁ = 1.613</code></td>
+        <td>The single strongest shared direction — the one axis that, alone,
+        best summarizes all three vectors.</td>
+      </tr>
+      <tr>
+        <td><code>σ₂ = 0.541</code></td>
+        <td>A second direction, orthogonal to the first, capturing what's left
+        after removing it.</td>
+      </tr>
+      <tr>
+        <td><code>σ₃ = 0.325</code></td>
+        <td>Whatever residual variation remains, orthogonal to both above.</td>
+      </tr>
+    </table>
+
+    <h3>"Energy" = squared length</h3>
+    <p>
+      By the Eckart–Young theorem, the sum of squared singular values equals the
+      total sum of squared entries across the matrix — the combined squared
+      length of the three rows:
+    </p>
+    <pre>σ₁² + σ₂² + σ₃²  =  ‖M‖²_F  =  ‖Ŝ_math‖² + ‖Ŝ_code‖² + ‖Ŝ_logic‖²  =  1 + 1 + 1  =  3</pre>
+    <p class="muted">
+      Check: <code>1.613² + 0.541² + 0.325² = 2.602 + 0.293 + 0.106 = 3.001</code>
+      ✓ (rounding).
+    </p>
+
+    <h3>Where 86.7% comes from</h3>
+    <pre>top-direction share  =  σ₁² / (σ₁² + σ₂² + σ₃²)
+                     =  2.602 / 3.001
+                     =  0.867</pre>
+    <div class="result">
+      If you approximated all three domain vectors by their single best-fit
+      shared direction — discarding <code>σ₂</code> and <code>σ₃</code>
+      entirely — you'd retain 86.7% of their combined squared length. Only
+      13.3% of what makes math, code, and logic vectors different from each
+      other lives outside that one shared axis.
+    </div>
+
+    <h3>Why this predicts the weight-sensitivity result (§3)</h3>
+    <p>
+      A matrix with one dominant singular value and two small ones is
+      <strong>numerically close to rank-1</strong> — as if built from a single
+      direction plus a bit of noise. Any weighted combination
+      <code>a·Ŝ_math + b·Ŝ_code + c·Ŝ_logic</code> is a linear combination of
+      the rows of <code>M</code>. When the rows nearly all point the same way,
+      changing the weights mostly rescales how far the sum moves
+      <em>along that one shared direction</em> — it can't rotate the sum far
+      off that axis, because there isn't much off-axis content
+      (<code>σ₂</code>, <code>σ₃</code>) for the weights to redistribute into.
+    </p>
+    <div class="decision">
+      <strong>This is the mechanism; the §3 grid sweep is the direct
+      confirmation.</strong> The SVD explains <em>why</em> reweighting is
+      constrained; the sweep measures <em>how much</em> — worst case cos 0.9847
+      over a 4× weight range.
+    </div>
+
+    <h3>The two bounding cases</h3>
+    <table>
+      <tr><th>If the three vectors were…</th><th class="num">Singular values</th><th class="num">Top-direction share</th></tr>
+      <tr>
+        <td><strong>identical</strong> (cos = 1 pairwise)</td>
+        <td class="num"><code>[√3, 0, 0]</code></td>
+        <td class="num">100%</td>
+      </tr>
+      <tr>
+        <td><strong>ours</strong> (measured)</td>
+        <td class="num"><code>[1.613, 0.541, 0.325]</code></td>
+        <td class="num"><strong>86.7%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>orthogonal</strong> (cos = 0 pairwise)</td>
+        <td class="num"><code>[1, 1, 1]</code></td>
+        <td class="num">33.3%</td>
+      </tr>
+    </table>
+    <p>
+      Identical vectors would make reweighting powerless to change direction at
+      all — only scale. Orthogonal vectors would let reweighting move the combo
+      substantially, since each vector contributes an independent axis. At
+      86.7%, these calibration vectors sit much closer to the identical end —
+      consistent with the §2 cosines (0.75–0.89) and the reason a weight grid
+      search over the combination isn't worth running.
+    </p>
+
+    <footer>
+      Reproduce every number on this page:
+      <code>python scripts/vector_geometry.py</code> and
+      <code>python build_combo_vector.py --out results/general/S_combo.pt</code>.
+      Both run on CPU in about a second — no model load, no GPU. See also
+      <a href="s_general_vs_s_combo.html">Will S_general Be the Same as S_combo?</a>
+      for the algebra behind why equal-weight, class-balanced pooling and
+      combination coincide.
+    </footer>
+  </article>
+</main>
+</body>
+</html>

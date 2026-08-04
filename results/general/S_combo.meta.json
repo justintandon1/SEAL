@@ -1,0 +1,44 @@
+{
+  "name": "S_combo",
+  "created": "2026-08-03",
+  "recipe": "S_combo = scale * sum_d weight_d * (S_d / ||S_d||)",
+  "sign_convention": "vector = mean(check \u222a switch) \u2212 mean(other); apply by ADDING coef * vector with coef = -1.0 (same as build_general_vector.py)",
+  "apply_coef": -1.0,
+  "weights": {
+    "math": 1.0,
+    "code": 1.0,
+    "logic": 1.0
+  },
+  "sources": {
+    "math": "results/results_for_math_vectors/MATH_train/DeepSeek-R1-Distill-Qwen-1.5B/baseline_10000/vector_500_500/layer_20_transition_reflection_steervec.pt",
+    "code": "vectors/apps_v_code.pt",
+    "logic": "vectors/logiqa_v_logic.pt"
+  },
+  "scaling": {
+    "mode": "mean-source",
+    "weighted_sum_norm": 2.792768,
+    "target_norm": 57.060247,
+    "scale_factor": 20.431431,
+    "source_norms": {
+      "math": 59.6656,
+      "code": 56.2239,
+      "logic": 55.2912
+    }
+  },
+  "vector_dim": 1536,
+  "vector_norm": 57.060246,
+  "cosine_with_sources": {
+    "math": 0.950556,
+    "code": 0.944893,
+    "logic": 0.897319
+  },
+  "cosine_with_comparisons": {},
+  "span_of_sources": {
+    "singular_values": [
+      1.613,
+      0.5408,
+      0.3252
+    ],
+    "top_direction_share": 0.8673
+  }
+}
