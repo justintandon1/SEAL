@@ -683,7 +683,73 @@
     see the pairwise tests below before reading anything into that.</p>
 
     <h3>Are the five vectors different from each other?</h3>
-    <p>No. Every steered-vs-steered pair is non-significant:</p>
+
+    <p>No &mdash; and because this is the central claim of the report, here is exactly how
+    that is tested.</p>
+
+    <h4 style="margin:20px 0 8px; font-size:15.5px;">Why not just compare the two accuracies?</h4>
+    <p>S_combo scores 79.4% and S_code 76.8%. The tempting move is to compare those against
+    their &plusmn;3.5-point confidence intervals, see that the intervals overlap, and call it
+    a draw. That test is valid but weak: it treats the two runs as if they were independent
+    samples of different problems. They are not &mdash; <strong>both arms answered the same
+    500 problems</strong>, and they agree on 86% of them. Throwing away that pairing wastes
+    most of the information.</p>
+
+    <h4 style="margin:20px 0 8px; font-size:15.5px;">What we do instead: McNemar's exact test</h4>
+    <p>Compare the two arms <em>problem by problem</em>. Every problem falls into one of
+    four cells:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th>Problem outcome</th><th>Count <span class="sub">(S_code vs S_combo)</span></th><th>Informative?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">Both arms correct</td><td>356</td><td class="sub">no &mdash; tells us nothing about a difference</td></tr>
+          <tr><td class="dom">Both arms wrong</td><td>75</td><td class="sub">no &mdash; same</td></tr>
+          <tr><td class="dom">S_code right, S_combo wrong &nbsp;<span class="mono">(b)</span></td><td>28</td><td class="up">yes</td></tr>
+          <tr><td class="dom">S_code wrong, S_combo right &nbsp;<span class="mono">(c)</span></td><td>41</td><td class="up">yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The two agreeing cells cancel out &mdash; a problem both arms solve, or
+    neither solves, carries no evidence that one vector is better. Only the
+    <strong>69 disagreements</strong> do.</p>
+
+    <p>If the two vectors were genuinely equivalent, then on each of those 69 problems it
+    should be a coin flip which arm happens to get it. So under the null hypothesis
+    <span class="mono">b ~ Binomial(b + c, 0.5)</span>, and the p-value is the exact
+    two-sided binomial tail:</p>
+
+    <div class="eq">p = 2 &times; P( X &le; min(b, c) ),   X ~ Binomial(b + c, 0.5)
+
+S_code vs S_combo:  b = 28, c = 41,  b + c = 69
+                    p = 2 &times; P(X &le; 28)  =  <b>0.148</b></div>
+
+    <p>Reading that: if the two vectors really behaved identically, a split at least as
+    lopsided as 28&ndash;41 would happen about <strong>15% of the time by chance alone</strong>.
+    That is far too common to call a real difference. The same computation for every other
+    pair lands even further from significance.</p>
+
+    <div class="note">
+      <strong>Three notes on the method.</strong>
+      <ul>
+        <li>We use the <em>exact</em> binomial tail rather than the usual
+        <span class="mono">&chi;&sup2;</span> approximation, because with 49&ndash;69
+        discordant pairs the approximation is not reliable at the edges. Implemented as
+        <code>mcnemar_exact()</code> in <code>scripts/report_stats.py</code>.</li>
+        <li>No multiple-comparison correction is applied across the 10 pairs. It would only
+        make these p-values larger, i.e. push them <em>further</em> from significance, so
+        omitting it is the conservative choice for the claim being made.</li>
+        <li><strong>Non-significant is not the same as proven identical.</strong> This test
+        says we cannot distinguish the vectors at n = 500, not that they are exactly equal.
+        With enough problems a 1&ndash;2 point difference would eventually resolve. The
+        claim is that any difference is small relative to what this evaluation can detect
+        &mdash; which is precisely what the near rank-1 geometry predicted.</li>
+      </ul>
+    </div>
+
+    <p>Every steered-vs-steered pair, computed this way:</p>
 
     <div class="table-wrap">
       <table class="res compact">
@@ -1010,14 +1076,30 @@
     </div>
 
     <div class="note">
-      <strong>Where the 1.2% comes from.</strong> Of the 164 problems where the baseline
-      burned its whole budget without finishing, it got <strong>2 right</strong> &mdash;
-      2 / 164 = 1.2%. It is near zero by construction: a generation cut off mid-reasoning has
-      no <code>\boxed{}</code> answer for the grader to read, so it cannot score. The 2
-      exceptions are grader edge cases. The same near-zero appears on MATH-500, GSM8K, MBPP,
-      LogiQA and APPS &mdash; 0.0&ndash;1.2% in every case. MMLU is the one exception at
-      23.1%, because it is 4-way multiple choice and its grader can still pull a letter out
-      of a truncated generation, landing near the 25% chance floor.
+      <strong>Why isn't the 1.2% just zero?</strong> It should be. A generation cut off
+      mid-reasoning never wrote an answer, so there is nothing for the grader to score. We
+      inspected the 2 problems it credited: <em>neither contains a
+      <code>\boxed{}</code>, neither closed <code>&lt;/think&gt;</code>, and neither contains
+      the phrase &ldquo;the answer is&rdquo; or &ldquo;final answer&rdquo;</em>. Both simply
+      stop mid-sentence, one of them mid-multiplication.
+      <br><br>
+      They score because the MATH extractor has no &ldquo;no answer stated &rarr;
+      wrong&rdquo; rule. When it finds no answer marker it falls back to the raw generation
+      text, and for these two a number matching the gold answer was recovered out of the
+      truncated reasoning. They are <strong>grader false positives, not solved
+      problems</strong> &mdash; the same failure mode as the LogiQA extractor we replaced,
+      which guessed a letter from unfinished traces.
+      <br><br>
+      So the honest reading of that cell is <strong>0 / 164 = 0.0%</strong>. Scoring those
+      two as wrong would move the baseline from 64.4% to 64.0% and S_combo's gain from +15.0
+      to <strong>+15.4</strong> &mdash; it slightly <em>strengthens</em> the effect, so the
+      tables throughout this report keep the committed 64.4% as the conservative number. See
+      <a href="#caveats">&sect;12</a>.
+      <br><br>
+      The same near-zero appears on GSM8K, MBPP, LogiQA and APPS &mdash; 0.0&ndash;1.2% in
+      every case. MMLU is the one real exception at 23.1%, because it is 4-way multiple
+      choice and its grader can still pull a letter out of a truncated generation, landing
+      near the 25% chance floor.
       <br><br>
       <strong>And the 95.2%?</strong> On the 336 problems the baseline <em>did</em> finish, it
       was right 95.2% of the time. That is the real ceiling: when this model gets to state an
@@ -1123,6 +1205,15 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       &ldquo;pooled and dominated by MATH+APPS.&rdquo;</li>
       <li><strong>7B token counts not computed</strong> &mdash; that model uses a different
       tokenizer, so its rows carry accuracy only.</li>
+      <li><strong>The MATH grader credits some answerless generations.</strong> With
+      <code>data_name="omni-math"</code>, <code>extract_answer</code> has no &ldquo;no answer
+      stated &rarr; wrong&rdquo; rule: when a generation contains no <code>\boxed{}</code>
+      and no &ldquo;the answer is&rdquo; phrase, it falls back to the raw text. On the
+      MATH-500 baseline this credits 2 truncated generations that never stated an answer
+      (<a href="#mechanism">&sect;11</a>). The effect on the headline is small and in the
+      conservative direction &mdash; correcting it would raise S_combo's gain from +15.0 to
+      +15.4 &mdash; but the fallback is the same failure mode as the LogiQA extractor we
+      replaced, and the MATH/GSM8K/MMLU results deserve the same audit.</li>
       <li><strong>Coefficient is fixed at &minus;1.0 and layer at 20.</strong> No sweep. All
       conclusions are conditional on that operating point.</li>
     </ol>
