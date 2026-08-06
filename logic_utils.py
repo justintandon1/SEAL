@@ -88,22 +88,6 @@ _LOGIEVAL_HEAD = re.compile(r"^\s*\(?([ABCD])(?![A-Za-z])\)?", re.IGNORECASE)
 _OPTION_LINE = re.compile(r"^\s*([ABCD])[.)]\s+(.*\S)\s*$", re.MULTILINE)
 
 
-def extract_choice_legacy(gen):
-    """The original extractor, kept so pre-2026-07-29 numbers can be reproduced.
-
-    Do not use for new results: when no explicit answer is present it falls back
-    to the last standalone A/B/C/D anywhere in the text, which fabricates a
-    prediction from truncated reasoning. Measured on the LogiQA clean-500
-    baseline, that path fired on 123/500 generations and scored 0.300 against a
-    0.25 chance floor.
-    """
-    tail = gen.split("</think>")[-1] if "</think>" in gen else gen
-    m = re.findall(r"answer\s*(?:is|:)?\s*\(?([ABCD])\)?", tail, re.IGNORECASE)
-    if not m:
-        m = re.findall(r"\b([ABCD])\b", tail)
-    return "ABCD".index(m[-1].upper()) if m else None
-
-
 def options_from_prompt(prompt):
     """Recover the option strings from a rendered LogiQA/MMLU prompt.
 
@@ -164,18 +148,22 @@ def extract_choice(gen, options=None):
     return None
 
 
-def logic_eval_main(res_path, save=False, output_dir=None, grader="reasoning"):
+def logic_eval_main(res_path, save=False, output_dir=None):
     """Grade LogiQA/MMLU predictions, keeping get_math_results.main's output schema
     so visualize_results.py works unchanged.
 
-    grader="reasoning" (default) treats a generation that never closed </think> as
-    UNFINISHED: the model ran out of budget still inside the reasoning block, so it
-    never reached the answer region and no answer exists to read. Unfinished scores
-    as incorrect -- matching LogiEval's exact_match semantics, where a generation
-    that does not state an answer is simply wrong -- but is counted separately so
-    "reasoned and got it wrong" is distinguishable from "never stopped reasoning".
+    A generation that never closed </think> is UNFINISHED: the model ran out of
+    budget still inside the reasoning block, so it never reached the answer region
+    and no answer exists to read. Unfinished scores as incorrect -- matching
+    LogiEval's exact_match semantics, where a generation that does not state an
+    answer is simply wrong -- but is counted separately so "reasoned and got it
+    wrong" is distinguishable from "never stopped reasoning".
 
-    grader="legacy" reproduces pre-2026-07-29 numbers. See extract_choice_legacy.
+    There is deliberately no way to select a different grader. The pre-2026-07-29
+    extractor guessed a letter for unfinished generations, inflating LogiQA by
+    ~10 points; keeping it selectable is what let a legacy-graded baseline sit on
+    main for a week while every steered arm used this rule. metrics.json still
+    records "grader": "reasoning" so a file's provenance stays checkable.
     """
     with open(res_path) as f:
         data = [json.loads(line) for line in f]
@@ -183,11 +171,8 @@ def logic_eval_main(res_path, save=False, output_dir=None, grader="reasoning"):
     for example in data:
         gens = example.get("model_generation") or [example.get("model_output", "")]
         gt = int(example["answer"])
-        if grader == "legacy":
-            all_pred = [extract_choice_legacy(g) for g in gens]
-        else:
-            opts = options_from_prompt(example.get("prompt", ""))
-            all_pred = [extract_choice(g, options=opts) for g in gens]
+        opts = options_from_prompt(example.get("prompt", ""))
+        all_pred = [extract_choice(g, options=opts) for g in gens]
         all_eval = [(p is not None and p == gt) for p in all_pred]
         all_unfinished = ["</think>" not in g for g in gens]
 
@@ -221,7 +206,7 @@ def logic_eval_main(res_path, save=False, output_dir=None, grader="reasoning"):
         "n_unfinished": n_unfinished,
         "answer_rate": n_answered / n if n else 0.0,  # did the model terminate and answer
         "acc_answered": acc_answered,                 # accuracy among those that answered
-        "grader": grader,
+        "grader": "reasoning",
     }
     print(f"Accuracy: {acc:.3f}  "
           f"(answered {n_answered}/{n} = {metrics['answer_rate']:.3f}, "
