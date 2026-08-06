@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEAL Precision: Math vs Code, Transformers 4 vs 5</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318;
+      --panel: #191c23;
+      --panel-2: #20242d;
+      --text: #eef1f6;
+      --muted: #aeb6c5;
+      --line: #343a46;
+      --accent: #7aa2f7;
+      --good: #8bd5a7;
+      --warn: #f2cc8f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 42px 24px 64px; }
+    h1 { margin: 0 0 8px; font-size: 30px; line-height: 1.2; }
+    h2 { margin: 34px 0 12px; font-size: 20px; }
+    p { margin: 0; }
+    .subtitle { color: var(--muted); max-width: 850px; }
+    .answer {
+      margin: 26px 0;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      background: var(--panel);
+      border-radius: 8px;
+    }
+    .answer strong { color: var(--accent); }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0 8px;
+    }
+    .card {
+      padding: 17px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; }
+    .value { margin-top: 5px; font-size: 21px; font-weight: 650; }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    th, td { padding: 13px 15px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { background: var(--panel-2); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    tr:last-child td { border-bottom: 0; }
+    code {
+      padding: 2px 5px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: var(--text);
+      font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    ul { margin: 10px 0 0; padding-left: 21px; }
+    li + li { margin-top: 7px; }
+    .note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+    @media (max-width: 760px) {
+      main { padding: 28px 16px 48px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>SEAL precision comparison</h1>
+    <p class="subtitle">Math uses <code>Andwwy/SEAL</code>; code uses <code>Andwwy/v_code-SEAL</code>. This separates vector construction from evaluation and explains the Transformers 4 versus 5 effect.</p>
+
+    <section class="answer">
+      <strong>Short answer:</strong> Both published steering vectors are FP32. Transformers 4 versus 5 matters when the dtype is omitted: the old math path resolves to FP32, while Transformers 5 may use the checkpoint's BF16 dtype. The code path avoids this drift by explicitly requesting FP32 and asserting it.
+    </section>
+
+    <section class="cards">
+      <div class="card">
+        <div class="label">Math vector</div>
+        <div class="value good">FP32, implicit</div>
+      </div>
+      <div class="card">
+        <div class="label">Code vector</div>
+        <div class="value good">FP32, explicit</div>
+      </div>
+      <div class="card">
+        <div class="label">Transformers 5 without dtype</div>
+        <div class="value warn">Likely BF16</div>
+      </div>
+    </section>
+
+    <h2>Process comparison</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Process</th>
+            <th>Math — Andwwy/SEAL</th>
+            <th>Code — Andwwy/v_code-SEAL</th>
+            <th>Finding</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Dependencies</td>
+            <td>Transformers 4.47.1</td>
+            <td>Transformers ≥4.53.2 and &lt;5</td>
+            <td>Both intentionally remain on v4</td>
+          </tr>
+          <tr>
+            <td>Trace generation</td>
+            <td><code>eval_MATH_vllm.py</code>, dtype omitted</td>
+            <td><code>gen_apps_vllm.py</code>, dtype omitted</td>
+            <td>vLLM 16-bit auto: BF16 for a BF16 config, otherwise FP16</td>
+          </tr>
+          <tr>
+            <td>Hidden extraction</td>
+            <td>No <code>torch_dtype</code>; v4.47 behavior is FP32</td>
+            <td><code>--dtype float32</code> plus a post-load assertion</td>
+            <td>Both vectors use FP32 activations</td>
+          </tr>
+          <tr>
+            <td>Vector calculation</td>
+            <td>FP32 mean and subtraction</td>
+            <td>Same vector-generation implementation</td>
+            <td>Both saved vectors are FP32</td>
+          </tr>
+          <tr>
+            <td>Baseline evaluation</td>
+            <td>vLLM 16-bit auto</td>
+            <td>No evaluation runner in v_code-SEAL</td>
+            <td>Code evaluation dtype depends on the external harness</td>
+          </tr>
+          <tr>
+            <td>Steering evaluation</td>
+            <td>HF model load without dtype under v4.47 → FP32</td>
+            <td>No evaluation runner in v_code-SEAL</td>
+            <td>Do not infer code-eval precision from its extraction code</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>What changes under Transformers 5?</h2>
+    <ul>
+      <li><strong>Unspecified dtype:</strong> the DeepSeek checkpoint can load as BF16 instead of the FP32 behavior used by the original math extraction.</li>
+      <li><strong>Performance:</strong> BF16 generally uses about half the weight memory and runs faster.</li>
+      <li><strong>Numerics:</strong> hidden activations and the steering vector change slightly. Whether evaluation accuracy changes materially must be measured.</li>
+      <li><strong>Explicit FP32:</strong> precision should remain aligned, but this repository still excludes v5 because Transformers/vLLM API compatibility is not guaranteed.</li>
+    </ul>
+
+    <h2>Reproduction recommendation</h2>
+    <p>Use the repository's pinned Transformers 4 environment. If testing v5, explicitly request FP32 during extraction and steering evaluation, then verify <code>next(model.parameters()).dtype == torch.float32</code>. Do not compare an FP32 reference run with an accidental BF16 rebuild as if they were the same experiment.</p>
+
+    <p class="note">Sources checked: Andwwy/SEAL and Andwwy/v_code-SEAL on GitHub, including requirements, hidden extraction, vLLM generation, steering evaluation, run scripts, README validation notes, and packaged vector metadata.</p>
+  </main>
+</body>
+</html>

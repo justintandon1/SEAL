@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEAL · General Steering Vectors — Progress Report</title>
+<style>
+  :root {
+    --bg:#f7f7f4;
+    --paper:#fff;
+    --ink:#202832;
+    --muted:#606a76;
+    --line:#d9dee5;
+    --blue:#1f65b7;
+    --blue-soft:#eef5ff;
+    --green:#2a7a50;
+    --green-soft:#edf8f2;
+    --orange:#b7641e;
+    --orange-soft:#fff4ea;
+    --purple:#6551a8;
+    --purple-soft:#f2efff;
+    --teal:#1a7a72;
+    --teal-soft:#e8f7f5;
+    --red:#b42318;
+    --red-soft:#fff1f0;
+    --code:#f1f3f5;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.48;
+  }
+  main { max-width:1040px; margin:0 auto; padding:44px 28px 56px; }
+  .page {
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:42px 44px;
+    box-shadow:0 22px 60px -50px rgba(32,40,50,.6);
+  }
+  @media (max-width:700px) { .page { padding:30px 22px; } }
+  .eyebrow {
+    color:var(--blue);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  h1 {
+    margin:0;
+    max-width:850px;
+    font-size:clamp(32px,4.6vw,50px);
+    line-height:1.05;
+    letter-spacing:-.055em;
+  }
+  .dek { margin:22px 0 28px; color:var(--muted); font-size:19px; max-width:850px; }
+  h2 {
+    margin:38px 0 14px; font-size:22px; letter-spacing:-.025em;
+    padding-bottom:9px; border-bottom:1px solid var(--line);
+  }
+  h2 .n { color:var(--blue); font-size:13px; font-weight:800; letter-spacing:.1em; margin-right:10px; vertical-align:2px; }
+  h3 { margin:26px 0 10px; font-size:17px; letter-spacing:-.02em; }
+  p { margin:0 0 12px; max-width:900px; }
+  ul, ol { margin:0 0 14px; padding-left:22px; max-width:900px; }
+  li { margin-bottom:7px; }
+  a { color:var(--blue); }
+  .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em; }
+  code {
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--code);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:1px 5px;
+    font-size:.9em;
+  }
+
+  .takeaway {
+    border-left:4px solid var(--green);
+    background:var(--green-soft);
+    border-radius:0 12px 12px 0;
+    padding:15px 18px;
+    margin:0 0 16px;
+    max-width:900px;
+    font-size:16px;
+  }
+  .takeaway strong { color:var(--green); }
+  .takeaway p:last-child, .takeaway ul:last-child { margin-bottom:0; }
+  .takeaway .head { display:block; font-size:12px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin-bottom:8px; color:var(--green); }
+  .takeaway.warn { border-left-color:var(--orange); background:var(--orange-soft); }
+  .takeaway.warn strong, .takeaway.warn .head { color:var(--orange); }
+  .takeaway.info { border-left-color:var(--blue); background:var(--blue-soft); }
+  .takeaway.info strong, .takeaway.info .head { color:var(--blue); }
+  .takeaway.alt { border-left-color:var(--purple); background:var(--purple-soft); }
+  .takeaway.alt strong, .takeaway.alt .head { color:var(--purple); }
+
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:0 0 20px; }
+  .stats.four { grid-template-columns:repeat(2,1fr); }
+  @media (max-width:900px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px) { .stats { grid-template-columns:1fr; } }
+  .stat { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:#fbfcfd; }
+  .stat .label { display:block; font-weight:750; margin-bottom:10px; font-size:15px; }
+  .stat .num { display:block; color:var(--blue); font-size:30px; line-height:1; font-weight:850; letter-spacing:-.03em; }
+  .stat .num.green { color:var(--green); }
+  .stat .num.orange { color:var(--orange); }
+  .stat .num.purple { color:var(--purple); }
+  .stat .num.teal { color:var(--teal); }
+  .stat .num.sm { font-size:23px; }
+  .stat .small { display:block; color:var(--muted); font-size:13.5px; margin-top:8px; }
+
+  .table-wrap {
+    width:100%;
+    overflow-x:auto;
+    border:1px solid var(--line);
+    border-radius:14px;
+    -webkit-overflow-scrolling:touch;
+    margin-bottom:12px;
+  }
+  table.res {
+    width:100%;
+    border-collapse:collapse;
+    margin:0;
+    font-size:13px;
+    min-width:760px;
+  }
+  table.res.compact { min-width:0; }
+  table.res.wide { min-width:900px; }
+  table.res th, table.res td {
+    text-align:right;
+    padding:9px 10px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  table.res th:first-child, table.res td:first-child { text-align:left; }
+  table.res.lead2 th:nth-child(2), table.res.lead2 td:nth-child(2) { text-align:left; }
+  table.res thead th {
+    background:var(--blue-soft);
+    color:var(--blue);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    font-weight:750;
+  }
+  table.res tbody tr:last-child td { border-bottom:none; }
+  table.res .dom { font-weight:750; }
+  table.res tr.groupname td { background:#f8fafc; color:var(--muted); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.05em; text-align:left; }
+  table.res tr.hl td { background:var(--green-soft); }
+  /* Column-best marker. An inline badge rather than a full-cell shade: the numeric
+     columns are right-aligned, so a filled cell puts its value against the right edge
+     and reads off-centre. The badge hugs the value and inherits its up/down colour. */
+  .win {
+    display:inline-block; min-width:62px; text-align:center;
+    background:#dff0e7; border:1px solid #b6ddc8; border-radius:7px;
+    padding:3px 9px; font-weight:800;
+  }
+  table.res tr.gap td { color:var(--muted); font-style:italic; text-align:left; }
+  table.res td.mono, table.res .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; }
+  table.res th.sep, table.res td.sep { border-left:1px solid var(--line); }
+  .up { color:var(--green); font-weight:750; }
+  .down { color:var(--orange); font-weight:750; }
+  .bad { color:var(--red); font-weight:750; }
+  .sub { color:var(--muted); font-size:12.5px; }
+  .cap { color:var(--muted); font-size:13.5px; max-width:900px; margin:0 0 22px; }
+  .yes { color:var(--green); font-weight:800; }
+  .no { color:var(--muted); }
+
+  .note {
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    border-radius:14px;
+    padding:16px 20px;
+    margin:0 0 18px;
+    font-size:14.5px;
+    color:var(--muted);
+  }
+  .note strong { color:var(--ink); }
+  .note ul, .note ol { margin:8px 0 0; padding-left:20px; }
+  .note li { margin-bottom:6px; }
+  .note p:last-child, .note ul:last-child, .note ol:last-child { margin-bottom:0; }
+
+  .toc { border:1px solid var(--line); background:#fbfcfd; border-radius:14px; padding:18px 22px; margin:0 0 30px; }
+  .toc ol { columns:2; column-gap:34px; margin:0; padding-left:20px; font-size:14.5px; }
+  @media (max-width:700px) { .toc ol { columns:1; } }
+  .toc li { margin-bottom:5px; }
+
+  .eq {
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--code);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 18px;
+    margin:0 0 16px;
+    font-size:13px;
+    line-height:1.7;
+    /* pre, not pre-wrap: the decomposition arithmetic is column-aligned, so it should
+       scroll on a narrow screen rather than wrap and lose the alignment. */
+    white-space:pre;
+    overflow-x:auto;
+  }
+
+  ol.steps { list-style:none; padding-left:0; counter-reset:s; }
+  ol.steps li { counter-increment:s; position:relative; padding-left:38px; margin-bottom:12px; }
+  ol.steps li::before {
+    content:counter(s);
+    position:absolute; left:0; top:1px;
+    width:25px; height:25px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue);
+    border:1px solid #cfe0f5;
+    font-size:12px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .pill {
+    display:inline-block;
+    font-size:12px; font-weight:700;
+    border-radius:999px; padding:4px 12px;
+  }
+  .pill.good { color:var(--green); background:var(--green-soft); border:1px solid #cfe8d8; }
+  .pill.bad { color:var(--red); background:var(--red-soft); border:1px solid #f2c6c2; }
+  .pill.neutral { color:var(--muted); background:#f3f5f7; border:1px solid var(--line); }
+  .pill.todo { color:var(--orange); background:var(--orange-soft); border:1px solid #f0d7bd; }
+  .pill.info { color:var(--blue); background:var(--blue-soft); border:1px solid #cfe0f5; }
+
+  .combo {
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 20px 16px;
+    background:#fbfcfd;
+  }
+  .combo-head { margin-bottom:12px; }
+  .combo h4 { margin:0 0 8px; font-size:16px; letter-spacing:-.02em; }
+  .combo p { font-size:14.5px; margin-bottom:0; color:var(--muted); }
+  .combo p strong { color:var(--ink); }
+  .combo-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+  @media (max-width:760px) { .combo-grid { grid-template-columns:1fr; } }
+
+  .chiprow { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 26px; font-size:13px; }
+  .chiprow .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 11px; border-radius:8px;
+    background:var(--paper); border:1px solid var(--line);
+    color:var(--muted);
+  }
+  .chiprow .chip strong { color:var(--ink); font-weight:650; }
+
+  footer { margin-top:30px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+
+    <div class="eyebrow">SEAL · Reasoning Steering · Progress Report</div>
+    <h1>Five steering vectors, one direction: general vs. task-specific reasoning calibration</h1>
+    <p class="dek">
+      Three domain-specific vectors (math, code, logic) and two general ones (pooled and
+      combined), all applied unchanged at layer 20 with coefficient
+      &alpha; = &minus;1.0 on <code>DeepSeek-R1-Distill-Qwen-1.5B</code>, across
+      <strong>six benchmarks</strong>. All five are close to the same direction in activation
+      space, all five produce <strong>statistically indistinguishable</strong> effects, and
+      all five cut reasoning tokens by 9&ndash;52% depending on the benchmark.
+    </p>
+
+    <div class="chiprow">
+      <span class="chip"><strong>Model</strong> DeepSeek-R1-Distill-Qwen-1.5B</span>
+      <span class="chip"><strong>Site</strong> layer 20 · coef &minus;1.0</span>
+      <span class="chip"><strong>Decoding</strong> greedy · max_tokens 10,000</span>
+      <span class="chip"><strong>Benchmarks</strong> MATH-500 · LogiQA · APPS · MBPP · GSM8K · MMLU</span>
+      <span class="chip"><strong>Date</strong> 2026-08-06</span>
+    </div>
+
+    <div class="takeaway">
+      <strong>Result:</strong> every vector improves accuracy and cuts tokens on every
+      benchmark it has been run on. On MATH-500 all five lift a 64.4% baseline to
+      76.8&ndash;79.4% (all <span class="mono">p &lt; 1e&minus;9</span> paired), and no two
+      steered vectors differ significantly from each other (all
+      <span class="mono">p &ge; 0.15</span>). The geometry predicted this &mdash; the domain
+      vectors are close to rank-1, 86.7% of variance in one direction &mdash; and the
+      benchmarks confirm it. <strong>But</strong> across all six benchmarks the gain comes
+      almost entirely from problems where the baseline exhausted its token budget, which is
+      why the queued controls are the critical path rather than a formality.
+    </div>
+
+    <div class="toc">
+      <ol>
+        <li><a href="#summary">Summary of findings</a></li>
+        <li><a href="#setup">Experimental setup</a></li>
+        <li><a href="#vectors">How the five vectors were built</a></li>
+        <li><a href="#geometry">Geometry: are they the same direction?</a></li>
+        <li><a href="#coverage">Coverage matrix: what has and hasn't run</a></li>
+        <li><a href="#math500">MATH-500</a></li>
+        <li><a href="#logiqa">LogiQA</a></li>
+        <li><a href="#code">Code: APPS</a></li>
+        <li><a href="#rest">Secondary: MBPP, GSM8K, MMLU, 7B</a></li>
+        <li><a href="#tokens">Token savings across all benchmarks</a></li>
+        <li><a href="#mechanism">What is actually driving the gain</a></li>
+        <li><a href="#caveats">Caveats and known gaps</a></li>
+        <li><a href="#next">Next steps: controls and ablations</a></li>
+      </ol>
+    </div>
+
+    <!-- ================================================================ -->
+    <h2 id="summary"><span class="n">01</span>Summary of findings</h2>
+
+    <div class="stats four">
+      <div class="stat">
+        <span class="label">MATH-500 · best arm</span>
+        <span class="num green">+15.0 pts</span>
+        <span class="small">64.4% &rarr; 79.4% (S_combo) &nbsp;·&nbsp; <span class="mono">p = 1.6e&minus;14</span></span>
+      </div>
+      <div class="stat">
+        <span class="label">Shared direction (SVD)</span>
+        <span class="num purple">86.7%</span>
+        <span class="small">of domain-vector variance in one singular direction</span>
+      </div>
+      <div class="stat">
+        <span class="label">Token reduction · range</span>
+        <span class="num teal sm">&minus;9% to &minus;52%</span>
+        <span class="small">APPS lowest, GSM8K highest &nbsp;·&nbsp; shorter on every benchmark</span>
+      </div>
+      <div class="stat">
+        <span class="label">Share of gain from budget-limited problems</span>
+        <span class="num orange">&ge; 100%</span>
+        <span class="small">on all six benchmarks &nbsp;·&nbsp; the rest contributes &minus;4.2 to +0.6</span>
+      </div>
+    </div>
+
+    <h3>All results at a glance — the three primary benchmarks</h3>
+    <p>Accuracy, change vs. baseline, and token saving for every vector on the three
+    benchmarks that anchor this study. Only the <em>best cell in each column</em> is shaded
+    &mdash; no vector leads on all three, so nothing is highlighted row-wise.</p>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th rowspan="2">Vector</th>
+            <th colspan="3" class="sep">MATH-500 <span class="sub">(n=500, acc)</span></th>
+            <th colspan="3" class="sep">APPS <span class="sub">(n=500, pass@1)</span></th>
+            <th colspan="3" class="sep">LogiQA <span class="sub">(n=500, acc)</span></th>
+          </tr>
+          <tr>
+            <th class="sep">Score</th><th>&Delta;</th><th>Tokens</th>
+            <th class="sep">Score</th><th>&Delta;</th><th>Tokens</th>
+            <th class="sep">Score</th><th>&Delta;</th><th>Tokens</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="dom">baseline</td>
+            <td class="sep">64.4%</td><td class="sub">&mdash;</td><td class="sub">4,818</td>
+            <td class="sep">11.2%</td><td class="sub">&mdash;</td><td class="sub">8,893</td>
+            <td class="sep">25.8%</td><td class="sub">&mdash;</td><td class="sub">4,089</td>
+          </tr>
+          <tr>
+            <td class="dom">S_math</td>
+            <td class="sep">78.4%</td><td class="up">+14.0</td><td class="down">&minus;33.9%</td>
+            <td class="sep">13.0%</td><td class="up">+1.8</td><td class="down"><span class="win">&minus;9.2%</span></td>
+            <td class="sep">28.6%</td><td class="up">+2.8</td><td class="down">&minus;26.9%</td>
+          </tr>
+          <tr>
+            <td class="dom">S_code</td>
+            <td class="sep">76.8%</td><td class="up">+12.4</td><td class="down">&minus;31.1%</td>
+            <td class="sep"><span class="win">13.8%</span></td><td class="up"><span class="win">+2.6</span></td><td class="down">&minus;8.6%</td>
+            <td class="sep"><span class="win">29.8%</span></td><td class="up"><span class="win">+4.0</span></td><td class="down"><span class="win">&minus;31.1%</span></td>
+          </tr>
+          <tr>
+            <td class="dom">S_logic</td>
+            <td class="sep">79.0%</td><td class="up">+14.6</td><td class="down">&minus;31.7%</td>
+            <td class="sep">13.4%</td><td class="up">+2.2</td><td class="down">&minus;7.7%</td>
+            <td class="sep">28.4%</td><td class="up">+2.6</td><td class="down">&minus;26.1%</td>
+          </tr>
+          <tr>
+            <td class="dom">S_general</td>
+            <td class="sep">78.6%</td><td class="up">+14.2</td><td class="down">&minus;34.2%</td>
+            <td class="sep sub" colspan="3">not run</td>
+            <td class="sep">28.8%</td><td class="up">+3.0</td><td class="down">&minus;26.7%</td>
+          </tr>
+          <tr>
+            <td class="dom">S_combo</td>
+            <td class="sep"><span class="win">79.4%</span></td><td class="up"><span class="win">+15.0</span></td><td class="down"><span class="win">&minus;35.6%</span></td>
+            <td class="sep sub" colspan="3">not run</td>
+            <td class="sep">28.4%</td><td class="up">+2.6</td><td class="down">&minus;30.1%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <strong>Read the shading as descriptive, not as a ranking.</strong> S_combo leads all
+      three MATH-500 columns and S_code leads LogiQA, but the leader is already inconsistent
+      within one benchmark &mdash; on APPS, S_code scores highest while S_math saves the most
+      tokens. More importantly, <em>none of those margins is
+      statistically significant</em> &mdash; every steered-vs-steered comparison on all three
+      benchmarks comes back non-significant (MATH-500 p &ge; 0.15, LogiQA p &ge; 0.46, APPS
+      p &ge; 0.66). Which vector &ldquo;wins&rdquo; a column would likely change on a
+      different 500 problems. The finding is that the columns are flat, not who is on top.
+      GSM8K, MBPP and MMLU are in <a href="#rest">&sect;9</a>; the six missing cells are in
+      the coverage matrix in <a href="#coverage">&sect;5</a>.
+    </div>
+
+    <div class="takeaway">
+      <span class="head">Finding 1 — every vector helps, on every benchmark, and shortens the CoT</span>
+      On MATH-500 all five vectors lift accuracy from a <strong>64.4%</strong> baseline to
+      <strong>76.8&ndash;79.4%</strong> (+12.4 to +15.0 points), every one significant on a
+      paired McNemar test (<span class="mono">p</span> from
+      <span class="mono">1e&minus;9</span> to <span class="mono">2e&minus;14</span>). The
+      direction of effect is positive on all six benchmarks, and average generated tokens
+      fall everywhere &mdash; from &minus;8.6% on APPS to &minus;51.7% on GSM8K.
+    </div>
+
+    <div class="takeaway">
+      <span class="head">Finding 2 — the five vectors are not distinguishable from each other</span>
+      All 10 steered-vs-steered pairings on MATH-500 are non-significant
+      (<span class="mono">p &ge; 0.15</span>), and the five arms agree on the outcome of
+      <strong>376 / 500</strong> problems &mdash; including agreeing on which 54 none of them
+      can solve. Same story on LogiQA (all pairs <span class="mono">p &ge; 0.46</span>) and
+      APPS (<span class="mono">p &ge; 0.66</span>, three arms agreeing on 431/500). The
+      geometry predicted this: the domain vectors are close to rank-1, so pooled, combined,
+      and individual vectors are all close to the same direction.
+      <strong>The benchmarks confirm the geometry.</strong>
+    </div>
+
+    <div class="takeaway warn">
+      <span class="head">Finding 3 — the gain comes from problems where the baseline ran out of token budget</span>
+      <p>New analysis for this report, measured with the model tokenizer on every arm of
+      every benchmark. Splitting each benchmark by whether the <em>baseline</em> hit the
+      10,000-token cap, the already-finishing half contributes between
+      <strong>&minus;4.2 and +0.6 points</strong> &mdash; while the cap-hit half contributes
+      the entire net gain. On MATH-500, S_combo's +15.0 decomposes into <strong>+16.4 from
+      the capped third</strong> and <strong>&minus;1.4 from the rest</strong>.</p>
+      <p>Steering makes the model terser, which converts &ldquo;never finished
+      thinking&rdquo; into &ldquo;produced an answer.&rdquo; It is not yet demonstrated that
+      it improves reasoning <em>quality</em> &mdash; on problems the model could already
+      finish, it usually costs a little. This is exactly why the mentor-requested controls
+      matter, and it raises the prior that they will reproduce a chunk of the effect.</p>
+    </div>
+
+    <!-- ================================================================ -->
+    <h2 id="setup"><span class="n">02</span>Experimental setup</h2>
+
+    <p>Everything below uses one model and one intervention shape, so the vectors are the
+    only thing that varies.</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <tbody>
+          <tr><td class="dom">Model</td><td style="text-align:left">deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B (1536-d hidden)</td></tr>
+          <tr><td class="dom">Steering site</td><td style="text-align:left">residual stream, layer 20, all generated positions</td></tr>
+          <tr><td class="dom">Intervention</td><td style="text-align:left">h &larr; h + coef &middot; S, with coef = &minus;1.0, BOS excluded</td></tr>
+          <tr><td class="dom">Decoding</td><td style="text-align:left">vLLM, greedy (temperature 0), n = 1, max_tokens = 10,000</td></tr>
+          <tr><td class="dom">Graders</td><td style="text-align:left">MATH-500 / GSM8K / MMLU: Omni-MATH rule grader · APPS / MBPP: unit tests executed · LogiQA: reasoning extractor</td></tr>
+          <tr><td class="dom">Token counts</td><td style="text-align:left">model tokenizer, <code>len(encode(generation))</code>; &ldquo;hit cap&rdquo; = within 10 tokens of max_tokens</td></tr>
+          <tr><td class="dom">Pairing</td><td style="text-align:left">identical problems in identical order across every arm of a benchmark (verified)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Because every arm sees the same problems, the right significance test is the
+    <strong>paired</strong> one. Throughout we use an exact two-sided McNemar (binomial) test
+    on the discordant pairs, which is more sensitive than comparing two independent error
+    bars. Every statistic in &sect;6&ndash;&sect;11 is reproducible with
+    <code>python scripts/report_stats.py</code>.</p>
+
+    <!-- ================================================================ -->
+    <h2 id="vectors"><span class="n">03</span>How the five vectors were built</h2>
+
+    <h3>The shared SEAL recipe</h3>
+    <p>All five vectors are the same kind of object: a contrast between two piles of hidden
+    states, collected at reasoning-step boundaries inside the model's own chain of
+    thought.</p>
+
+    <ol class="steps">
+      <li><strong>Generate traces.</strong> Run the model greedily on a training split and
+      keep 500 correct + 500 incorrect traces (both piles, so the vector is not a
+      correctness direction).</li>
+      <li><strong>Find step boundaries.</strong> Every vocabulary token containing
+      <code>\n\n</code>, restricted to positions inside <code>&lt;think&gt;</code>. Record
+      the layer-20 hidden state at each such position.</li>
+      <li><strong>Tag each boundary</strong> by the keywords that open the following step:
+      <strong>reflection</strong> (&ldquo;wait&rdquo;, &ldquo;let me check&rdquo;,
+      &ldquo;hmm&rdquo;, &hellip;), <strong>transition</strong> (&ldquo;alternatively&rdquo;,
+      &ldquo;another approach&rdquo;, &hellip;), or <strong>execution</strong> (everything
+      else).</li>
+      <li><strong>Contrast the piles.</strong></li>
+    </ol>
+
+    <div class="eq">S = mean(H_reflection &cup; H_transition) &minus; mean(H_execution)</div>
+
+    <p>Applied with <strong>coef = &minus;1.0</strong>, i.e. the model is pushed <em>away</em>
+    from the reflection/transition direction and toward execution. That is the SEAL
+    mechanism: suppress non-essential reflective detours in the CoT. Full walkthrough in the
+    <a href="seal_pipeline_study_note.html">SEAL pipeline study note</a> and the
+    <a href="layer_data_explainer.html">layer-data explainer</a>.</p>
+
+    <h3>The three domain vectors</h3>
+    <p>Same recipe, three different source corpora and three keyword sets.</p>
+
+    <div class="table-wrap">
+      <table class="res lead2">
+        <thead>
+          <tr>
+            <th>Vector</th><th>Source corpus</th><th>Traces</th>
+            <th>Reflect + trans<br><span class="sub">boundaries</span></th>
+            <th>Execution<br><span class="sub">boundaries</span></th>
+            <th>&Vert;S&Vert;</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">S_math</td><td>MATH train</td><td>500 + 500</td><td>51,317</td><td>101,743</td><td>59.67</td></tr>
+          <tr><td class="dom">S_code</td><td>codeparrot/apps, train</td><td>500 + 500</td><td>76,452</td><td>113,249</td><td>56.22</td></tr>
+          <tr><td class="dom">S_logic</td><td>LogiQA 2.0 MRC, English only</td><td>500 + 500</td><td>9,683</td><td>13,680</td><td>55.29</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Boundary counts are the number of <code>\n\n</code> positions falling in
+    each pile. LogiQA contributes ~8&times; fewer boundaries than the other two because its
+    chains of thought are much shorter &mdash; this matters for S_general below.</p>
+
+    <h3>S_general — pooled across domains</h3>
+    <p>S_general does <em>not</em> average the three finished vectors. It goes back to the
+    raw boundary activations, pools every labelled boundary from all three domains into one
+    pair of piles, and takes a single contrast:</p>
+
+    <div class="eq">S_general = mean(all check &cup; switch, all domains) &minus; mean(all other, all domains)</div>
+
+    <p>This is the <strong>Phase 1</strong> (count-weighted) build: each domain casts as many
+    votes as it has boundaries, so domains with longer CoTs dominate. Pooled counts:
+    <strong>137,452</strong> reflection/transition rows against <strong>228,672</strong>
+    execution rows, out of 366,124 total. Resulting norm <strong>55.78</strong>.</p>
+
+    <div class="note">
+      Because the pools are not domain-balanced, MATH and APPS together supply
+      <strong>93.6%</strong> of the rows and LogiQA only <strong>6.4%</strong> &mdash; which
+      is why S_general ends up much closer to S_math (cos 0.969) and S_code (cos 0.975) than
+      to S_logic (cos 0.797). A domain-balanced <strong>Phase 2</strong> build (subsample
+      each domain to <code>min(n_domain)</code>) is implemented behind <code>--balance</code>
+      but has not been run. Both phases are specified in the
+      <a href="vector_build_plan.html">S_general build plan</a>, which walks through the
+      domain sources, the boundary budget, and how the three keyword sets are mixed.
+    </div>
+
+    <h3>S_combo — combined from the finished vectors</h3>
+    <p>S_combo is the arithmetic control for S_general: if pooling raw activations is doing
+    something a simple weighted sum cannot, S_general and S_combo should behave
+    differently.</p>
+
+    <div class="eq">S_combo = scale &middot; ( a&middot;Ŝ_math + b&middot;Ŝ_code + c&middot;Ŝ_logic ),   a = b = c = 1</div>
+
+    <p>Three build decisions, each with a reason:</p>
+    <ul>
+      <li><strong>Unit-normalize each source first.</strong> Nearly free here (the three
+      norms are within 8% of each other, so <code>cos(raw sum, unit sum) = 0.99996</code>)
+      but it keeps the build correct if a future vector arrives with a very different
+      magnitude.</li>
+      <li><strong>Equal weights.</strong> The three sources are close to rank-1, so
+      reweighting cannot rotate the sum much &mdash; across a 4&times; weight range the
+      direction stays within <code>cos 0.985</code> of equal weights. Grid-searching weights
+      would spend GPU budget resolving ~0.015 of cosine. Equal weights is also the
+      <em>correct comparison object</em>: a domain-balanced S_general equals the average of
+      the domain vectors, so this tests <em>pooling vs. combining</em> rather than
+      <em>tuned vs. untuned</em>.</li>
+      <li><strong>Rescale to the mean source norm (57.06).</strong> The unit sum has norm
+      2.79 against ~57 for the domain vectors; saved unscaled it would be a ~20&times;
+      weaker intervention at the same coefficient and would look inert. Scaling never
+      changes direction, and the factor (20.43&times;) is recorded in the meta.</li>
+    </ul>
+
+    <p>Full derivation, including the SVD appendix:
+    <a href="s_combo_construction.html">S_combo construction</a>. The prior analysis of when
+    S_general and S_combo should and should not coincide:
+    <a href="s_general_vs_s_combo.html">Will S_general be the same as S_combo?</a></p>
+
+    <!-- ================================================================ -->
+    <h2 id="geometry"><span class="n">04</span>Geometry: are they the same direction?</h2>
+
+    <p>Largely, yes. Pairwise cosine between the vectors we hold on disk:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th></th><th>S_math</th><th>S_code</th><th>S_logic</th><th>S_general</th><th>S_combo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">S_math</td><td class="sub">1</td><td>0.894</td><td>0.761</td><td>0.969</td><td>0.951</td></tr>
+          <tr><td class="dom">S_code</td><td>0.894</td><td class="sub">1</td><td>0.745</td><td>0.975</td><td>0.945</td></tr>
+          <tr><td class="dom">S_logic</td><td>0.761</td><td>0.745</td><td class="sub">1</td><td>0.797</td><td>0.897</td></tr>
+          <tr><td class="dom">S_general</td><td>0.969</td><td>0.975</td><td>0.797</td><td class="sub">1</td><td class="sub">not computed</td></tr>
+          <tr><td class="dom">S_combo</td><td>0.951</td><td>0.945</td><td>0.897</td><td class="sub">not computed</td><td class="sub">1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The S_general &harr; S_combo cell is the one number missing: the S_general
+    <code>.pt</code> was not committed alongside its <code>meta.json</code>, so the direct
+    cosine has not been measured. Recovering it is a two-minute job once the file is located
+    &mdash; flagged in <a href="#caveats">&sect;12</a>.</p>
+
+    <div class="takeaway info">
+      Stacking the three domain vectors and taking the SVD gives singular values
+      <strong>[1.613, 0.541, 0.325]</strong>. The top direction carries <strong>86.7%</strong>
+      of the squared variance: the three domain vectors are mostly <em>one</em> direction
+      plus small domain-specific residuals. That is the structural reason to expect all five
+      vectors to do roughly the same thing at the same layer and coefficient.
+    </div>
+
+    <p>The one genuine outlier is S_logic, which sits at cos 0.75&ndash;0.80 from the other
+    two. It is also the vector built from by far the fewest boundaries (9,683 vs 51k and 76k)
+    and from the shortest chains of thought.</p>
+
+    <!-- ================================================================ -->
+    <h2 id="coverage"><span class="n">05</span>Coverage matrix: what has and hasn't run</h2>
+
+    <p>Stating the gaps up front. MATH-500 and LogiQA have all five vectors; the code and
+    knowledge benchmarks predate the general-vector work and are missing S_general and
+    S_combo. Everything marked <span class="no">&mdash;</span> is a run we intend to do, not
+    a result being withheld.</p>
+
+    <div class="table-wrap">
+      <table class="res lead2">
+        <thead>
+          <tr>
+            <th>Benchmark</th><th>Eval set</th><th>Metric</th>
+            <th>baseline</th><th>S_math</th><th>S_code</th><th>S_logic</th><th>S_general</th><th>S_combo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">MATH-500</td><td>all 500, seed 42</td><td>acc</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td></tr>
+          <tr><td class="dom">LogiQA</td><td>clean English-500</td><td>acc</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td></tr>
+          <tr><td class="dom">APPS</td><td>test rand42-500</td><td>pass@1</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
+          <tr><td class="dom">MBPP</td><td>test-500</td><td>pass@1</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
+          <tr><td class="dom">GSM8K</td><td>full test (1,319)</td><td>acc</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
+          <tr><td class="dom">MMLU philosophy</td><td>test (311)</td><td>acc</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
+          <tr class="groupname"><td colspan="9">Larger model — DeepSeek-R1-Distill-Qwen-7B</td></tr>
+          <tr><td class="dom">MATH-500 (7B)</td><td>all 500, seed 42</td><td>acc</td>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Closing the eight missing S_general / S_combo cells on APPS, MBPP and
+    GSM8K is listed under Priority 3 in <a href="#next">&sect;13</a>. It matters most on
+    APPS, since that is where the general vectors would be tested furthest from their
+    MATH-heavy pooling.</p>
+
+    <!-- ================================================================ -->
+    <h2 id="math500"><span class="n">06</span>MATH-500</h2>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th>Arm</th><th>Accuracy</th><th>&Delta;</th><th>95% CI</th>
+            <th>vs baseline<br><span class="sub">McNemar</span></th>
+            <th class="sep">Avg tokens</th><th>Median</th><th>&Delta; tokens</th><th>Hit cap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">baseline</td><td>64.4%</td><td class="sub">&mdash;</td><td class="sub">&plusmn;4.2</td><td class="sub">&mdash;</td>
+              <td class="sep">4,818</td><td>2,764</td><td class="sub">&mdash;</td><td class="bad">32.8%</td></tr>
+          <tr><td class="dom">S_math</td><td>78.4%</td><td class="up">+14.0</td><td class="sub">&plusmn;3.6</td><td class="mono">4.8e&minus;13</td>
+              <td class="sep">3,184</td><td>1,757</td><td class="down">&minus;33.9%</td><td>14.0%</td></tr>
+          <tr><td class="dom">S_code</td><td>76.8%</td><td class="up">+12.4</td><td class="sub">&plusmn;3.7</td><td class="mono">1.0e&minus;09</td>
+              <td class="sep">3,321</td><td>1,778</td><td class="down">&minus;31.1%</td><td>14.6%</td></tr>
+          <tr><td class="dom">S_logic</td><td>79.0%</td><td class="up">+14.6</td><td class="sub">&plusmn;3.6</td><td class="mono">4.8e&minus;14</td>
+              <td class="sep">3,293</td><td>1,908</td><td class="down">&minus;31.7%</td><td>14.4%</td></tr>
+          <tr><td class="dom">S_general</td><td>78.6%</td><td class="up">+14.2</td><td class="sub">&plusmn;3.6</td><td class="mono">1.0e&minus;12</td>
+              <td class="sep">3,170</td><td>1,714</td><td class="down">&minus;34.2%</td><td>14.4%</td></tr>
+          <tr class="hl"><td class="dom">S_combo</td><td>79.4%</td><td class="up">+15.0</td><td class="sub">&plusmn;3.5</td><td class="mono">1.6e&minus;14</td>
+              <td class="sep">3,105</td><td>1,811</td><td class="down">&minus;35.6%</td><td class="up">12.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">n = 500 for every row. Token counts from the model tokenizer;
+    &ldquo;hit cap&rdquo; is the fraction of generations reaching the 10,000-token limit.
+    Best accuracy, largest token saving and lowest cap rate all belong to S_combo &mdash; but
+    see the pairwise tests below before reading anything into that.</p>
+
+    <h3>Are the five vectors different from each other?</h3>
+
+    <p>No &mdash; and because this is the central claim of the report, here is exactly how
+    that is tested.</p>
+
+    <h4 style="margin:20px 0 8px; font-size:15.5px;">Why not just compare the two accuracies?</h4>
+    <p>S_combo scores 79.4% and S_code 76.8%. The tempting move is to compare those against
+    their &plusmn;3.5-point confidence intervals, see that the intervals overlap, and call it
+    a draw. That test is valid but weak: it treats the two runs as if they were independent
+    samples of different problems. They are not &mdash; <strong>both arms answered the same
+    500 problems</strong>, and they agree on 86% of them. Throwing away that pairing wastes
+    most of the information.</p>
+
+    <h4 style="margin:20px 0 8px; font-size:15.5px;">What we do instead: McNemar's exact test</h4>
+    <p>Compare the two arms <em>problem by problem</em>. Every problem falls into one of
+    four cells:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th>Problem outcome</th><th>Count <span class="sub">(S_code vs S_combo)</span></th><th>Informative?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">Both arms correct</td><td>356</td><td class="sub">no &mdash; tells us nothing about a difference</td></tr>
+          <tr><td class="dom">Both arms wrong</td><td>75</td><td class="sub">no &mdash; same</td></tr>
+          <tr><td class="dom">S_code right, S_combo wrong &nbsp;<span class="mono">(b)</span></td><td>28</td><td class="up">yes</td></tr>
+          <tr><td class="dom">S_code wrong, S_combo right &nbsp;<span class="mono">(c)</span></td><td>41</td><td class="up">yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The two agreeing cells cancel out &mdash; a problem both arms solve, or
+    neither solves, carries no evidence that one vector is better. Only the
+    <strong>69 disagreements</strong> do.</p>
+
+    <p>If the two vectors were genuinely equivalent, then on each of those 69 problems it
+    should be a coin flip which arm happens to get it. So under the null hypothesis
+    <span class="mono">b ~ Binomial(b + c, 0.5)</span>, and the p-value is the exact
+    two-sided binomial tail:</p>
+
+    <div class="eq">p = 2 &times; P( X &le; min(b, c) ),   X ~ Binomial(b + c, 0.5)
+
+S_code vs S_combo:  b = 28, c = 41,  b + c = 69
+                    p = 2 &times; P(X &le; 28)  =  <b>0.148</b></div>
+
+    <p>Reading that: if the two vectors really behaved identically, a split at least as
+    lopsided as 28&ndash;41 would happen about <strong>15% of the time by chance alone</strong>.
+    That is far too common to call a real difference. The same computation for every other
+    pair lands even further from significance.</p>
+
+    <div class="note">
+      <strong>Three notes on the method.</strong>
+      <ul>
+        <li>We use the <em>exact</em> binomial tail rather than the usual
+        <span class="mono">&chi;&sup2;</span> approximation, because with 49&ndash;69
+        discordant pairs the approximation is not reliable at the edges. Implemented as
+        <code>mcnemar_exact()</code> in <code>scripts/report_stats.py</code>.</li>
+        <li>No multiple-comparison correction is applied across the 10 pairs. It would only
+        make these p-values larger, i.e. push them <em>further</em> from significance, so
+        omitting it is the conservative choice for the claim being made.</li>
+        <li><strong>Non-significant is not the same as proven identical.</strong> This test
+        says we cannot distinguish the vectors at n = 500, not that they are exactly equal.
+        With enough problems a 1&ndash;2 point difference would eventually resolve. The
+        claim is that any difference is small relative to what this evaluation can detect
+        &mdash; which is precisely what the near rank-1 geometry predicted.</li>
+      </ul>
+    </div>
+
+    <p>Every steered-vs-steered pair, computed this way:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th>Pair (A vs B)</th><th>A&#10003; B&#10007;</th><th>A&#10007; B&#10003;</th><th>&Delta;</th><th>p (exact)</th><th>Agreement</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S_math vs S_code</td><td>38</td><td>30</td><td>&minus;1.6</td><td class="mono">0.40</td><td>86.4%</td></tr>
+          <tr><td>S_math vs S_logic</td><td>26</td><td>29</td><td>+0.6</td><td class="mono">0.79</td><td>89.0%</td></tr>
+          <tr><td>S_math vs S_general</td><td>24</td><td>25</td><td>+0.2</td><td class="mono">1.00</td><td>90.2%</td></tr>
+          <tr><td>S_math vs S_combo</td><td>26</td><td>31</td><td>+1.0</td><td class="mono">0.60</td><td>88.6%</td></tr>
+          <tr><td>S_code vs S_logic</td><td>30</td><td>41</td><td>+2.2</td><td class="mono">0.24</td><td>85.8%</td></tr>
+          <tr><td>S_code vs S_general</td><td>28</td><td>37</td><td>+1.8</td><td class="mono">0.32</td><td>87.0%</td></tr>
+          <tr><td>S_code vs S_combo</td><td>28</td><td>41</td><td>+2.6</td><td class="mono">0.15</td><td>86.2%</td></tr>
+          <tr><td>S_logic vs S_general</td><td>31</td><td>29</td><td>&minus;0.4</td><td class="mono">0.90</td><td>88.0%</td></tr>
+          <tr><td>S_logic vs S_combo</td><td>25</td><td>27</td><td>+0.4</td><td class="mono">0.89</td><td>89.6%</td></tr>
+          <tr><td>S_general vs S_combo</td><td>22</td><td>26</td><td>+0.8</td><td class="mono">0.67</td><td>90.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The widest spread &mdash; S_code vs S_combo, 2.6 points &mdash; is the
+    closest to significance and still lands at p = 0.15. No multiple-comparison correction is
+    applied; it would only push these further from significance.</p>
+
+    <p>Beyond pairwise: the five steered arms are <strong>unanimous on 376 of 500
+    problems</strong> (322 all-correct, 54 all-wrong). They fail on the same problems and
+    succeed on the same problems. <strong>The five vectors behave as one
+    intervention.</strong></p>
+
+    <div class="note">
+      <strong>Reading of the table.</strong> The interesting result is <em>not</em> that
+      S_combo edged out the others by 2.6 points &mdash; that difference is noise. The
+      interesting result is that a vector built from code traces, a vector built from logic
+      puzzles, a vector pooled across three domains, and a vector arithmetically combined
+      from all three all move MATH-500 by the same amount.
+    </div>
+
+    <!-- ================================================================ -->
+    <h2 id="logiqa"><span class="n">07</span>LogiQA</h2>
+
+    <p>Every arm below &mdash; baseline included &mdash; is graded with the
+    <code>reasoning</code> extractor, which reads the answer region after
+    <code>&lt;/think&gt;</code> and returns <em>no answer</em> when the generation never
+    closed the reasoning block. A generation that never stated an answer is scored wrong, but
+    is also counted separately, which is what the &ldquo;answer rate&rdquo; column reports.</p>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th>Arm</th><th>Accuracy</th><th>&Delta;</th><th>Answer rate</th><th>Acc | answered</th>
+            <th>vs baseline<br><span class="sub">McNemar</span></th>
+            <th class="sep">Avg tokens</th><th>&Delta; tokens</th><th>Hit cap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">baseline</td><td>25.8%</td><td class="sub">&mdash;</td><td class="bad">63.8%</td><td>40.4%</td><td class="sub">&mdash;</td>
+              <td class="sep">4,089</td><td class="sub">&mdash;</td><td class="bad">36.2%</td></tr>
+          <tr><td class="dom">S_math</td><td>28.6%</td><td class="up">+2.8</td><td>75.2%</td><td>38.0%</td><td class="mono">0.23</td>
+              <td class="sep">2,989</td><td class="down">&minus;26.9%</td><td>24.2%</td></tr>
+          <tr class="hl"><td class="dom">S_code</td><td>29.8%</td><td class="up">+4.0</td><td class="up">77.2%</td><td>38.6%</td><td class="mono">0.075</td>
+              <td class="sep">2,818</td><td class="down">&minus;31.1%</td><td class="up">22.8%</td></tr>
+          <tr><td class="dom">S_logic</td><td>28.4%</td><td class="up">+2.6</td><td>75.4%</td><td>37.7%</td><td class="mono">0.25</td>
+              <td class="sep">3,022</td><td class="down">&minus;26.1%</td><td>24.0%</td></tr>
+          <tr><td class="dom">S_general</td><td>28.8%</td><td class="up">+3.0</td><td>75.4%</td><td>38.2%</td><td class="mono">0.20</td>
+              <td class="sep">2,997</td><td class="down">&minus;26.7%</td><td>24.2%</td></tr>
+          <tr><td class="dom">S_combo</td><td>28.4%</td><td class="up">+2.6</td><td class="up">77.2%</td><td>36.8%</td><td class="mono">0.27</td>
+              <td class="sep">2,859</td><td class="down">&minus;30.1%</td><td class="up">22.6%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">n = 500, English-only clean split, 4-way multiple choice (25% chance
+    floor). &ldquo;Answer rate&rdquo; = fraction of generations that closed
+    <code>&lt;/think&gt;</code> and stated an answer. All 10 steered-vs-steered pairs are
+    non-significant (p &ge; 0.46), and none of the steered-vs-baseline gains reach
+    significance either.</p>
+
+    <p>Splitting by whether the baseline hit the cap shows the same mechanism as MATH-500:
+    on the 181 capped problems the baseline scores <strong>0.0%</strong> and the steered arms
+    <strong>19.9&ndash;22.7%</strong>; on the 319 it finished, the baseline scores
+    <strong>40.4%</strong> and the steered arms <strong>32.0&ndash;33.9%</strong>. The reason
+    LogiQA nets out near zero while MATH-500 nets +15 is that the recovered accuracy here is
+    ~20%, <em>below</em> the 25% chance floor for a 4-way question, whereas on MATH-500 it is
+    ~50%. Truncation-recovery is worth a lot on MATH-500 and almost nothing on multiple
+    choice.</p>
+
+    <div class="note">
+      Note that <strong>S_logic &mdash; the vector built <em>from</em> LogiQA &mdash; is not
+      the best vector on LogiQA</strong> (S_code is). Nothing here is domain-specific.
+    </div>
+
+    <!-- ================================================================ -->
+    <h2 id="code"><span class="n">08</span>Code: APPS</h2>
+
+    <p>APPS is where the intervention looks weakest and where the truncation account is
+    clearest: the problems are so long-form that the baseline hits the token cap on
+    <strong>83.6%</strong> of them. Metric is pass@1 on 500 seeded-random test problems,
+    scored by executing the unit tests. (MBPP, the other code benchmark, is in
+    <a href="#rest">&sect;9</a>.)</p>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th>Arm</th><th>pass@1</th><th>&Delta;</th><th>95% CI</th>
+            <th>vs baseline<br><span class="sub">McNemar</span></th>
+            <th class="sep">Avg tokens</th><th>&Delta; tokens</th><th>Hit cap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">baseline</td><td>11.2%</td><td class="sub">&mdash;</td><td class="sub">&plusmn;2.8</td><td class="sub">&mdash;</td>
+              <td class="sep">8,893</td><td class="sub">&mdash;</td><td class="bad">83.6%</td></tr>
+          <tr><td class="dom">S_math</td><td>13.0%</td><td class="up">+1.8</td><td class="sub">&plusmn;2.9</td><td class="mono">0.24</td>
+              <td class="sep">8,079</td><td class="down">&minus;9.2%</td><td>68.0%</td></tr>
+          <tr class="hl"><td class="dom">S_code</td><td>13.8%</td><td class="up">+2.6</td><td class="sub">&plusmn;3.0</td><td class="mono">0.098</td>
+              <td class="sep">8,125</td><td class="down">&minus;8.6%</td><td>70.0%</td></tr>
+          <tr><td class="dom">S_logic</td><td>13.4%</td><td class="up">+2.2</td><td class="sub">&plusmn;3.0</td><td class="mono">0.14</td>
+              <td class="sep">8,207</td><td class="down">&minus;7.7%</td><td>70.0%</td></tr>
+          <tr class="gap"><td colspan="8">S_general and S_combo — not run</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">No arm reaches significance against the baseline, and the three steered
+    arms are indistinguishable from each other (all pairs p &ge; 0.66), agreeing on 431/500
+    problems &mdash; though 397 of those are problems all three get wrong.</p>
+
+    <p>Broken out by APPS difficulty tier, the gain concentrates in the easiest tier:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th>Difficulty</th><th>n</th><th>baseline</th><th>S_math</th><th>S_code</th><th>S_logic</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">introductory</td><td>95</td><td>28.4%</td><td class="up">34.7%</td><td class="up">34.7%</td><td>31.6%</td></tr>
+          <tr><td class="dom">interview</td><td>314</td><td>8.9%</td><td>9.2%</td><td>10.8%</td><td class="up">11.1%</td></tr>
+          <tr><td class="dom">competition</td><td>91</td><td>1.1%</td><td class="up">3.3%</td><td>2.2%</td><td>2.2%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="takeaway warn">
+      <span class="head">APPS is the clearest case against a "reasoning quality" reading</span>
+      On the 418 problems where the baseline hit the cap, the baseline scores
+      <strong>0.0%</strong> and the steered arms only <strong>6.0&ndash;6.2%</strong> &mdash;
+      recovering an answer rarely means recovering a <em>correct</em> one on hard code. On
+      the 82 problems the baseline finished, the baseline scores <strong>68.3%</strong> and
+      the steered arms <strong>48.8&ndash;53.7%</strong> &mdash; a 15&ndash;20 point drop.
+      The net is positive only because the capped subset is so large.
+    </div>
+
+    <!-- ================================================================ -->
+    <h2 id="rest"><span class="n">09</span>Secondary benchmarks: MBPP, GSM8K, MMLU, and the 7B model</h2>
+
+    <p>These four are supporting evidence rather than the benchmarks the study is built
+    around. They cover fewer vectors and, in MMLU's case, far fewer problems &mdash; but the
+    direction of effect is the same everywhere.</p>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th>Benchmark · arm</th><th>Accuracy</th><th>&Delta;</th>
+            <th>vs baseline<br><span class="sub">McNemar</span></th>
+            <th class="sep">Avg tokens</th><th>&Delta; tokens</th><th>Hit cap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="groupname"><td colspan="7">MBPP — test split, n = 500, pass@1</td></tr>
+          <tr><td class="dom">baseline</td><td>36.8%</td><td class="sub">&mdash;</td><td class="sub">&mdash;</td>
+              <td class="sep">5,447</td><td class="sub">&mdash;</td><td>45.0%</td></tr>
+          <tr class="hl"><td class="dom">S_math</td><td>42.8%</td><td class="up">+6.0</td><td class="mono">0.0018</td>
+              <td class="sep">4,161</td><td class="down">&minus;23.6%</td><td class="up">29.8%</td></tr>
+          <tr><td class="dom">S_code</td><td>40.6%</td><td class="up">+3.8</td><td class="mono">0.037</td>
+              <td class="sep">4,478</td><td class="down">&minus;17.8%</td><td>33.0%</td></tr>
+          <tr class="gap"><td colspan="7">S_logic, S_general and S_combo — not run</td></tr>
+          <tr class="groupname"><td colspan="7">GSM8K — full test set, n = 1,319</td></tr>
+          <tr><td class="dom">baseline</td><td>73.0%</td><td class="sub">&mdash;</td><td class="sub">&mdash;</td>
+              <td class="sep">2,145</td><td class="sub">&mdash;</td><td>14.9%</td></tr>
+          <tr class="hl"><td class="dom">S_math</td><td>81.9%</td><td class="up">+8.9</td><td class="mono">4.8e&minus;17</td>
+              <td class="sep">1,037</td><td class="down">&minus;51.7%</td><td class="up">3.0%</td></tr>
+          <tr><td class="dom">S_code</td><td>80.1%</td><td class="up">+7.1</td><td class="mono">1.2e&minus;10</td>
+              <td class="sep">1,090</td><td class="down">&minus;49.2%</td><td>3.6%</td></tr>
+          <tr class="gap"><td colspan="7">S_logic, S_general and S_combo — not run</td></tr>
+          <tr class="groupname"><td colspan="7">MMLU philosophy — n = 311</td></tr>
+          <tr><td class="dom">baseline</td><td>38.9%</td><td class="sub">&mdash;</td><td class="sub">&mdash;</td>
+              <td class="sep">2,709</td><td class="sub">&mdash;</td><td>20.9%</td></tr>
+          <tr><td class="dom">S_math</td><td>42.4%</td><td class="up">+3.5</td><td class="mono">0.29</td>
+              <td class="sep">1,704</td><td class="down">&minus;37.1%</td><td class="up">11.3%</td></tr>
+          <tr class="gap"><td colspan="7">S_code, S_logic, S_general and S_combo — not run</td></tr>
+          <tr class="groupname"><td colspan="7">MATH-500 on DeepSeek-R1-Distill-Qwen-7B — n = 500</td></tr>
+          <tr><td class="dom">baseline</td><td>84.4%</td><td class="sub">&mdash;</td><td class="sub">&mdash;</td>
+              <td class="sep sub">not computed</td><td class="sub">&mdash;</td><td class="sub">&mdash;</td></tr>
+          <tr><td class="dom">S_math (7B)</td><td>87.8%</td><td class="up">+3.4</td><td class="sub">not computed</td>
+              <td class="sep sub">not computed</td><td class="sub">&mdash;</td><td class="sub">&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">MBPP is the only one of the four where both steered arms beat the baseline
+    significantly, and S_math and S_code do not differ from each other (p = 0.26) &mdash;
+    note again that the code-derived vector is not the better one on a code benchmark. GSM8K
+    is the largest effect in the whole study and also the largest token saving (&minus;52%).
+    MMLU is directionally positive but not significant at n = 311. The 7B rows use a
+    different tokenizer, so their token counts have not been recomputed yet.</p>
+
+    <div class="takeaway info">
+      The <strong>7B row is the most informative sanity check we have</strong>. At a baseline
+      of 84.4% &mdash; where far less of the eval set is budget-limited &mdash; the same
+      intervention buys <strong>+3.4</strong> points instead of +14. That is what the
+      truncation-recovery account in <a href="#mechanism">&sect;11</a> predicts: less
+      truncation to recover, less headroom for this intervention.
+    </div>
+
+    <!-- ================================================================ -->
+    <h2 id="tokens"><span class="n">10</span>Token savings across all benchmarks</h2>
+
+    <p>Steering shortens the chain of thought everywhere, but by very different amounts. This
+    table uses S_math, the only vector run on all six benchmarks, so the rows are
+    comparable.</p>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th>Benchmark</th><th>n</th>
+            <th>Avg tokens<br><span class="sub">baseline</span></th>
+            <th>Avg tokens<br><span class="sub">S_math</span></th>
+            <th>&Delta; tokens</th>
+            <th>Median<br><span class="sub">base &rarr; steered</span></th>
+            <th>Hit cap<br><span class="sub">base &rarr; steered</span></th>
+            <th class="sep">&Delta; accuracy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">GSM8K</td><td>1,319</td><td>2,145</td><td>1,037</td><td class="down">&minus;51.7%</td><td>763 &rarr; 688</td><td>14.9% &rarr; 3.0%</td><td class="sep up">+8.9</td></tr>
+          <tr><td class="dom">MMLU philosophy</td><td>311</td><td>2,709</td><td>1,704</td><td class="down">&minus;37.1%</td><td>687 &rarr; 560</td><td>20.9% &rarr; 11.3%</td><td class="sep up">+3.5</td></tr>
+          <tr><td class="dom">MATH-500</td><td>500</td><td>4,818</td><td>3,184</td><td class="down">&minus;33.9%</td><td>2,764 &rarr; 1,757</td><td>32.8% &rarr; 14.0%</td><td class="sep up">+14.0</td></tr>
+          <tr><td class="dom">LogiQA</td><td>500</td><td>4,089</td><td>2,989</td><td class="down">&minus;26.9%</td><td>848 &rarr; 722</td><td>36.2% &rarr; 24.2%</td><td class="sep up">+2.8</td></tr>
+          <tr><td class="dom">MBPP</td><td>500</td><td>5,447</td><td>4,161</td><td class="down">&minus;23.6%</td><td>2,832 &rarr; 1,760</td><td>45.0% &rarr; 29.8%</td><td class="sep up">+6.0</td></tr>
+          <tr><td class="dom">APPS</td><td>500</td><td>8,893</td><td>8,079</td><td class="down">&minus;9.2%</td><td>10,000 &rarr; 10,000</td><td>83.6% &rarr; 68.0%</td><td class="sep up">+1.8</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Sorted by token saving. APPS is last on both saving and accuracy gain, and
+    its median generation is pinned at the cap in both arms &mdash; the intervention cannot
+    shorten what the budget already truncates. Note that token saving and accuracy gain are
+    <em>not</em> proportional: GSM8K saves the most tokens but MATH-500 gains the most
+    accuracy.</p>
+
+    <p>Token savings for all five vectors, on the two benchmarks where all five have run:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th>Vector</th><th>MATH-500<br><span class="sub">avg tokens</span></th><th>&Delta;</th><th class="sep">LogiQA<br><span class="sub">avg tokens</span></th><th>&Delta;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">baseline</td><td>4,818</td><td class="sub">&mdash;</td><td class="sep">4,089</td><td class="sub">&mdash;</td></tr>
+          <tr><td class="dom">S_math</td><td>3,184</td><td class="down">&minus;33.9%</td><td class="sep">2,989</td><td class="down">&minus;26.9%</td></tr>
+          <tr><td class="dom">S_code</td><td>3,321</td><td class="down">&minus;31.1%</td><td class="sep">2,818</td><td class="down"><span class="win">&minus;31.1%</span></td></tr>
+          <tr><td class="dom">S_logic</td><td>3,293</td><td class="down">&minus;31.7%</td><td class="sep">3,022</td><td class="down">&minus;26.1%</td></tr>
+          <tr><td class="dom">S_general</td><td>3,170</td><td class="down">&minus;34.2%</td><td class="sep">2,997</td><td class="down">&minus;26.7%</td></tr>
+          <tr><td class="dom">S_combo</td><td>3,105</td><td class="down"><span class="win">&minus;35.6%</span></td><td class="sep">2,859</td><td class="down">&minus;30.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The five vectors compress within ~4.5 percentage points of each other on
+    MATH-500 and ~5 on LogiQA &mdash; the same &ldquo;they are one intervention&rdquo;
+    picture the accuracy tables show.</p>
+
+    <!-- ================================================================ -->
+    <h2 id="mechanism"><span class="n">11</span>What is actually driving the gain</h2>
+
+    <p>The headline is &ldquo;+15 points on MATH-500.&rdquo; This section asks
+    <em>which problems</em> those points came from, and the answer turns out to be narrow
+    enough to change how the result should be read.</p>
+
+    <h3>The idea: sort the problems by what the baseline did, then score both arms on each pile</h3>
+
+    <p>Every run has a hard limit of 10,000 generated tokens. A reasoning model that keeps
+    second-guessing itself can spend all 10,000 still inside <code>&lt;think&gt;</code> and
+    get cut off before it ever writes an answer. That is not a wrong answer &mdash; it is
+    <em>no</em> answer, and it scores zero automatically.</p>
+
+    <p>So we split the problem set in two, using only the <strong>baseline</strong> run:</p>
+
+    <ol class="steps">
+      <li><strong>Ran out of budget.</strong> The baseline generation reached the 10,000-token
+      limit. On MATH-500 this is <strong>164 of the 500 problems</strong> (32.8%).</li>
+      <li><strong>Finished.</strong> The baseline stopped on its own, inside budget. The
+      remaining <strong>336 problems</strong>.</li>
+    </ol>
+
+    <p>The split is decided entirely by the baseline, then <em>held fixed</em> while we score
+    every steered arm on the same two piles. So it is a like-for-like comparison of the same
+    problems, not a re-partition per arm.</p>
+
+    <h3>Worked example: MATH-500, baseline vs. S_combo</h3>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr>
+            <th>Pile</th><th>How many problems</th>
+            <th>Baseline<br><span class="sub">accuracy</span></th>
+            <th>S_combo<br><span class="sub">accuracy</span></th>
+            <th>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="dom">Baseline ran out of budget</td><td>164 &nbsp;<span class="sub">(32.8%)</span></td>
+            <td class="bad">2 / 164 = 1.22%</td><td>84 / 164 = 51.22%</td><td class="up">+50.00 pts</td>
+          </tr>
+          <tr>
+            <td class="dom">Baseline finished</td><td>336 &nbsp;<span class="sub">(67.2%)</span></td>
+            <td class="up">320 / 336 = 95.24%</td><td>313 / 336 = 93.15%</td><td class="down">&minus;2.08 pts</td>
+          </tr>
+          <tr>
+            <td class="dom">All problems</td><td>500</td><td>322 / 500 = 64.4%</td><td>397 / 500 = 79.4%</td><td class="up">+15.0 pts</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <strong>Why isn't the 1.2% just zero?</strong> It should be. A generation cut off
+      mid-reasoning never wrote an answer, so there is nothing for the grader to score. We
+      inspected the 2 problems it credited: <em>neither contains a
+      <code>\boxed{}</code>, neither closed <code>&lt;/think&gt;</code>, and neither contains
+      the phrase &ldquo;the answer is&rdquo; or &ldquo;final answer&rdquo;</em>. Both simply
+      stop mid-sentence, one of them mid-multiplication.
+      <br><br>
+      They score because the MATH extractor has no &ldquo;no answer stated &rarr;
+      wrong&rdquo; rule. When it finds no answer marker it falls back to the raw generation
+      text, and for these two a number matching the gold answer was recovered out of the
+      truncated reasoning. They are <strong>grader false positives, not solved
+      problems</strong> &mdash; the same failure mode as the LogiQA extractor we replaced,
+      which guessed a letter from unfinished traces.
+      <br><br>
+      So the honest reading of that cell is <strong>0 / 164 = 0.0%</strong>. Scoring those
+      two as wrong would move the baseline from 64.4% to 64.0% and S_combo's gain from +15.0
+      to <strong>+15.4</strong> &mdash; it slightly <em>strengthens</em> the effect, so the
+      tables throughout this report keep the committed 64.4% as the conservative number. See
+      <a href="#caveats">&sect;12</a>.
+      <br><br>
+      The same near-zero appears on GSM8K, MBPP, LogiQA and APPS &mdash; 0.0&ndash;1.2% in
+      every case. MMLU is the one real exception at 23.1%, because it is 4-way multiple
+      choice and its grader can still pull a letter out of a truncated generation, landing
+      near the 25% chance floor.
+      <br><br>
+      <strong>And the 95.2%?</strong> On the 336 problems the baseline <em>did</em> finish, it
+      was right 95.2% of the time. That is the real ceiling: when this model gets to state an
+      answer on a MATH-500 problem, it is usually right. Its 64.4% overall score is not a
+      reasoning ceiling &mdash; it is 95.2% on two thirds of the set, dragged down by ~0% on
+      the third that never finished.
+    </div>
+
+    <p>Now split S_combo's +15.0 points by where they were earned. Each pile's contribution
+    is its accuracy change times its share of the problem set:</p>
+
+    <div class="eq">ran-out pile:   (51.22% &minus; 1.22%)  &times; 164/500  =  +50.00 &times; 0.328  =  <b>+16.4 pts</b>
+finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times; 0.672  =  <b>&minus;1.4 pts</b>
+                                                                  net  =  <b>+15.0 pts</b></div>
+
+    <p>So steering did not make the model a better reasoner on the problems it could already
+    handle &mdash; there it lost 2 points. What it did was stop the model from talking itself
+    past the budget on the other third, turning guaranteed zeros into roughly coin flips.
+    <strong>All +15 points, and then some, come from that one pile.</strong></p>
+
+    <h3>The same split on every benchmark</h3>
+
+    <p>This is not a MATH-500 quirk. Below, one representative steered arm per benchmark,
+    with each pile's contribution computed exactly as above. Read the last three columns as:
+    &ldquo;of the net change, this many points were earned on problems the baseline had run
+    out of budget on, and this many on problems it had finished.&rdquo;</p>
+
+    <div class="table-wrap">
+      <table class="res wide">
+        <thead>
+          <tr>
+            <th>Benchmark · arm</th><th>Baseline<br><span class="sub">ran out on</span></th>
+            <th>Ran-out pile<br><span class="sub">base &rarr; steered</span></th>
+            <th>Finished pile<br><span class="sub">base &rarr; steered</span></th>
+            <th class="sep">Points from<br>ran-out</th><th>Points from<br>finished</th><th>Net &Delta;</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="dom">MATH-500 · S_combo</td><td>32.8%</td><td>1.2% &rarr; 51.2%</td><td>95.2% &rarr; 93.2%</td>
+              <td class="sep up">+16.4</td><td class="down">&minus;1.4</td><td class="up">+15.0</td></tr>
+          <tr><td class="dom">GSM8K · S_math</td><td>14.9%</td><td>1.0% &rarr; 56.9%</td><td>85.7% &rarr; 86.3%</td>
+              <td class="sep up">+8.3</td><td class="up">+0.5</td><td class="up">+8.9</td></tr>
+          <tr><td class="dom">MBPP · S_math</td><td>45.0%</td><td>0.0% &rarr; 19.6%</td><td>66.9% &rarr; 61.8%</td>
+              <td class="sep up">+8.8</td><td class="down">&minus;2.8</td><td class="up">+6.0</td></tr>
+          <tr><td class="dom">LogiQA · S_code</td><td>36.2%</td><td>0.0% &rarr; 22.7%</td><td>40.4% &rarr; 33.9%</td>
+              <td class="sep up">+8.2</td><td class="down">&minus;4.2</td><td class="up">+4.0</td></tr>
+          <tr><td class="dom">MMLU · S_math</td><td>20.9%</td><td>23.1% &rarr; 36.9%</td><td>43.1% &rarr; 43.9%</td>
+              <td class="sep up">+2.9</td><td class="up">+0.6</td><td class="up">+3.5</td></tr>
+          <tr><td class="dom">APPS · S_code</td><td>83.6%</td><td>0.0% &rarr; 6.0%</td><td>68.3% &rarr; 53.7%</td>
+              <td class="sep up">+5.0</td><td class="down">&minus;2.4</td><td class="up">+2.6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">One representative steered arm per benchmark; the other arms give the same
+    picture (see <code>scripts/report_stats.py</code>). Two things to notice. First, the
+    ran-out column supplies <strong>all</strong> of the net gain on every benchmark &mdash;
+    the finished column contributes between &minus;4.2 and +0.6 points, and is negative in
+    four of six cases. Second, how much the ran-out pile is worth depends on what the model
+    can do once it gets to answer: on MATH-500 recovered problems land at 51%, on LogiQA only
+    23% (below the 25% chance floor), on APPS just 6%. That, not the vector, is what sets the
+    size of each benchmark's gain.</p>
+
+    <div class="takeaway warn">
+      <span class="head">The honest statement of the result</span>
+      <p>Steering makes the model terser. On problems where the baseline was thinking itself
+      past the token cap, that converts a guaranteed zero into a partial success. On problems
+      the baseline could already finish, the same terseness usually costs a little. The net
+      is positive everywhere, but <em>because</em> a large slice of every eval set is
+      budget-limited &mdash; from 14.9% on GSM8K to 83.6% on APPS.</p>
+      <p>This is consistent with SEAL's own account of the mechanism &mdash; suppressing
+      non-essential reflection &mdash; but it means the headline numbers are not yet evidence
+      that the vector improves reasoning <em>quality</em>. Distinguishing &ldquo;makes it
+      shorter&rdquo; from &ldquo;makes it better&rdquo; is precisely what the queued controls
+      are for.</p>
+    </div>
+
+    <p>It also explains our low MATH-500 baseline. 64.4% sits well below the commonly cited
+    <strong>83.9%</strong> for this model, and the gap is a budget/protocol difference, not a
+    bug: the reported figure uses a 32,768-token generation limit with sampling, while our
+    runs are greedy at 10,000 tokens. A third of our baseline generations truncate; at 32k
+    far fewer would, and the headroom steering is exploiting would shrink accordingly. The
+    7B result (+3.4 at an 84.4% baseline) is the same effect seen from the other side.</p>
+
+    <!-- ================================================================ -->
+    <h2 id="caveats"><span class="n">12</span>Caveats and known gaps</h2>
+
+    <ol>
+      <li><strong>No controls yet.</strong> The biggest gap, and the subject of &sect;13.
+      Nothing here rules out that <em>any</em> intervention of this norm at this layer
+      shortens the CoT and produces the same gain.</li>
+      <li><strong>Single greedy sample, 10,000-token budget.</strong> No sampling variance is
+      measured, and a large fraction of every baseline set is budget-limited. Our 64.4% vs
+      the commonly reported 83.9% is explained by this, but it means our headroom is partly
+      an artifact of the protocol.</li>
+      <li><strong>Coverage is uneven</strong> (&sect;5). S_general and S_combo have run only
+      on MATH-500 and LogiQA; APPS, MBPP and GSM8K have no general-vector rows, and MMLU has
+      only S_math.</li>
+      <li><strong>The S_general <code>.pt</code> is not committed</strong> &mdash; only its
+      <code>meta.json</code>. So cos(S_general, S_combo), the single most direct test of
+      &ldquo;is pooling the same as combining,&rdquo; is unmeasured.</li>
+      <li><strong>S_general is Phase 1 only</strong> (count-weighted). The domain-balanced
+      Phase 2 build is implemented but unrun, so &ldquo;pooled&rdquo; currently means
+      &ldquo;pooled and dominated by MATH+APPS.&rdquo;</li>
+      <li><strong>7B token counts not computed</strong> &mdash; that model uses a different
+      tokenizer, so its rows carry accuracy only.</li>
+      <li><strong>The MATH grader credits some answerless generations.</strong> With
+      <code>data_name="omni-math"</code>, <code>extract_answer</code> has no &ldquo;no answer
+      stated &rarr; wrong&rdquo; rule: when a generation contains no <code>\boxed{}</code>
+      and no &ldquo;the answer is&rdquo; phrase, it falls back to the raw text. On the
+      MATH-500 baseline this credits 2 truncated generations that never stated an answer
+      (<a href="#mechanism">&sect;11</a>). The effect on the headline is small and in the
+      conservative direction &mdash; correcting it would raise S_combo's gain from +15.0 to
+      +15.4 &mdash; but the fallback is the same failure mode as the LogiQA extractor we
+      replaced, and the MATH/GSM8K/MMLU results deserve the same audit.</li>
+      <li><strong>Coefficient is fixed at &minus;1.0 and layer at 20.</strong> No sweep. All
+      conclusions are conditional on that operating point.</li>
+    </ol>
+
+    <!-- ================================================================ -->
+    <h2 id="next"><span class="n">13</span>Next steps: controls and ablations</h2>
+
+    <p>The findings above make the controls the critical path, not a nicety. If the effect is
+    &ldquo;terser CoT recovers truncated answers,&rdquo; then interventions with nothing to
+    do with reasoning may reproduce it &mdash; and we need to know that before claiming a
+    reasoning-specific direction.</p>
+
+    <h3>Priority 1 — the two controls, same 500 problems, same harness</h3>
+
+    <div class="combo-grid">
+      <div class="combo">
+        <div class="combo-head"><span class="pill todo">Queued</span></div>
+        <h4>A. Norm-matched random vector</h4>
+        <p>A random direction in 1536-d, rescaled to <strong>&Vert;S_combo&Vert; = 57.06</strong>,
+        applied at layer 20 with coef &minus;1.0. Answers: does <em>any</em> perturbation of
+        this magnitude at this site shorten the CoT and recover truncated answers? This is the
+        same control we ran in the CAA phase. Cheap &mdash; one eval run.</p>
+      </div>
+      <div class="combo">
+        <div class="combo-head"><span class="pill todo">Queued</span></div>
+        <h4>B. Null-keyword vector from non-reasoning text</h4>
+        <p>Run the <em>full extraction recipe</em> &mdash; generate traces, tag
+        <code>\n\n</code> boundaries by the same reflection/transition keywords, contrast the
+        piles &mdash; on a <strong>non-reasoning corpus</strong>, then evaluate on MATH-500.
+        What changes is the extraction source; the evaluation benchmark stays MATH-500.
+        Answers: does the recipe find something reasoning-specific, or does the same keyword
+        contrast on any text produce a vector that helps math just as much?</p>
+      </div>
+    </div>
+
+    <div class="takeaway info">
+      <span class="head">Interpretation grid, decided in advance</span>
+      <ul>
+        <li><strong>Both controls flat, our vectors gain +12&ndash;15</strong> &rarr; the
+        shared direction is reasoning-specific. Strongest outcome.</li>
+        <li><strong>Control B gains but A is flat</strong> &rarr; the <em>recipe</em>
+        generalizes but is not reasoning-specific; the keyword contrast finds a generic
+        &ldquo;stop hedging, commit&rdquo; direction in any text.</li>
+        <li><strong>Both controls gain</strong> &rarr; the effect is a generic
+        length/decoding intervention at this layer and coefficient, and the domain story
+        collapses. Given &sect;11, this is a live possibility and we should say so up front
+        rather than discover it later.</li>
+      </ul>
+      <p style="margin-top:10px">In all three cases we should report the token savings and
+      the cap-hit decomposition from &sect;11 for the control arms, since that is where the
+      signal lives.</p>
+    </div>
+
+    <h3>Priority 2 — closing the analysis gaps</h3>
+    <ul>
+      <li><span class="pill good">Done</span> &nbsp;<strong>Per-problem statistics and token
+      data.</strong> McNemar across every pair, tokenizer-measured token counts, cap rates,
+      and the cap-hit decomposition now exist for all six benchmarks
+      (<code>scripts/report_stats.py</code>).</li>
+      <li><span class="pill good">Done</span> &nbsp;<strong>Baseline sanity check</strong>
+      against the published MATH-500 number &mdash; 64.4% vs 83.9%, explained by the 10k vs
+      32k generation budget and greedy vs sampled decoding.</li>
+      <li><span class="pill todo">To do</span> &nbsp;Commit the S_general <code>.pt</code> and
+      measure cos(S_general, S_combo).</li>
+      <li><span class="pill todo">To do</span> &nbsp;Recompute 7B token counts with the 7B
+      tokenizer.</li>
+    </ul>
+
+    <h3>Priority 3 — ablations, once the controls land</h3>
+    <ul>
+      <li><strong>Budget sweep.</strong> Re-run MATH-500 baseline and one steered arm at
+      32,000 tokens. If the gain shrinks toward the 7B-sized +3, that confirms &sect;11
+      directly and tells us how much of the headline is protocol. Highest-value single
+      experiment on this list.</li>
+      <li><strong>Fill the coverage matrix</strong> &mdash; S_general and S_combo on APPS,
+      MBPP and GSM8K, so the general vectors have the same coverage as S_math and S_code.
+      APPS matters most: it is the furthest from the MATH-heavy pooling in S_general.</li>
+      <li><strong>Coefficient sweep</strong> at fixed layer 20 &mdash; is &minus;1.0 near an
+      optimum, and does the accuracy/length trade-off curve look the same for all five
+      vectors?</li>
+      <li><strong>S_general Phase 2</strong> (domain-balanced) vs Phase 1, to test whether
+      balancing moves it away from S_math/S_code and toward S_logic. The Phase 2 recipe
+      &mdash; boundary budget <code>min(n_domain)</code>, seeded subsampling, then the same
+      contrast &mdash; is already specified in the
+      <a href="vector_build_plan.html">S_general build plan</a> and implemented behind
+      <code>--balance</code>; it only needs a run.</li>
+      <li><strong>Rank-1 ablation.</strong> Since 86.7% of the domain-vector variance is one
+      direction, steer with that top singular direction alone (norm-matched). If it
+      reproduces the full effect, the domain-specific residuals are demonstrably
+      irrelevant.</li>
+    </ul>
+
+    <div class="note">
+      <strong>Status of the wider run queue.</strong> Additional benchmark runs are in
+      flight; this report covers MATH-500 and LogiQA at full five-vector coverage and the
+      other four benchmarks at partial coverage. The two control runs in Priority 1 are the
+      next GPU jobs. For reference, the previous five-eval sequence took roughly 38 GPU-hours
+      end to end.
+    </div>
+
+    <footer>
+      SEAL · reasoning-calibration steering · progress report, 2026-08-06<br>
+      Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B</code> · layer 20 · coef &minus;1.0 · greedy · max_tokens 10,000<br>
+      Statistics reproducible with <code>python scripts/report_stats.py</code> ·
+      Code and results: <a href="https://github.com/Andwwy/SEAL">github.com/Andwwy/SEAL</a> ·
+      <a href="index.html">all docs</a> ·
+      Earlier transfer study: <a href="steering_transfer_results.html">steering transfer results</a>
+    </footer>
+
+  </div>
+</main>
+</body>
+</html>
