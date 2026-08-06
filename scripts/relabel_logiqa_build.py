@@ -28,7 +28,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from logic_utils import extract_choice, extract_choice_legacy, options_from_prompt
+from logic_utils import extract_choice, options_from_prompt
 
 
 def main():
@@ -58,7 +58,6 @@ def main():
         e["all_eval"] = [ok]
         e["all_pred"] = [pred]
         e["unfinished"] = pred is None
-        e["legacy_pred"] = extract_choice_legacy(gen)
         out_data.append(d)
         out_ev.append(e)
 

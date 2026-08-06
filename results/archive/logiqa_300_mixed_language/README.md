@@ -23,7 +23,12 @@ items that also appear in the extraction set swapped out. Results:
 `results/results_for_logic_vectors/LogiQA/*/rand42_500_clean/`.
 
 The two are not comparable: different size (300 vs 500), language mix, contamination
-status, and baseline (0.327 vs 0.362).
+status, and baseline (0.327 vs 0.258).
+
+The numbers on this page are all from the pre-2026-07-29 extractor, which guessed a
+letter for generations that never closed `</think>`. They are kept as a record of what
+these superseded runs reported, not as measurements — nothing here has been regraded,
+and nothing here should be compared against a current run.
 
 ## What is here
 
