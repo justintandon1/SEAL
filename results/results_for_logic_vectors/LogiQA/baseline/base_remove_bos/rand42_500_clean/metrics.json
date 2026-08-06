@@ -1,1 +1,1 @@
-{"acc": 0.362}
+{"acc": 0.258, "n": 500, "n_answered": 319, "n_unfinished": 181, "answer_rate": 0.638, "acc_answered": 0.4043887147335423, "grader": "reasoning"}
