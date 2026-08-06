@@ -1,0 +1,11 @@
+<｜User｜>Read the passage and answer the multiple-choice question. Think step-by-step, then end your response with 'Answer: X' where X is A, B, C, or D.
+
+Passage: As long as the rule of law and truly people - oriented,, we can completely solve the problem of arrears of migrant workers wages. According to a survey conducted during the Spring Festival in 2004, wage arrears to migrant workers are still serious in some places.
+
+Question: Which of the following can be inferred?
+
+Options:
+A. In some places, there are not people-oriente.
+B. Some places are people-oriented.
+C. In some places, there is neither the rule of law nor the people-oriented.
+D. Some places either do not the rule of law or are not people-oriented.<｜Assistant｜><think>

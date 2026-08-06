@@ -1,0 +1,2 @@
+<｜User｜>Answer the following questions. You should think step-by-step and put your final answer within \boxed{}.
+Question: In right triangle $ABC$ with $\angle B = 90^\circ$, we have $\sin A = 2\cos A$.  What is $\tan A$?<｜Assistant｜><think>
