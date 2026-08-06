@@ -1,0 +1,50 @@
+# Jekyll config for the GitHub Pages site (https://andwwy.github.io/SEAL/).
+#
+# Pages serves this repo from the root of `main`, so by default it tries to
+# publish the whole thing -- currently ~874 MB, of which results/ alone is
+# ~800 MB of eval outputs and data/ another ~53 MB. That is what broke the
+# build: from the #45 merge onward, `pages-build-deployment` spent ~15 minutes
+# walking those trees and was cancelled, so the live site froze at the last
+# good commit and any doc added after it 404s.
+#
+# Only docs/ needs to be served. Everything heavy or irrelevant is excluded
+# below, which drops the build to the handful of files it actually needs.
+#
+# Why not the two obvious alternatives:
+#   * A .nojekyll file skips Jekyll but still publishes the entire repo, so the
+#     size problem stays -- and it would make this config be ignored.
+#   * Switching the Pages source to the /docs folder also works, but it moves
+#     the site root to docs/, changing every published URL from
+#     /SEAL/docs/<page>.html to /SEAL/<page>.html and breaking links already
+#     shared with the team.
+#
+# Keep this list in sync when new top-level directories of results or data land.
+
+exclude:
+  # Large artifacts: eval outputs, generated traces, saved vectors.
+  - results/
+  - data/
+  - archive/
+  - external/
+  - vectors/
+  # Code and vendored evaluation harnesses -- not part of the site.
+  - eval_math_rule/
+  - code_evaluation/
+  - modeling_utils/
+  - apps/
+  - logic/
+  - scripts/
+  - tests/
+  - "*.py"
+  - "*.ipynb"
+  - "*.sh"
+  - requirements.txt
+  - .env.example
+  - RUNPOD.md
+  - v_code_MBPP_NOTES.md
+
+# The docs are hand-written, self-contained HTML. Nothing should be wrapped in
+# a Jekyll layout or have its Liquid-looking braces interpreted -- several pages
+# embed LaTeX and raw model output.
+plugins: []
+markdown: kramdown
