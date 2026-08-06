@@ -76,7 +76,34 @@
   <section>
     <div class="sechead">
       <span class="secnum">01</span>
-      <h2>Documents</h2>
+      <h2>Results</h2>
+    </div>
+    <div class="cards">
+      <a class="card" href="steering_progress_report.html">
+        <span class="role">Progress Report</span>
+        <h3>General vs. Task-Specific Vectors — Experiments &amp; Results</h3>
+        <p>Five vectors on the same 500 problems: how each was built, MATH-500 and LogiQA results with paired significance tests, what is driving the gain, and the controls queued next.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="steering_transfer_results.html">
+        <span class="role">Results</span>
+        <h3>Cross-Domain Steering Transfer (GSM8K / MBPP / LogiQA / MMLU)</h3>
+        <p>One MATH-derived vector applied unchanged across four domains — accuracy, tokens, runtimes, and full example outputs.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="steering_transfer_results_7b.html">
+        <span class="role">Results · 7B</span>
+        <h3>Scaling the Math Vector to DeepSeek-R1-Distill-Qwen-7B</h3>
+        <p>The same MATH-derived vector at 7B on MATH-500 — does the effect survive a stronger baseline?</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <span class="secnum">02</span>
+      <h2>Plans</h2>
     </div>
     <div class="cards">
       <a class="card" href="steering_seal_research_plan.html">
@@ -85,16 +112,76 @@
         <p>The full research plan following the SEAL recipe — motivation, method, experiments, and references.</p>
         <span class="go">Open document <span class="arrow">&rarr;</span></span>
       </a>
+      <a class="card" href="vector_build_plan.html">
+        <span class="role">Build Plan</span>
+        <h3>S_general Plan: MATH + APPS + LogiQA, Two Phases</h3>
+        <p>Build three SEAL-style domain vectors of 1,000 questions each, then one pooled general vector — count-weighted in phase 1, domain-balanced in phase 2.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <span class="secnum">03</span>
+      <h2>Vector construction &amp; math</h2>
+    </div>
+    <div class="cards">
+      <a class="card" href="s_combo_construction.html">
+        <span class="role">Worked Math</span>
+        <h3>Building S_combo: the Math and the Decisions</h3>
+        <p>The "just add the three domain vectors together" baseline — normalization, equal weights, rescaling, and an SVD appendix on why the sources are near rank-1.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="s_general_vs_s_combo.html">
+        <span class="role">Derivation</span>
+        <h3>Will S_general Be the Same as S_combo?</h3>
+        <p>When pooling raw activations equals summing finished vectors, and when it does not — the answer turns on domain balance and normalization.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="layer_data_explainer.html">
+        <span class="role">Code Walkthrough</span>
+        <h3>Reading the Layer Data: load_labeled_boundary_states</h3>
+        <p>A visual walkthrough of <code>build_general_vector.py</code> lines 64–132 — what <code>hidden.pt</code> actually stores and how check/switch/other piles are split.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <span class="secnum">04</span>
+      <h2>Codebase &amp; engineering</h2>
+    </div>
+    <div class="cards">
       <a class="card" href="seal_pipeline_study_note.html">
         <span class="role">Pipeline Brief</span>
         <h3>SEAL Pipeline: Sampling, Grading &amp; Vector Construction</h3>
         <p>A one-page map of how the codebase builds a steering vector from reasoning traces.</p>
         <span class="go">Open document <span class="arrow">&rarr;</span></span>
       </a>
-      <a class="card" href="steering_transfer_results.html">
-        <span class="role">Results</span>
-        <h3>Cross-Domain Steering Transfer (GSM8K / MBPP / LogiQA / MMLU)</h3>
-        <p>One MATH-derived vector applied unchanged across four domains — accuracy, tokens, runtimes, and full example outputs.</p>
+      <a class="card" href="codebase_diagrams.html">
+        <span class="role">Diagrams</span>
+        <h3>How the Codebase Fits Together</h3>
+        <p>Four diagrams mapping the real structure: what imports what, and how data flows file by file.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="lm_head_explainer.html">
+        <span class="role">Explainer</span>
+        <h3>Hidden States vs. lm_head — Why You Can Skip It</h3>
+        <p>During extraction the text is already written, so there is nothing to predict — and the language-model head can be dropped entirely.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="optimizing_llm_runtime.html">
+        <span class="role">Performance</span>
+        <h3>Optimizing LLM Runtime</h3>
+        <p>Three small changes to hidden-state extraction that cut gigabytes of wasted GPU memory.</p>
+        <span class="go">Open document <span class="arrow">&rarr;</span></span>
+      </a>
+      <a class="card" href="math_code_precision_comparison.html">
+        <span class="role">Engineering Note</span>
+        <h3>Precision: Math vs. Code, Transformers 4 vs. 5</h3>
+        <p>Why the math and code vectors were built in separate repos, and what that means for reproducing either.</p>
         <span class="go">Open document <span class="arrow">&rarr;</span></span>
       </a>
     </div>

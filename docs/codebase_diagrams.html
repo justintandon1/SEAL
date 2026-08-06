@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEAL · Codebase Relationship Diagrams</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E7; --panel:#FBF8F1; --panel-2:#EFE7D8;
+    --ink:#1B1714; --ink-soft:#5C5347; --line:#DCD2BF;
+    --blue:#2546D4; --blue-soft:#8195EC; --blue-wash:#E7EAFB;
+    --coral:#D9461C; --coral-soft:#EF9272; --coral-wash:#FAE6DC;
+    --green:#2C7A4E; --green-soft:#7FBE99; --green-wash:#E7F0EA;
+    --amber:#B7791F; --amber-wash:#F6ECD5;
+    --grid:rgba(27,23,20,.045);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",sans-serif; font-size:17px; line-height:1.62;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px}
+  .mono{font-family:"IBM Plex Mono",monospace}
+  .kicker{font-family:"IBM Plex Mono",monospace; font-size:12.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--blue)}
+  h1,h2,h3{font-family:"Fraunces",serif; font-weight:600; line-height:1.08; letter-spacing:-.01em}
+  p{max-width:70ch}
+  a{color:var(--blue)}
+
+  header{padding:72px 0 26px}
+  header .kicker{margin-bottom:18px}
+  h1{font-size:clamp(32px,5.6vw,58px); font-weight:700; max-width:18ch}
+  .lede{margin-top:20px; font-size:clamp(16px,2vw,19px); color:var(--ink-soft); max-width:66ch}
+
+  nav.toc{position:sticky; top:0; z-index:20; background:rgba(246,241,231,.9); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); margin:0 -28px; padding:12px 28px; display:flex; gap:8px; flex-wrap:wrap}
+  nav.toc a{font-family:"IBM Plex Mono",monospace; font-size:12px; text-decoration:none; color:var(--ink-soft); padding:5px 11px; border:1px solid var(--line); border-radius:100px; background:var(--panel)}
+  nav.toc a:hover{color:var(--blue); border-color:var(--blue-soft)}
+
+  section{padding:44px 0 20px; border-top:1px solid var(--line)}
+  .sechead{display:flex; align-items:baseline; gap:16px; margin-bottom:14px}
+  .secnum{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--blue); padding-top:6px}
+  h2{font-size:clamp(23px,3.6vw,32px)}
+  .sub{color:var(--ink-soft); margin:8px 0 22px; max-width:74ch; font-size:16px}
+
+  .diagram{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px; box-shadow:0 18px 40px -34px rgba(27,23,20,.45); overflow-x:auto}
+  .diagram .mermaid{display:flex; justify-content:center; min-width:min-content}
+
+  .legend{display:flex; flex-wrap:wrap; gap:16px; margin:2px 0 16px; font-size:13px; font-family:"IBM Plex Mono",monospace; color:var(--ink-soft)}
+  .legend span{display:inline-flex; align-items:center; gap:7px}
+  .sw{width:22px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.15); flex:none}
+  .sw.proc{background:#E7EAFB; border-color:#8195EC}
+  .sw.data{background:#E7F0EA; border-color:#7FBE99}
+  .sw.model{background:#FAE6DC; border-color:#EF9272}
+  .sw.grade{background:#F6ECD5; border-color:#d8b465}
+  .sw.orch{background:#241f1a; border-color:#241f1a}
+
+  .callout{border-left:3px solid var(--blue); background:var(--blue-wash); border-radius:0 10px 10px 0; padding:14px 18px; margin:18px 0; font-size:15px}
+  .callout.green{border-color:var(--green); background:var(--green-wash)}
+  .callout b{color:var(--ink)}
+  code.ic{font-family:"IBM Plex Mono",monospace; font-size:.9em; background:var(--panel-2); padding:1px 6px; border-radius:5px; border:1px solid var(--line)}
+
+  .keyrow{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px}
+  @media(max-width:760px){.keyrow{grid-template-columns:1fr}}
+  .keycard{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px}
+  .keycard h4{font-family:"Fraunces",serif; font-size:16px; margin-bottom:6px}
+  .keycard p{font-size:14px; color:var(--ink-soft); margin:0}
+
+  footer{border-top:1px solid var(--line); padding:34px 0 60px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink-soft)}
+  footer a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">SEAL · Relationship Diagrams</div>
+    <h1>How the codebase fits together</h1>
+    <p class="lede">Four diagrams that map the real structure: what imports what, how data flows file-by-file through the pipeline, the two parallel eval tracks, and how the orchestrator drives it all.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#mental">Mental model</a>
+    <a href="#imports">① Import graph</a>
+    <a href="#dataflow">② Data flow</a>
+    <a href="#tracks">③ Eval tracks</a>
+    <a href="#orch">④ Orchestrator</a>
+  </nav>
+
+  <section id="mental" style="border-top:none">
+    <div class="sechead"><span class="secnum">00</span><h2>The one thing to understand first</h2></div>
+    <p class="sub">The scripts barely call each other in code. Instead, each script <b>writes files to disk</b>, and the next script <b>reads those files</b>. So there are two separate relationship maps, and you need both:</p>
+    <div class="keyrow">
+      <div class="keycard"><h4>① Code relationships (imports)</h4><p>Static "who uses whose functions". Small and shallow — only a few files import each other. Diagram ①.</p></div>
+      <div class="keycard"><h4>② Data relationships (files on disk)</h4><p>The real pipeline. A <code class="ic">.jsonl</code> / <code class="ic">.pt</code> file produced by one step is the input to the next. Diagram ②.</p></div>
+    </div>
+  </section>
+
+  <!-- 1. IMPORT GRAPH -->
+  <section id="imports">
+    <div class="sechead"><span class="secnum">01</span><h2>Diagram ① — Module import graph</h2></div>
+    <p class="sub">Arrow <b>A → B</b> means "A imports from B". Only <i>internal</i> repo imports are shown (external libs like torch/vllm omitted). Notice how shallow it is: the entry scripts lean on just two shared modules — <code class="ic">get_math_results.py</code> and the custom <code class="ic">modeling_qwen2.py</code>.</p>
+    <div class="legend">
+      <span><span class="sw proc"></span> entry script (you run it)</span>
+      <span><span class="sw model"></span> custom steering model</span>
+      <span><span class="sw grade"></span> answer-grading code</span>
+      <span><span class="sw data"></span> standalone (no internal imports)</span>
+    </div>
+    <div class="diagram">
+      <pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"IBM Plex Mono, monospace","fontSize":"14px"}}}%%
+flowchart LR
+  classDef proc fill:#E7EAFB,stroke:#2546D4,stroke-width:1.2px,color:#1B1714;
+  classDef model fill:#FAE6DC,stroke:#D9461C,stroke-width:1.2px,color:#1B1714;
+  classDef grade fill:#F6ECD5,stroke:#B7791F,stroke-width:1.2px,color:#1B1714;
+  classDef alone fill:#E7F0EA,stroke:#2C7A4E,stroke-width:1.2px,color:#1B1714;
+
+  subgraph MATH["MATH / GSM8K track"]
+    vllm["eval_MATH_vllm.py"]:::proc
+    steer["eval_MATH_steering.py"]:::proc
+  end
+  subgraph CODE["Code (LiveCodeBench) track"]
+    cvllm["eval_code_vllm.py"]:::proc
+    csteer["eval_code_steering.py"]:::proc
+  end
+
+  gmr["get_math_results.py"]:::grade
+  qwen["modeling_utils/<br/>modeling_qwen2.py"]:::model
+
+  subgraph EMR["eval_math_rule/evaluation"]
+    grader["grader.py"]:::grade
+    parser["parser.py"]:::grade
+  end
+  subgraph CE["code_evaluation/"]
+    cinit["__init__.py"]:::grade
+    cutil["code_utils.py"]:::grade
+    cmet["compute_code_generation_metrics.py"]:::grade
+    ctest["testing_util.py"]:::grade
+    cpass["pass_k_utils.py"]:::grade
+  end
+
+  vllm --> gmr
+  steer --> gmr
+  steer --> qwen
+  csteer --> qwen
+  cvllm --> cinit
+  csteer --> cinit
+  gmr --> grader
+  gmr --> parser
+  cinit --> cutil
+  cinit --> cmet
+  cmet --> ctest
+  cmet --> cpass
+
+  subgraph STANDALONE["Standalone tools (import no repo code)"]
+    hidden["hidden_analysis.py"]:::alone
+    vecgen["vector_generation.py"]:::alone
+    viz["visualize_results.py"]:::alone
+  end
+      </pre>
+    </div>
+    <div class="callout"><b>Read this way:</b> the <code class="ic">*_steering.py</code> scripts are the only ones that import the custom model. The three standalone tools (hidden / vector / visualize) connect to everything else <i>only through files</i> — see the next diagram.</div>
+  </section>
+
+  <!-- 2. DATA FLOW -->
+  <section id="dataflow">
+    <div class="sechead"><span class="secnum">02</span><h2>Diagram ② — End-to-end data flow</h2></div>
+    <p class="sub">This is the most important diagram. Rounded blue boxes are <b>scripts</b> (steps that run); green cylinders are <b>files on disk</b>. Follow the arrows to see how the output of one step becomes the input of the next, across all four phases.</p>
+    <div class="legend">
+      <span><span class="sw proc"></span> script / process step</span>
+      <span><span class="sw data"></span> file on disk (data passed between steps)</span>
+      <span><span class="sw model"></span> the steering vector (the payload)</span>
+    </div>
+    <div class="diagram">
+      <pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"IBM Plex Mono, monospace","fontSize":"13px"}}}%%
+flowchart TD
+  classDef proc fill:#E7EAFB,stroke:#2546D4,stroke-width:1.2px,color:#1B1714;
+  classDef data fill:#E7F0EA,stroke:#2C7A4E,stroke-width:1px,color:#1B1714;
+  classDef vec fill:#FAE6DC,stroke:#D9461C,stroke-width:1.4px,color:#1B1714;
+
+  mtrain[("data/MATH/train.jsonl")]:::data
+  gtest[("data/gsm/test.jsonl")]:::data
+
+  subgraph P1["PHASE 1 · build the steering vector (once per model)"]
+    direction TB
+    p1a["eval_MATH_vllm.py<br/>(generate MATH solutions)"]:::proc
+    pred1[("predictions.jsonl")]:::data
+    p1grade["get_math_results.py<br/>(grade correct/incorrect)"]:::proc
+    meval1[("math_eval.jsonl")]:::data
+    p1b["hidden_analysis.py<br/>(record + label hidden states)"]:::proc
+    hpt[("hidden_correct/hidden.pt<br/>hidden_incorrect/hidden.pt")]:::data
+    p1c["vector_generation.py<br/>(mean-diff subtraction)"]:::proc
+    p1a --> pred1 --> p1grade --> meval1
+    meval1 --> p1b
+    p1b --> hpt --> p1c
+  end
+
+  vec[("layer_20_..._steervec.pt")]:::vec
+
+  subgraph P2["PHASE 2 · baseline (no steering)"]
+    direction TB
+    p2["eval_MATH_vllm.py"]:::proc
+    mevalB[("baseline/math_eval.jsonl<br/>+ metrics.json")]:::data
+    p2 --> mevalB
+  end
+
+  subgraph P3["PHASE 3 · steered eval"]
+    direction TB
+    p3["eval_MATH_steering.py<br/>+ modeling_qwen2.py"]:::proc
+    mevalS[("steered/math_eval.jsonl<br/>+ metrics.json")]:::data
+    p3 --> mevalS
+  end
+
+  subgraph P4["PHASE 4 · visualize"]
+    direction TB
+    p4["visualize_results.py"]:::proc
+    dash[("dashboard.png<br/>summary.md / .json")]:::data
+    p4 --> dash
+  end
+
+  mtrain --> p1a
+  mtrain --> p1b
+  p1c --> vec
+
+  gtest --> p2
+  gtest --> p3
+  vec --> p3
+
+  mevalB --> p4
+  mevalS --> p4
+      </pre>
+    </div>
+    <div class="callout green"><b>The spine of the project:</b> <code class="ic">MATH/train.jsonl → predictions → math_eval → hidden.pt → steervec.pt → (applied in Phase 3) → metrics → dashboard</code>. The single <code class="ic">steervec.pt</code> file (orange) is the whole point — everything before it builds it, everything after it uses it.</div>
+  </section>
+
+  <!-- 3. TRACKS -->
+  <section id="tracks">
+    <div class="sechead"><span class="secnum">03</span><h2>Diagram ③ — Two parallel eval tracks</h2></div>
+    <p class="sub">The repo evaluates on two benchmark types with mirror-image file sets. The <b>same steering vector and same custom model</b> feed both — only the dataset loader and the grader differ.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"IBM Plex Mono, monospace","fontSize":"13px"}}}%%
+flowchart LR
+  classDef proc fill:#E7EAFB,stroke:#2546D4,stroke-width:1.2px,color:#1B1714;
+  classDef model fill:#FAE6DC,stroke:#D9461C,stroke-width:1.4px,color:#1B1714;
+  classDef grade fill:#F6ECD5,stroke:#B7791F,stroke-width:1.2px,color:#1B1714;
+
+  qwen["modeling_qwen2.py<br/>(shared steering model)"]:::model
+
+  subgraph MT["MATH / GSM8K track"]
+    direction TB
+    mb["eval_MATH_vllm.py<br/>(baseline)"]:::proc
+    ms["eval_MATH_steering.py<br/>(steered)"]:::proc
+    mg["get_math_results.py →<br/>eval_math_rule (sympy grader)"]:::grade
+    mb --> mg
+    ms --> mg
+  end
+
+  subgraph CT["Code / LiveCodeBench track"]
+    direction TB
+    cb["eval_code_vllm.py<br/>(baseline)"]:::proc
+    cs["eval_code_steering.py<br/>(steered)"]:::proc
+    cg["code_evaluation/<br/>(run unit tests, pass@k)"]:::grade
+    cb --> cg
+    cs --> cg
+  end
+
+  qwen --> ms
+  qwen --> cs
+      </pre>
+    </div>
+  </section>
+
+  <!-- 4. ORCHESTRATOR -->
+  <section id="orch">
+    <div class="sechead"><span class="secnum">04</span><h2>Diagram ④ — What the orchestrator runs</h2></div>
+    <p class="sub"><code class="ic">scripts/runpod_gsm.sh</code> is the conductor: it runs the phases in order and, crucially, <b>skips any phase whose output file already exists</b> (so re-runs are cheap). Time order goes top-to-bottom.</p>
+    <div class="legend"><span><span class="sw orch"></span> shell orchestrator</span><span><span class="sw proc"></span> phase (python script)</span></div>
+    <div class="diagram">
+      <pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"IBM Plex Mono, monospace","fontSize":"13px"}}}%%
+flowchart TD
+  classDef orch fill:#241f1a,stroke:#241f1a,color:#f0e9dc;
+  classDef proc fill:#E7EAFB,stroke:#2546D4,stroke-width:1.2px,color:#1B1714;
+  classDef skip fill:#EFE7D8,stroke:#5C5347,stroke-dasharray:4 3,color:#5C5347;
+
+  sh["scripts/runpod_gsm.sh"]:::orch
+  q{"steervec.pt<br/>already exists?"}
+
+  sh --> q
+  q -->|no| P1["Phase 1: build vector<br/>(vllm → hidden_analysis → vector_generation)"]:::proc
+  q -->|yes, skip| P2
+  P1 --> P2["Phase 2: baseline GSM8K<br/>(eval_MATH_vllm.py)"]:::proc
+  P2 --> P3["Phase 3: steered GSM8K<br/>(eval_MATH_steering.py)"]:::proc
+  P3 --> P4["Phase 4: charts<br/>(visualize_results.py)"]:::proc
+  P4 --> done(["metrics.json + dashboard.png"]):::skip
+      </pre>
+    </div>
+    <div class="callout"><b>Config knobs</b> are passed as env vars to this script (<code class="ic">STEER_LAYER=20</code>, <code class="ic">STEER_COEF=-1.0</code>, <code class="ic">GSM_MAX_EXAMPLES</code>, <code class="ic">MAX_TOKENS</code>) and flow down into the phase commands.</div>
+  </section>
+
+  <footer class="wrap">
+    SEAL relationship diagrams · <a href="index.html">index.html</a>
+  </footer>
+</div>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, securityLevel: "loose", flowchart: { curve: "basis", useMaxWidth: true } });
+</script>
+</body>
+</html>

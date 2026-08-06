@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hidden states vs lm_head — why you can skip it</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --panel2: #1c2333; --border: #2d3748;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --good: #3fb950; --danger: #f85149; --warn: #d29922;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.65; }
+  .wrap { max-width: 940px; margin:0 auto; padding:32px 20px 90px; }
+  h1 { font-size:1.75rem; margin:0 0 6px; }
+  h2 { font-size:1.2rem; margin:44px 0 12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+  .sub { color:var(--muted); margin:0 0 10px; }
+  code { background:var(--panel2); padding:2px 6px; border-radius:5px; font-size:.9em; color:#ffa657; }
+  p { margin: 12px 0; }
+
+  /* mode switch */
+  .modeswitch { display:flex; gap:12px; margin:22px 0 8px; }
+  .modeswitch button {
+    flex:1; padding:16px; border-radius:10px; border:2px solid var(--border);
+    background:var(--panel2); color:var(--text); cursor:pointer; text-align:left; transition:all .2s;
+  }
+  .modeswitch button .t { font-weight:700; font-size:1rem; display:block; }
+  .modeswitch button .d { font-size:.82rem; color:var(--muted); }
+  .modeswitch button.active.gen  { border-color:var(--accent); background:rgba(88,166,255,.12); }
+  .modeswitch button.active.ext  { border-color:var(--good);   background:rgba(63,185,80,.12); }
+
+  .scene { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:22px; margin:14px 0 8px; }
+  .scenehead { font-weight:700; margin-bottom:4px; }
+  .scenehead .tag { font-size:.72rem; padding:2px 8px; border-radius:20px; margin-left:8px; vertical-align:middle; }
+  .tag.gen { background:rgba(88,166,255,.2); color:var(--accent); }
+  .tag.ext { background:rgba(63,185,80,.2); color:var(--good); }
+  .scenedesc { color:var(--muted); font-size:.92rem; margin-bottom:16px; }
+
+  /* the flow diagram */
+  .flow { display:flex; align-items:stretch; gap:0; flex-wrap:wrap; }
+  .box { flex:1; min-width:110px; border-radius:10px; padding:14px 10px; text-align:center;
+    border:2px solid transparent; transition:all .3s; position:relative; }
+  .box .cap { font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .box .nm { font-weight:700; margin:3px 0; font-size:.95rem; }
+  .box .dt { font-size:.76rem; color:var(--muted); }
+  .box.tf { background:rgba(88,166,255,.08); border-color:rgba(88,166,255,.35); }
+  .box.hs { background:rgba(63,185,80,.1); border-color:rgba(63,185,80,.5); }
+  .box.lh { background:rgba(248,81,73,.08); border-color:rgba(248,81,73,.4); }
+  .box.lg { background:rgba(248,81,73,.05); border-color:rgba(248,81,73,.3); }
+  .box.faded { opacity:.2; filter:grayscale(1); }
+  .box.pulse { animation:pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(63,185,80,.5);} 50%{ box-shadow:0 0 0 8px rgba(63,185,80,0);} }
+  .ar { align-self:center; color:var(--muted); font-size:1.4rem; padding:0 3px; transition:opacity .3s; }
+  .ar.faded { opacity:.15; }
+  .pin { display:inline-block; font-size:.66rem; padding:2px 7px; border-radius:12px; margin-top:7px; font-weight:700; }
+  .pin.grab { background:rgba(63,185,80,.22); color:var(--good); }
+  .pin.skip { background:rgba(248,81,73,.22); color:var(--danger); }
+  .pin.use  { background:rgba(88,166,255,.22); color:var(--accent); }
+
+  .takeaway { margin-top:16px; padding:14px 16px; border-radius:8px; font-size:.95rem; }
+  .takeaway.gen { background:rgba(88,166,255,.1); border:1px solid rgba(88,166,255,.4); }
+  .takeaway.ext { background:rgba(63,185,80,.1); border:1px solid rgba(63,185,80,.4); }
+  .takeaway b { color:var(--text); }
+
+  .qa { display:flex; gap:14px; margin:18px 0; flex-wrap:wrap; }
+  .card { flex:1; min-width:240px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+  .card h3 { margin:0 0 6px; font-size:1rem; }
+  .card.need h3 { color:var(--good); }
+  .card.skip h3 { color:var(--danger); }
+  .card p { margin:6px 0; font-size:.9rem; color:var(--muted); }
+
+  .analogy { background:var(--panel2); border-left:4px solid var(--accent); border-radius:0 10px 10px 0; padding:16px 20px; margin:24px 0; }
+  .analogy b { color:var(--accent); }
+  .analogy .em { color:var(--good); font-weight:600; }
+  .analogy .em2 { color:var(--danger); font-weight:600; }
+
+  /* memory mini */
+  .mem { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin:16px 0; }
+  .bartrack { position:relative; height:30px; background:var(--panel2); border-radius:8px; overflow:hidden; border:1px solid var(--border); margin-top:10px; }
+  .barfill { position:absolute; inset:0; display:flex; }
+  .seg { height:100%; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:700; color:#fff; overflow:hidden; white-space:nowrap; transition:width .35s; }
+  .seg.model{ background:linear-gradient(90deg,#1f6feb,#388bfd);} .seg.hid{ background:linear-gradient(90deg,#238636,#3fb950);} .seg.log{ background:linear-gradient(90deg,#b62324,#f85149);}
+  .capline{ position:absolute; top:-4px; bottom:-4px; width:3px; background:var(--warn); box-shadow:0 0 8px var(--warn);}
+  .caplabel{ position:absolute; top:-20px; transform:translateX(-50%); font-size:.7rem; color:var(--warn); font-weight:700; }
+  .verdict{ margin-top:26px; padding:12px 15px; border-radius:8px; font-weight:600; font-size:.92rem;}
+  .verdict.ok{ background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.4); color:var(--good);}
+  .verdict.bad{ background:rgba(248,81,73,.12); border:1px solid rgba(248,81,73,.4); color:var(--danger);}
+  .footnote{ color:var(--muted); font-size:.8rem; margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Hidden states vs <code>lm_head</code></h1>
+  <p class="sub">The one idea that makes it click: <b>when you extract, the text is already written — so there's nothing to predict.</b> Flip the switch below and watch what the model actually needs to do.</p>
+
+  <h2>1. Same model, two totally different jobs</h2>
+  <p>The exact same model can be used two ways. The difference isn't the model — it's <b>whether you're writing new text or just reading finished text.</b> That single difference is why you can drop <code>lm_head</code>.</p>
+
+  <div class="modeswitch">
+    <button id="btnGen" class="gen active" onclick="setMode('gen')">
+      <span class="t">✍️ Generating (Phase 1a)</span>
+      <span class="d">Model writes the reasoning trace, one word at a time</span>
+    </button>
+    <button id="btnExt" class="ext" onclick="setMode('ext')">
+      <span class="t">🔍 Extracting (Phase 1b — your crash)</span>
+      <span class="d">Trace is already written; you re-read it to watch the internals</span>
+    </button>
+  </div>
+
+  <div class="scene">
+    <div class="scenehead" id="sceneTitle">–</div>
+    <div class="scenedesc" id="sceneDesc">–</div>
+
+    <div class="flow" id="flow">
+      <div class="box tf" id="b-tf">
+        <div class="cap">Stage 1</div><div class="nm">Transformer</div>
+        <div class="dt">reads the text, builds understanding</div>
+      </div>
+      <div class="ar" id="ar1">→</div>
+      <div class="box hs" id="b-hs">
+        <div class="cap">comes out of stage 1</div><div class="nm">Hidden state</div>
+        <div class="dt">layer 20 · the internal "thought"</div>
+        <div class="pin use" id="pin-hs">used to keep going</div>
+      </div>
+      <div class="ar" id="ar2">→</div>
+      <div class="box lh" id="b-lh">
+        <div class="cap">Stage 2 (last step)</div><div class="nm">lm_head</div>
+        <div class="dt">turns the thought into a next-word guess</div>
+      </div>
+      <div class="ar" id="ar3">→</div>
+      <div class="box lg" id="b-lg">
+        <div class="cap">comes out of stage 2</div><div class="nm">Next-word scores</div>
+        <div class="dt">150,000 numbers · "which word is next?"</div>
+      </div>
+    </div>
+
+    <div class="takeaway" id="takeaway">–</div>
+  </div>
+
+  <h2>2. So what do you keep, and what do you skip?</h2>
+  <p>In <b>extraction</b> mode, the answer becomes obvious. You never asked "what word comes next" — the words are already there. You only asked "what was the model <i>thinking</i> as it read." That thinking = the hidden state.</p>
+  <div class="qa">
+    <div class="card need">
+      <h3>✓ What you NEED</h3>
+      <p><b>The layer-20 hidden state.</b> It's the model's internal representation of the reasoning. Your steering vector is literally built by averaging these for correct vs. incorrect traces and subtracting.</p>
+      <p>It's produced <b>partway through</b> the transformer — before <code>lm_head</code> ever runs.</p>
+    </div>
+    <div class="card skip">
+      <h3>✗ What you SKIP</h3>
+      <p><b><code>lm_head</code> and its 150,000 next-word scores.</b> Its only job is predicting the next token so the model can keep writing.</p>
+      <p>You're not writing anything — the trace is finished. So this step produces a giant tensor you'd immediately throw away. That tensor is what overflowed your 24 GB.</p>
+    </div>
+  </div>
+
+  <h2>3. The analogy that matches your task</h2>
+  <div class="analogy">
+    <p>You hand a student a <b>finished essay</b> and ask: <i>"As you read this, which parts make your brain go 'wait, let me double-check'?"</i></p>
+    <p><span class="em">✓ You scan their brain while they read</span> → that's grabbing the <b>hidden state</b>. This is all you want.</p>
+    <p><span class="em2">✗ You do NOT ask them to write the next paragraph of the essay</span> → that's <code>lm_head</code>. The essay is already done, so composing 150,000 candidate next-sentences is pure wasted effort — and it's what filled up the desk (your VRAM).</p>
+    <p>Your fix <code>model.model(...)</code> says: <b>"read it and let me scan your brain — but don't write anything."</b> Same brain scan, none of the waste.</p>
+  </div>
+
+  <h2>4. Watch the memory (extraction, on your 4090)</h2>
+  <p>Drag the trace length. Notice the <span style="color:var(--danger);font-weight:700">red next-word-scores</span> block is the thing that blows past 24 GB — and it's the exact block your fix deletes.</p>
+  <div class="mem">
+    <label style="font-weight:600; font-size:.9rem;">Trace length: <span id="seqVal" style="color:var(--accent)">10000</span> tokens</label>
+    <input type="range" id="seq" min="500" max="10000" step="500" value="10000" style="width:100%; accent-color:var(--accent); margin-top:8px;" />
+    <div style="display:flex; gap:12px; margin:14px 0 4px;">
+      <button id="fixBtn" onclick="toggleFix()" style="padding:10px 14px; border-radius:8px; border:2px solid var(--danger); background:rgba(248,81,73,.12); color:var(--text); cursor:pointer; font-weight:600;">
+        Currently: running <code>model(...)</code> — click to apply the fix
+      </button>
+    </div>
+    <div class="bartrack">
+      <div class="barfill" id="fill"></div>
+      <div class="capline" id="capline"></div>
+      <div class="caplabel" id="caplabel">24 GB (4090)</div>
+    </div>
+    <div class="verdict" id="verdict">–</div>
+    <div class="footnote">Numbers are illustrative for a 1.5B model in fp16 — the point is the ~100× gap between the green thought and the red word-scores, not the exact decimals.</div>
+  </div>
+</div>
+
+<script>
+  /* ---------- Section 1: mode narrative ---------- */
+  let mode = 'gen';
+  function setMode(m){
+    mode = m;
+    document.getElementById('btnGen').classList.toggle('active', m==='gen');
+    document.getElementById('btnExt').classList.toggle('active', m==='ext');
+
+    const title = document.getElementById('sceneTitle');
+    const desc  = document.getElementById('sceneDesc');
+    const take  = document.getElementById('takeaway');
+    const pinHs = document.getElementById('pin-hs');
+
+    const faded = (on)=>['b-lh','b-lg','ar3'].forEach(id=>document.getElementById(id).classList.toggle('faded',on));
+    document.getElementById('ar2').classList.toggle('faded', false);
+
+    if(m==='gen'){
+      title.innerHTML = 'Generating <span class="tag gen">Phase 1a · already done</span>';
+      desc.textContent = 'The model is writing the trace. To choose each next word it must run all the way to lm_head. Here lm_head is essential.';
+      faded(false);
+      document.getElementById('b-hs').classList.remove('pulse');
+      pinHs.className='pin use'; pinHs.textContent='passed into lm_head';
+      take.className='takeaway gen';
+      take.innerHTML='<b>Here you need the whole chain.</b> The hidden state flows into <code>lm_head</code>, which scores 150,000 words so the model can pick the next one and keep writing. lm_head is doing real work.';
+    } else {
+      title.innerHTML = 'Extracting <span class="tag ext">Phase 1b · where it crashed</span>';
+      desc.textContent = 'The trace is already written. You feed it back in only to read the internal hidden state. There is no next word to predict — so the last two boxes are pointless.';
+      faded(true);
+      document.getElementById('b-hs').classList.add('pulse');
+      pinHs.className='pin grab'; pinHs.textContent='✓ grab this & stop';
+      take.className='takeaway ext';
+      take.innerHTML='<b>You stop at the hidden state.</b> The text is finished, so there is nothing to predict — <code>lm_head</code> and the 150,000 word-scores are wasted. Your fix <code>model.model(...)</code> literally cuts the greyed-out boxes.';
+    }
+  }
+
+  /* ---------- Section 4: memory ---------- */
+  const BYTES=2, HIDDEN_DIM=1536, VOCAB=151936, WEIGHTS_GB=3.5, OVERHEAD=2.2, CAP=24, GB=1024**3, AXIS=40;
+  let applyFix=false;
+  function toggleFix(){
+    applyFix=!applyFix;
+    const b=document.getElementById('fixBtn');
+    if(applyFix){
+      b.style.borderColor='var(--good)'; b.style.background='rgba(63,185,80,.12)';
+      b.innerHTML='Fix applied: running <code>model.model(...)</code> — click to revert';
+    } else {
+      b.style.borderColor='var(--danger)'; b.style.background='rgba(248,81,73,.12)';
+      b.innerHTML='Currently: running <code>model(...)</code> — click to apply the fix';
+    }
+    renderMem();
+  }
+  const gb=n=>n.toFixed(2)+' GB';
+  function renderMem(){
+    const seq=+document.getElementById('seq').value;
+    document.getElementById('seqVal').textContent=seq;
+    const hid=(seq*HIDDEN_DIM*BYTES*OVERHEAD)/GB;
+    const log=(seq*VOCAB*BYTES)/GB;
+    const useLog=!applyFix;
+    const total=WEIGHTS_GB+hid+(useLog?log:0);
+    const pct=v=>Math.min(100,(v/AXIS)*100);
+    let h=`<div class="seg model" style="width:${pct(WEIGHTS_GB)}%">weights</div>`;
+    h+=`<div class="seg hid" style="width:${pct(hid)}%">${hid>1.2?'thought':''}</div>`;
+    if(useLog) h+=`<div class="seg log" style="width:${pct(log)}%">word-scores</div>`;
+    document.getElementById('fill').innerHTML=h;
+    document.getElementById('capline').style.left=pct(CAP)+'%';
+    document.getElementById('caplabel').style.left=pct(CAP)+'%';
+    const v=document.getElementById('verdict');
+    if(total>CAP){ v.className='verdict bad'; v.textContent=`💥 needs ${gb(total)} > 24 GB → CUDA out of memory (your crash).`; }
+    else { v.className='verdict ok'; v.textContent=`✅ needs ${gb(total)} ≤ 24 GB → fits.`; }
+  }
+  document.getElementById('seq').addEventListener('input',renderMem);
+
+  setMode('gen');
+  renderMem();
+</script>
+</body>
+</html>
