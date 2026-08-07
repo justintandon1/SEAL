@@ -883,19 +883,20 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
     S_combo included, is non-significant (all p &ge; 0.66) &mdash; agreeing on 419/500
     problems (30 all-correct, 389 all-wrong).</p>
 
-    <p>Broken out by APPS difficulty tier, the gain concentrates in the easiest tier. (S_combo
-    is not yet broken out by tier &mdash; that split is not part of
-    <code>scripts/report_stats.py</code>'s output.)</p>
+    <p>Broken out by APPS difficulty tier, the gain concentrates in the easiest tier. (This
+    split comes from <code>metrics.json</code>'s own <code>breakdown.difficulty</code> field,
+    written by <code>eval_code_steering.py</code> at eval time &mdash; not from
+    <code>scripts/report_stats.py</code>, which does not compute it.)</p>
 
     <div class="table-wrap">
       <table class="res compact">
         <thead>
-          <tr><th>Difficulty</th><th>n</th><th>baseline</th><th>S_math</th><th>S_code</th><th>S_logic</th></tr>
+          <tr><th>Difficulty</th><th>n</th><th>baseline</th><th>S_math</th><th>S_code</th><th>S_logic</th><th>S_combo</th></tr>
         </thead>
         <tbody>
-          <tr><td class="dom">introductory</td><td>95</td><td>28.4%</td><td class="up">34.7%</td><td class="up">34.7%</td><td>31.6%</td></tr>
-          <tr><td class="dom">interview</td><td>314</td><td>8.9%</td><td>9.2%</td><td>10.8%</td><td class="up">11.1%</td></tr>
-          <tr><td class="dom">competition</td><td>91</td><td>1.1%</td><td class="up">3.3%</td><td>2.2%</td><td>2.2%</td></tr>
+          <tr><td class="dom">introductory</td><td>95</td><td>28.4%</td><td class="up">34.7%</td><td class="up">34.7%</td><td>31.6%</td><td>30.5%</td></tr>
+          <tr><td class="dom">interview</td><td>314</td><td>8.9%</td><td>9.2%</td><td>10.8%</td><td class="up">11.1%</td><td class="up">11.1%</td></tr>
+          <tr><td class="dom">competition</td><td>91</td><td>1.1%</td><td class="up">3.3%</td><td>2.2%</td><td>2.2%</td><td>2.2%</td></tr>
         </tbody>
       </table>
     </div>
