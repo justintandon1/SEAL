@@ -1,6 +1,7 @@
 **/__pycache__/
 results/
-.env.ipynb_checkpoints/
+.env
+.ipynb_checkpoints/
 external/
 
 # Durable layer-20 hidden states live under data/*/hidden_*/ (copied by
