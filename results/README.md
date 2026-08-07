@@ -26,9 +26,20 @@ results/
     MATH500/ APPS/ GSM/ MBPP/   # imported from Andwwy/v_code-SEAL (see its README)
     LogiQA/                     # in-repo run on the clean English-500 set
 
+  results_for_general_vectors/  # runs using the pooled general vector (S_general, Phase 1)
+    MATH500/ LogiQA/            #   <benchmark>/s_general_phase1/<run>/  + visualization/
+
+  results_for_combo_vectors/    # runs using the combined vector (S_combo = results/general/S_combo.pt)
+    MATH500/ LogiQA/ APPS/      #   <benchmark>/s_combo/<run>/  + visualization/
+
   archive/
     logiqa_300_mixed_language/  # superseded 300-problem, ~half-Chinese LogiQA set
 ```
+
+`S_general` and `S_combo` are both *general* vectors but are built differently, so
+they get separate trees: `S_general` pools raw boundary activations across all
+three domains, while `S_combo` is a weighted sum of the three finished domain
+vectors. See `docs/s_combo_construction.html` and `docs/s_general_vs_s_combo.html`.
 
 `hidden.pt` files are not committed in either tree — only `hidden_*/prompts.json`
 and the resulting `vector_*/…steervec.pt`. Regenerate hidden states from the

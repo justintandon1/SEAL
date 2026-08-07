@@ -52,9 +52,9 @@ from logic_utils import extract_choice, options_from_prompt  # noqa: E402
 MODEL = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 MAX_TOKENS = 10000
 
-# Arm -> path relative to the results root. The nesting is historical: runs are
-# filed under the vector that produced them, so S_combo's LogiQA run sits under
-# results_for_math_vectors. See results/README.md.
+# Arm -> path relative to the results root. Runs are filed under the vector that
+# produced them (results_for_<source>_vectors/<benchmark>/), so one benchmark's
+# arms are spread across several trees. See results/README.md.
 BENCHMARKS: Dict[str, dict] = {
     "math500": {
         "label": "MATH-500 (Omni-MATH rule grader)",
@@ -66,7 +66,7 @@ BENCHMARKS: Dict[str, dict] = {
             "S_code": "results_for_code_vectors/MATH500/code_vector/vectors_apps_v_code/coef_-1.0_remove_bos/rand42_500",
             "S_logic": "results_for_logic_vectors/MATH500/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/rand42_500",
             "S_general": "results_for_general_vectors/MATH500/s_general_phase1/results_general_S_general_math_apps_logic_phase1/coef_-1.0_remove_bos/rand42_500",
-            "S_combo": "results_for_math_vectors/MATH500/S_combo/results_general_S_combo/coef_-1.0_remove_bos/rand42_500",
+            "S_combo": "results_for_combo_vectors/MATH500/s_combo/results_general_S_combo/coef_-1.0_remove_bos/rand42_500",
         },
     },
     "logiqa": {
@@ -79,7 +79,7 @@ BENCHMARKS: Dict[str, dict] = {
             "S_code": "results_for_code_vectors/LogiQA/code_vector/vectors_apps_v_code/coef_-1.0_remove_bos/eval_rand42_500_clean",
             "S_logic": "results_for_logic_vectors/LogiQA/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/eval_rand42_500_clean",
             "S_general": "results_for_general_vectors/LogiQA/s_general_phase1/results_general_S_general_math_apps_logic_phase1/coef_-1.0_remove_bos/eval_rand42_500_clean",
-            "S_combo": "results_for_math_vectors/LogiQA/S_combo/results_general_S_combo/coef_-1.0_remove_bos/eval_rand42_500_clean",
+            "S_combo": "results_for_combo_vectors/LogiQA/s_combo/results_general_S_combo/coef_-1.0_remove_bos/eval_rand42_500_clean",
         },
     },
     "apps": {
@@ -91,7 +91,7 @@ BENCHMARKS: Dict[str, dict] = {
             "S_math": "results_for_math_vectors/APPS/math_vector/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/test_rand42_500",
             "S_code": "results_for_code_vectors/APPS/code_vector/vectors_apps_v_code/coef_-1.0_remove_bos/test_rand42_500",
             "S_logic": "results_for_logic_vectors/APPS/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/test_rand42_500",
-            "S_combo": "results_for_math_vectors/APPS/S_combo/results_general_S_combo/coef_-1.0_remove_bos/test_rand42_500",
+            "S_combo": "results_for_combo_vectors/APPS/s_combo/results_general_S_combo/coef_-1.0_remove_bos/test_rand42_500",
         },
     },
     "mbpp": {
