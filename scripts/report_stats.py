@@ -91,6 +91,7 @@ BENCHMARKS: Dict[str, dict] = {
             "S_math": "results_for_math_vectors/APPS/math_vector/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/test_rand42_500",
             "S_code": "results_for_code_vectors/APPS/code_vector/vectors_apps_v_code/coef_-1.0_remove_bos/test_rand42_500",
             "S_logic": "results_for_logic_vectors/APPS/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/test_rand42_500",
+            "S_combo": "results_for_math_vectors/APPS/S_combo/results_general_S_combo/coef_-1.0_remove_bos/test_rand42_500",
         },
     },
     "mbpp": {

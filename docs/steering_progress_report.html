@@ -261,7 +261,7 @@
       &alpha; = &minus;1.0 on <code>DeepSeek-R1-Distill-Qwen-1.5B</code>, across
       <strong>six benchmarks</strong>. All five are close to the same direction in activation
       space, all five produce <strong>statistically indistinguishable</strong> effects, and
-      all five cut reasoning tokens by 9&ndash;52% depending on the benchmark.
+      all five cut reasoning tokens by 7.5&ndash;52% depending on the benchmark.
     </p>
 
     <div class="chiprow">
@@ -269,7 +269,7 @@
       <span class="chip"><strong>Site</strong> layer 20 · coef &minus;1.0</span>
       <span class="chip"><strong>Decoding</strong> greedy · max_tokens 10,000</span>
       <span class="chip"><strong>Benchmarks</strong> MATH-500 · LogiQA · APPS · MBPP · GSM8K · MMLU</span>
-      <span class="chip"><strong>Date</strong> 2026-08-06</span>
+      <span class="chip"><strong>Date</strong> 2026-08-07</span>
     </div>
 
     <div class="takeaway">
@@ -318,8 +318,8 @@
       </div>
       <div class="stat">
         <span class="label">Token reduction · range</span>
-        <span class="num teal sm">&minus;9% to &minus;52%</span>
-        <span class="small">APPS lowest, GSM8K highest &nbsp;·&nbsp; shorter on every benchmark</span>
+        <span class="num teal sm">&minus;7.5% to &minus;52%</span>
+        <span class="small">APPS lowest (S_combo), GSM8K highest &nbsp;·&nbsp; shorter on every benchmark</span>
       </div>
       <div class="stat">
         <span class="label">Share of gain from budget-limited problems</span>
@@ -382,7 +382,7 @@
           <tr>
             <td class="dom">S_combo</td>
             <td class="sep"><span class="win">79.4%</span></td><td class="up"><span class="win">+15.0</span></td><td class="down"><span class="win">&minus;35.6%</span></td>
-            <td class="sep sub" colspan="3">not run</td>
+            <td class="sep">13.2%</td><td class="up">+2.0</td><td class="down">&minus;7.5%</td>
             <td class="sep">28.4%</td><td class="up">+2.6</td><td class="down">&minus;30.1%</td>
           </tr>
         </tbody>
@@ -397,8 +397,9 @@
       benchmarks comes back non-significant (MATH-500 p &ge; 0.15, LogiQA p &ge; 0.46, APPS
       p &ge; 0.66). Which vector &ldquo;wins&rdquo; a column would likely change on a
       different 500 problems. The finding is that the columns are flat, not who is on top.
-      GSM8K, MBPP and MMLU are in <a href="#rest">&sect;9</a>; the six missing cells are in
-      the coverage matrix in <a href="#coverage">&sect;5</a>.
+      GSM8K, MBPP and MMLU are in <a href="#rest">&sect;9</a>; the remaining three missing
+      cells (S_general on APPS) are in the coverage matrix in
+      <a href="#coverage">&sect;5</a>.
     </div>
 
     <div class="takeaway">
@@ -408,7 +409,7 @@
       paired McNemar test (<span class="mono">p</span> from
       <span class="mono">1e&minus;9</span> to <span class="mono">2e&minus;14</span>). The
       direction of effect is positive on all six benchmarks, and average generated tokens
-      fall everywhere &mdash; from &minus;8.6% on APPS to &minus;51.7% on GSM8K.
+      fall everywhere &mdash; from &minus;7.5% on APPS to &minus;51.7% on GSM8K.
     </div>
 
     <div class="takeaway">
@@ -417,7 +418,8 @@
       (<span class="mono">p &ge; 0.15</span>), and the five arms agree on the outcome of
       <strong>376 / 500</strong> problems &mdash; including agreeing on which 54 none of them
       can solve. Same story on LogiQA (all pairs <span class="mono">p &ge; 0.46</span>) and
-      APPS (<span class="mono">p &ge; 0.66</span>, three arms agreeing on 431/500). The
+      APPS (<span class="mono">p &ge; 0.66</span>, four arms agreeing on 419/500 &mdash; now
+      including S_combo). The
       geometry predicted this: the domain vectors are close to rank-1, so pooled, combined,
       and individual vectors are all close to the same direction.
       <strong>The benchmarks confirm the geometry.</strong>
@@ -631,7 +633,7 @@
           <tr><td class="dom">LogiQA</td><td>clean English-500</td><td>acc</td>
             <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td></tr>
           <tr><td class="dom">APPS</td><td>test rand42-500</td><td>pass@1</td>
-            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
+            <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="yes">&#10003;</td></tr>
           <tr><td class="dom">MBPP</td><td>test-500</td><td>pass@1</td>
             <td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&mdash;</td><td class="no">&mdash;</td><td class="no">&mdash;</td></tr>
           <tr><td class="dom">GSM8K</td><td>full test (1,319)</td><td>acc</td>
@@ -644,9 +646,11 @@
         </tbody>
       </table>
     </div>
-    <p class="cap">Closing the eight missing S_general / S_combo cells on APPS, MBPP and
-    GSM8K is listed under Priority 3 in <a href="#next">&sect;13</a>. It matters most on
-    APPS, since that is where the general vectors would be tested furthest from their
+    <p class="cap">S_combo now covers MATH-500, LogiQA and APPS &mdash; it is still missing
+    on MBPP and GSM8K. Closing the remaining seven missing S_general / S_combo cells
+    (S_general on APPS, plus both on MBPP and GSM8K) is listed under Priority 3 in
+    <a href="#next">&sect;13</a>. S_general on APPS matters most among what is left, since
+    that is where the general vectors would be tested furthest from their
     MATH-heavy pooling.</p>
 
     <!-- ================================================================ -->
@@ -868,15 +872,20 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
               <td class="sep">8,125</td><td class="down">&minus;8.6%</td><td>70.0%</td></tr>
           <tr><td class="dom">S_logic</td><td>13.4%</td><td class="up">+2.2</td><td class="sub">&plusmn;3.0</td><td class="mono">0.14</td>
               <td class="sep">8,207</td><td class="down">&minus;7.7%</td><td>70.0%</td></tr>
-          <tr class="gap"><td colspan="8">S_general and S_combo — not run</td></tr>
+          <tr><td class="dom">S_combo</td><td>13.2%</td><td class="up">+2.0</td><td class="sub">&plusmn;3.0</td><td class="mono">0.18</td>
+              <td class="sep">8,227</td><td class="down">&minus;7.5%</td><td>69.8%</td></tr>
+          <tr class="gap"><td colspan="8">S_general &mdash; not run</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="cap">No arm reaches significance against the baseline, and the three steered
-    arms are indistinguishable from each other (all pairs p &ge; 0.66), agreeing on 431/500
-    problems &mdash; though 397 of those are problems all three get wrong.</p>
+    <p class="cap">No arm reaches significance against the baseline, and the four steered
+    arms are indistinguishable from each other &mdash; every steered-vs-steered pair on APPS,
+    S_combo included, is non-significant (all p &ge; 0.66) &mdash; agreeing on 419/500
+    problems (30 all-correct, 389 all-wrong).</p>
 
-    <p>Broken out by APPS difficulty tier, the gain concentrates in the easiest tier:</p>
+    <p>Broken out by APPS difficulty tier, the gain concentrates in the easiest tier. (S_combo
+    is not yet broken out by tier &mdash; that split is not part of
+    <code>scripts/report_stats.py</code>'s output.)</p>
 
     <div class="table-wrap">
       <table class="res compact">
@@ -890,6 +899,28 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
         </tbody>
       </table>
     </div>
+
+    <p>Every steered-vs-steered pair on APPS, computed the same way as the MATH-500 pairwise
+    table in <a href="#math500">&sect;6</a>:</p>
+
+    <div class="table-wrap">
+      <table class="res compact">
+        <thead>
+          <tr><th>Pair (A vs B)</th><th>A&#10003; B&#10007;</th><th>A&#10007; B&#10003;</th><th>&Delta;</th><th>p (exact)</th><th>Agreement</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S_math vs S_code</td><td>21</td><td>25</td><td>+0.8</td><td class="mono">0.66</td><td>90.8%</td></tr>
+          <tr><td>S_math vs S_logic</td><td>21</td><td>23</td><td>+0.4</td><td class="mono">0.88</td><td>91.2%</td></tr>
+          <tr><td>S_math vs S_combo</td><td>18</td><td>19</td><td>+0.2</td><td class="mono">1.00</td><td>92.6%</td></tr>
+          <tr><td>S_code vs S_logic</td><td>25</td><td>23</td><td>&minus;0.4</td><td class="mono">0.89</td><td>90.4%</td></tr>
+          <tr><td>S_code vs S_combo</td><td>27</td><td>24</td><td>&minus;0.6</td><td class="mono">0.78</td><td>89.8%</td></tr>
+          <tr><td>S_logic vs S_combo</td><td>21</td><td>20</td><td>&minus;0.2</td><td class="mono">1.00</td><td>91.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Widest spread is S_code vs S_combo at 0.6 points, p = 0.78 &mdash; nowhere
+    close to significant. Same picture as MATH-500 and LogiQA: the vectors move APPS as one
+    intervention.</p>
 
     <div class="takeaway warn">
       <span class="head">APPS is the clearest case against a "reasoning quality" reading</span>
@@ -1194,9 +1225,9 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       measured, and a large fraction of every baseline set is budget-limited. Our 64.4% vs
       the commonly reported 83.9% is explained by this, but it means our headroom is partly
       an artifact of the protocol.</li>
-      <li><strong>Coverage is uneven</strong> (&sect;5). S_general and S_combo have run only
-      on MATH-500 and LogiQA; APPS, MBPP and GSM8K have no general-vector rows, and MMLU has
-      only S_math.</li>
+      <li><strong>Coverage is uneven</strong> (&sect;5). S_combo now covers MATH-500,
+      LogiQA and APPS; S_general still covers only MATH-500 and LogiQA. MBPP and GSM8K have
+      no general-vector rows at all, and MMLU has only S_math.</li>
       <li><strong>The S_general <code>.pt</code> is not committed</strong> &mdash; only its
       <code>meta.json</code>. So cos(S_general, S_combo), the single most direct test of
       &ldquo;is pooling the same as combining,&rdquo; is unmeasured.</li>
@@ -1288,9 +1319,14 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       32,000 tokens. If the gain shrinks toward the 7B-sized +3, that confirms &sect;11
       directly and tells us how much of the headline is protocol. Highest-value single
       experiment on this list.</li>
-      <li><strong>Fill the coverage matrix</strong> &mdash; S_general and S_combo on APPS,
-      MBPP and GSM8K, so the general vectors have the same coverage as S_math and S_code.
-      APPS matters most: it is the furthest from the MATH-heavy pooling in S_general.</li>
+      <li><span class="pill good">Partly done</span> &nbsp;<strong>Fill the coverage
+      matrix</strong> &mdash; S_combo now has APPS (13.2%, +2.0 pts, non-significant vs.
+      every other arm, same as MATH-500/LogiQA). Still missing: S_general on APPS, and both
+      S_general and S_combo on MBPP and GSM8K. APPS was the priority case since it is
+      furthest from the MATH-heavy pooling in S_general &mdash; that half of the test (the
+      S_combo half) now confirms the same flat-effect pattern holds there too. S_general on
+      APPS is the one still worth running, since S_general and S_combo could in principle
+      diverge exactly where S_general's pooling is most MATH/APPS-skewed.</li>
       <li><strong>Coefficient sweep</strong> at fixed layer 20 &mdash; is &minus;1.0 near an
       optimum, and does the accuracy/length trade-off curve look the same for all five
       vectors?</li>
@@ -1308,14 +1344,15 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
 
     <div class="note">
       <strong>Status of the wider run queue.</strong> Additional benchmark runs are in
-      flight; this report covers MATH-500 and LogiQA at full five-vector coverage and the
-      other four benchmarks at partial coverage. The two control runs in Priority 1 are the
-      next GPU jobs. For reference, the previous five-eval sequence took roughly 38 GPU-hours
-      end to end.
+      flight; this report covers MATH-500 and LogiQA at full five-vector coverage, APPS at
+      four of five vectors (S_general still missing), and the other three benchmarks at
+      partial coverage. The two control runs in Priority 1 are the next GPU jobs. For
+      reference, S_combo's APPS run took ~8h55m on one A100 80GB PCIe (batch 16); the
+      earlier five-eval sequence took roughly 38 GPU-hours end to end.
     </div>
 
     <footer>
-      SEAL · reasoning-calibration steering · progress report, 2026-08-06<br>
+      SEAL · reasoning-calibration steering · progress report, 2026-08-07<br>
       Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B</code> · layer 20 · coef &minus;1.0 · greedy · max_tokens 10,000<br>
       Statistics reproducible with <code>python scripts/report_stats.py</code> ·
       Code and results: <a href="https://github.com/Andwwy/SEAL">github.com/Andwwy/SEAL</a> ·
