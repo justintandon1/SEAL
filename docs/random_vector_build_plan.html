@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Building R_iso · the random-vector control</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #1c2530;
+      --muted: #667281;
+      --line: #dfe4ea;
+      --blue: #1769aa;
+      --blue-soft: #eaf4ff;
+      --green: #24784b;
+      --green-soft: #eaf7f0;
+      --orange: #a45a19;
+      --orange-soft: #fff3e7;
+      --purple: #6849a8;
+      --purple-soft: #f2edff;
+      --code: #121a24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.62;
+    }
+    main {
+      width: min(880px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+    article {
+      padding: 42px 48px 52px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 20px 55px -48px rgba(28, 37, 48, .7);
+    }
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 8px 0 18px;
+      font-size: clamp(32px, 5.6vw, 46px);
+      line-height: 1.1;
+      letter-spacing: -.045em;
+    }
+    h2 {
+      margin: 40px 0 12px;
+      padding-top: 4px;
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: -.02em;
+    }
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 16px;
+      color: var(--blue);
+    }
+    p { margin: 0 0 13px; }
+    .lede {
+      color: var(--muted);
+      font-size: 18px;
+    }
+    code {
+      padding: 1px 5px;
+      background: #f1f3f5;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      margin: 14px 0 17px;
+      padding: 17px 19px;
+      overflow-x: auto;
+      color: #e8eef4;
+      background: var(--code);
+      border-radius: 11px;
+      font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    pre code { padding: 0; background: none; border: 0; color: inherit; font-size: inherit; }
+    .answer {
+      margin: 25px 0 8px;
+      padding: 17px 19px;
+      background: var(--blue-soft);
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+    }
+    .step {
+      display: inline-grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      margin-right: 7px;
+      color: #fff;
+      background: var(--blue);
+      border-radius: 50%;
+      font-size: 13px;
+      vertical-align: 2px;
+    }
+    .result {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--green-soft);
+      border: 1px solid #c5e1d1;
+      border-radius: 11px;
+    }
+    .warning {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--orange-soft);
+      border: 1px solid #f0d3b6;
+      border-radius: 11px;
+    }
+    .decision {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--purple-soft);
+      border: 1px solid #ddd0f5;
+      border-radius: 11px;
+    }
+    .decision strong { color: var(--purple); }
+    .muted { color: var(--muted); }
+    .tablewrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      margin: 14px 0 18px;
+      border-collapse: collapse;
+      font-size: 14.5px;
+    }
+    th, td {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+    th {
+      background: #f8f9fb;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td strong { color: var(--ink); }
+    .toc {
+      margin: 22px 0 8px;
+      padding: 16px 19px;
+      background: #f8f9fb;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 14.5px;
+    }
+    .toc a { color: var(--blue); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc ol { margin: 6px 0 0; padding-left: 20px; }
+    .toc li { margin: 4px 0; }
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      margin-left: 6px;
+      background: var(--green-soft);
+      color: var(--green);
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      vertical-align: 2px;
+    }
+    .badge.todo { background: var(--orange-soft); color: var(--orange); }
+    .badge.plan { background: var(--purple-soft); color: var(--purple); }
+    footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+    @media (max-width: 620px) {
+      main { width: min(100% - 20px, 880px); padding: 18px 0 42px; }
+      article { padding: 27px 20px 34px; }
+      table { font-size: 13px; }
+      th, td { padding: 7px 8px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <article>
+    <div class="eyebrow">Control construction · build plan</div>
+    <h1>Building <code>R_iso</code>: the random-vector control</h1>
+    <p class="lede">
+      Control A from the progress report, specified end to end. The vector itself
+      is four lines of arithmetic — the work is in the decisions around it: what
+      magnitude, how many draws, and what makes a flat result mean something
+      rather than nothing. No GPU is needed to build or verify it.
+    </p>
+
+    <div class="toc">
+      <strong>On this page</strong>
+      <ol>
+        <li><a href="#why">What this control has to rule out</a></li>
+        <li><a href="#recipe">The recipe</a></li>
+        <li><a href="#norm">Decision 1 — why norm 57.06</a></li>
+        <li><a href="#seeds">Decision 2 — why three draws, not one</a></li>
+        <li><a href="#iso">Decision 3 — isotropic is the <em>easy</em> control</a></li>
+        <li><a href="#geometry">The geometry check, and what it can't catch</a></li>
+        <li><a href="#script">The script</a></li>
+        <li><a href="#gotchas">Three things that will bite</a></li>
+        <li><a href="#verify">CPU verification, before any GPU time</a></li>
+        <li><a href="#run">Running it, and the readouts</a></li>
+        <li><a href="#answers">What this does and doesn't answer</a></li>
+      </ol>
+    </div>
+
+    <h2 id="why"><span class="step">1</span>What this control has to rule out</h2>
+    <p>
+      §11 of the progress report established the mechanism: on all six benchmarks
+      the budget-limited pile — problems where the <em>baseline</em> hit the
+      10,000-token cap — supplies at least 100% of the net gain, while the
+      finished pile contributes between −4.2 and +0.6 points. On MATH-500 with
+      <code>S_combo</code>, the 164 capped problems go 1.22% → 51.22% while the
+      336 finished ones go 95.24% → 93.15%.
+    </p>
+    <p>
+      So the measured effect is <strong>compression</strong>, not better
+      reasoning. That is precisely why this control is on the critical path: a
+      norm-57 vector added at layer 20 at every generated position could
+      plausibly shorten chains of thought regardless of which direction it
+      points. Build this control to be decisive, not to be survived.
+    </p>
+
+    <h2 id="recipe"><span class="step">2</span>The recipe</h2>
+
+    <div class="answer">
+      <strong>Recipe:</strong>
+      <code>R_iso = 57.06 · g / ‖g‖</code>, where <code>g ~ N(0, I₁₅₃₆)</code>
+      drawn from a pinned seed. Applied at layer 20, <code>coef = −1.0</code>,
+      <code>--remove_bos</code> — identical in every respect to the SEAL arms
+      except the direction.
+    </div>
+
+    <p>
+      Three draws, seeds 1 / 2 / 3, written to
+      <code>results/control/R_iso_seed{1,2,3}.pt</code>. Each is a bare
+      1536-dim <code>float32</code> tensor plus a sidecar
+      <code>.meta.json</code>, matching what
+      <code>build_combo_vector.py</code> emits — the loader at
+      <code>eval_MATH_steering.py:190</code> is just
+      <code>torch.load(..., weights_only=True)</code>, so no special format is
+      required.
+    </p>
+
+    <h2 id="norm"><span class="step">3</span>Decision 1 — why norm 57.06</h2>
+    <p>
+      The intervention is <code>hidden_states[flag, -1] += coef · vector</code>.
+      At a fixed <code>coef = −1.0</code>, the vector's norm <em>is</em> the
+      intervention strength, so a control at the wrong magnitude tests nothing:
+      too small and it is inert by construction, too large and it degrades the
+      model for reasons unrelated to direction.
+    </p>
+    <p>
+      57.06 is the mean of the three domain-vector norms — the same
+      <code>mean-source</code> target <code>S_combo</code> already uses. Measured
+      from the committed vectors:
+    </p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Vector</th><th class="num">‖S‖</th><th>Source</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>S_math</code></td><td class="num">59.666</td><td>MATH_train, 1.5B, layer 20</td></tr>
+        <tr><td><code>S_code</code></td><td class="num">56.224</td><td><code>vectors/apps_v_code.pt</code></td></tr>
+        <tr><td><code>S_logic</code></td><td class="num">55.291</td><td><code>vectors/logiqa_v_logic.pt</code></td></tr>
+        <tr><td><code>S_general</code></td><td class="num">55.783</td><td>phase-1, count-weighted</td></tr>
+        <tr><td><code>S_combo</code></td><td class="num">57.060</td><td>rescaled to mean-source</td></tr>
+        <tr><td><strong><code>R_iso</code></strong></td><td class="num"><strong>57.060</strong></td><td>this document</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>
+      The five real vectors span 55.29–59.67, a spread of 8%. Landing the control
+      in the middle of that band means any difference in outcome cannot be
+      attributed to strength.
+    </p>
+
+    <h2 id="seeds"><span class="step">4</span>Decision 2 — why three draws, not one</h2>
+    <p>
+      A single random vector is <em>n</em> = 1. If it comes back flat you cannot
+      separate "random directions do nothing here" from "that particular draw
+      happened to do nothing," and if it comes back hot you cannot tell a real
+      effect from one unlucky draw. Neither outcome is publishable from one
+      sample.
+    </p>
+    <div class="decision">
+      <strong>Three seeds also settles the sign question for free.</strong>
+      A contrast vector has a meaningful orientation — <code>S</code> points from
+      execution toward reflection, and <code>coef = −1.0</code> pushes against
+      it. A random vector has no such orientation, so "should we also run
+      <code>+1.0</code>?" is not a real question: <code>−R_seed1</code> is drawn
+      from exactly the same distribution as <code>R_seed2</code>. Three draws at
+      <code>−1.0</code> already sample both half-spaces.
+    </div>
+
+    <h2 id="iso"><span class="step">5</span>Decision 3 — isotropic is the <em>easy</em> control</h2>
+    <p>
+      This is the part most worth arguing about in the writeup. The residual
+      stream is strongly anisotropic: activations concentrate in a low-dimensional
+      region with a few dominant directions. An isotropic Gaussian draw is very
+      nearly orthogonal to that region, so <code>R_iso</code> may come back flat
+      for a reason that has nothing to do with reasoning — it simply never
+      enters the subspace the model computes in.
+    </p>
+    <p>
+      That does not make <code>R_iso</code> useless. It is the pre-registered
+      spec, it is the standard control in the steering literature, and it is what
+      a reader will ask for first. But its flatness is weak evidence on its own,
+      and the writeup should say so rather than claim more than the design
+      supports.
+    </p>
+    <div class="warning">
+      <strong>The harder follow-on: <code>R_cov</code>.</strong>
+      Draw from a Gaussian matched to the covariance of layer-20 hidden states at
+      boundary tokens, rescale to 57.06 as above. This lands the control inside
+      the region the model actually occupies, so a flat result there is a genuine
+      statement about <em>direction</em>. It needs the <code>hidden.pt</code>
+      activations, which live on the pod rather than in the repo — which is why
+      it is staged second, not because it matters less.
+    </div>
+    <p>
+      Recommended order: build and run <code>R_iso</code> first (cheap, expected,
+      pre-registered), and hold <code>R_cov</code> as the immediate follow-on
+      if <code>R_iso</code> is flat. If <code>R_iso</code> is <em>not</em> flat,
+      <code>R_cov</code> becomes unnecessary — the domain story is already in
+      trouble and the budget should go to the coefficient sweep instead.
+    </p>
+
+    <h2 id="geometry"><span class="step">6</span>The geometry check, and what it can't catch</h2>
+    <p>
+      Before spending GPU time, confirm each draw is actually unrelated to the
+      real vectors. In <em>d</em> = 1536 dimensions the cosine between a random
+      direction and any fixed vector concentrates hard around zero:
+      the standard deviation is 1/√<em>d</em> = 0.0255. Measured over 20,000
+      draws against <code>S_math</code>: mean +0.0001, sd 0.0251, matching
+      theory.
+    </p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Threshold on |cos|</th><th class="num">≈ σ</th><th class="num">P(single draw exceeds)</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0.050</td><td class="num">2.0</td><td class="num">5.1%</td><td>Unremarkable</td></tr>
+        <tr><td>0.064</td><td class="num">2.5</td><td class="num">1.3%</td><td>Note it in the meta</td></tr>
+        <tr><td><strong>0.080</strong></td><td class="num">3.1</td><td class="num">0.21%</td><td><strong>Redraw</strong></td></tr>
+        <tr><td>0.100</td><td class="num">3.9</td><td class="num">0.015%</td><td>Suspect a bug, not luck</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="decision">
+      <strong>Pre-register the redraw rule, don't improvise it.</strong>
+      Reject and redraw any seed with |cos| &gt; 0.08 against any of the five
+      vectors, and record the rejection in the meta. Across three draws the
+      chance of triggering this by chance is about 0.6%, so it will almost
+      certainly never fire — which is the point. A discard rule invented
+      <em>after</em> seeing a hot result is the same rule with none of the
+      credibility.
+    </div>
+    <p>
+      What this check cannot catch: near-orthogonality to the SEAL vectors does
+      not imply near-orthogonality to whatever direction actually drives
+      compression. If the effect is carried by a generic "wrap up and answer"
+      direction that the SEAL vectors merely overlap with, a random draw could
+      still touch it. That possibility is what the evaluation, not the geometry,
+      has to settle.
+    </p>
+
+    <h2 id="script"><span class="step">7</span>The script</h2>
+    <p>
+      New file <code>build_random_vector.py</code>, mirroring the structure and
+      metadata conventions of <code>build_combo_vector.py</code>.
+    </p>
+
+<pre><code># Primary: three isotropic draws at the mean-source norm.
+for s in 1 2 3; do
+  python build_random_vector.py \
+    --mode iso --seed $s \
+    --like results/general/S_combo.pt \
+    --check-against results/general/S_combo.pt \
+    --check-against vectors/apps_v_code.pt \
+    --check-against vectors/logiqa_v_logic.pt \
+    --out results/control/R_iso_seed$s.pt
+done</code></pre>
+
+    <p>Arguments, and why each exists:</p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Flag</th><th>Default</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>--mode</code></td><td><code>iso</code></td><td><code>iso</code> now; leaves room for <code>cov</code> without a second script</td></tr>
+        <tr><td><code>--seed</code></td><td>required</td><td>Pins the draw. Recorded in the meta so the vector is reproducible from it alone</td></tr>
+        <tr><td><code>--like</code></td><td>—</td><td>Reads dim and norm off an existing vector, so 1536 and 57.06 are never typed by hand</td></tr>
+        <tr><td><code>--norm</code></td><td><code>like</code></td><td>Override for the magnitude sweep — accepts a number or <code>mean-source</code></td></tr>
+        <tr><td><code>--check-against</code></td><td>repeatable</td><td>Cosine check + redraw rule; every path given is reported in the meta</td></tr>
+        <tr><td><code>--max-cos</code></td><td><code>0.08</code></td><td>The pre-registered redraw threshold</td></tr>
+        <tr><td><code>--out</code></td><td>required</td><td>Vector path; meta goes to the same stem</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>
+      The meta should carry: <code>seed</code>, <code>mode</code>, torch version
+      and generator device, <code>vector_dim</code>, <code>vector_norm</code>,
+      <code>apply_coef: -1.0</code>, <code>apply_layer: 20</code>, the full
+      cosine map against every checked vector, and any redraws that fired. That
+      is enough for someone to regenerate the exact tensor without this
+      document.
+    </p>
+
+    <h2 id="gotchas"><span class="step">8</span>Three things that will bite</h2>
+
+    <h3>Do not reuse <code>check_sign_convention</code></h3>
+    <p>
+      <code>build_combo_vector.py</code> aborts if any pair of input vectors has
+      a negative cosine — correct there, because summing oppositely-oriented
+      contrast vectors cancels signal. A random vector will sit at cos ≈ 0 and
+      will be negative about half the time. Importing that guard here would
+      reject roughly half of all valid draws, and worse, it would do so
+      <em>silently biasing the control toward the SEAL vectors' half-space</em>.
+      Reuse <code>cosine()</code>, not the guard.
+    </p>
+
+    <h3>Pin the generator explicitly</h3>
+    <p>
+      Use <code>torch.Generator().manual_seed(s)</code> passed into
+      <code>torch.randn</code>, not the global RNG. Global seeding makes the
+      output depend on whatever else consumed random numbers first, which
+      quietly breaks reproducibility the moment the script grows a second draw.
+      Generate on CPU in <code>float32</code>; the forward pass casts to the
+      activation dtype at
+      <code>modeling_qwen2.py:884</code>.
+    </p>
+
+    <h3>Normalize before scaling, and check the norm after</h3>
+    <p>
+      A raw <code>randn(1536)</code> has norm ≈ √1536 ≈ 39.2, not 1 and not
+      57.06. Unit-normalize first, then multiply. Assert the final norm is within
+      1e-3 of target before writing — a silent factor-of-39 error would look
+      exactly like "random steering destroys the model."
+    </p>
+
+    <h2 id="verify"><span class="step">9</span>CPU verification, before any GPU time</h2>
+    <p>Every one of these runs locally in seconds. All must pass before the vector goes near the pod.</p>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Check</th><th>Expected</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Shape and dtype</td><td><code>torch.Size([1536])</code>, <code>float32</code></td></tr>
+        <tr><td>Norm</td><td>57.060 ± 0.001</td></tr>
+        <tr><td>|cos| vs all five SEAL vectors</td><td>&lt; 0.08 for every pair</td></tr>
+        <tr><td>Seeds produce distinct vectors</td><td>pairwise |cos| between draws also &lt; 0.08</td></tr>
+        <tr><td>Reproducibility</td><td>Re-running the same seed is bit-identical</td></tr>
+        <tr><td>Loads the way the eval loads it</td><td><code>torch.load(path, weights_only=True)</code> succeeds</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="run"><span class="step">10</span>Running it, and the readouts</h2>
+    <p>
+      <strong>Three runs total: three seeds, MATH-500 only.</strong> Not three
+      seeds across all six benchmarks. The baseline arm already exists and is
+      reused, so the control costs three new evaluations, nothing else.
+    </p>
+
+    <h3>Why one benchmark is enough</h3>
+    <p>
+      The full grid would be 3 vectors × 6 benchmarks = 18 runs, on the order of
+      the entire ~38 GPU-h already spent on the study. Doubling the project's
+      compute for a control is the wrong trade, and the extra 15 runs would not
+      change the conclusion. Three reasons MATH-500 carries it alone:
+    </p>
+    <p>
+      <strong>Test a control where the effect is strongest.</strong> This is the
+      load-bearing argument. MATH-500 has the largest measured gain in the study
+      at +15.0. If a magnitude-matched random direction cannot reproduce the
+      biggest effect, it will not reproduce the small ones — APPS is +1.2 to
+      +2.6, LogiQA +2.6 to +4.0. A pass on the strongest benchmark generalizes
+      downward on its own; a pass on APPS would generalize nowhere, because an
+      arm that moves nothing is unsurprising where almost nothing moves.
+    </p>
+    <p>
+      <strong>The mechanism is most visible there.</strong> §11 attributes the
+      gain to recovering baseline-truncated problems, so the control needs a
+      benchmark with enough truncation for that channel to be observable.
+      MATH-500 sits at a 32.8% baseline cap rate with 164 capped and 336
+      finished problems — both piles large enough to decompose. GSM8K, at 14.9%,
+      would give a capped pile too small to read.
+    </p>
+    <p>
+      <strong>It is the cheapest of the six.</strong> APPS runs at
+      <code>batch_size 1</code> with 8,893 average tokens and an 83.6% cap rate,
+      costing several times a MATH-500 arm. Picking the most informative
+      benchmark and the cheapest benchmark happens to be the same choice here.
+    </p>
+    <p>
+      Comparability is free as well: all five SEAL vectors already have MATH-500
+      coverage on the same <code>rand42_500</code> selection, so the control arms
+      drop straight into the existing table and the existing paired tests.
+    </p>
+
+    <div class="decision">
+      <strong>Expand only if something moves.</strong>
+      If all three seeds are flat, the control is finished — report it and move
+      to Control B. If a seed comes back hot, extend <em>that seed</em> to the
+      other benchmarks: one vector across more benchmarks, never three. The wide
+      budget gets spent once there is a result that justifies it, not in advance
+      on the chance that there might be.
+    </div>
+
+<pre><code># One run per seed. Baseline is reused, not regenerated.
+for s in 1 2 3; do
+  RUN_BASELINE=0 DATASETS=math RESULT_ROOT=results/results_for_control_vectors \
+    scripts/eval_steering_vector_benchmarks.sh \
+      results/control/R_iso_seed$s.pt R_iso_seed$s 0
+done</code></pre>
+
+    <div class="warning">
+      <strong>Reuse the baseline, but verify the pairing first.</strong>
+      <code>RUN_BASELINE=0</code> points the arm at the existing MATH-500
+      baseline rather than burning an hour regenerating it. That is only valid if
+      <code>SAMPLE_SEED=42</code>, <code>MATH_MAX_EXAMPLES=500</code> and
+      <code>MAX_TOKENS=10000</code> match the existing arm exactly — the exact
+      paired McNemar test depends on identical problem ordering, and a mismatch
+      produces a number that looks fine and means nothing.
+    </div>
+
+    <h3>The magnitude sweep is not optional</h3>
+    <p>
+      If all three seeds come back flat, that result is ambiguous between "the
+      direction is what matters" and "a norm-57 perturbation at layer 20 does
+      approximately nothing, whatever it is." Take seed 1 to
+      <code>COEF=-2, -4, -8</code> on 100 problems and find where output visibly
+      degrades. Establishing that the intervention site is live is what converts
+      a flat <code>R_iso</code> from an absence of evidence into evidence.
+      Roughly one GPU-hour.
+    </p>
+
+    <h3>Report the same five things the SEAL arms report</h3>
+    <ol>
+      <li>Accuracy vs baseline, with the exact paired McNemar test</li>
+      <li>Mean tokens and percent change</li>
+      <li>Cap-hit rate change</li>
+      <li><strong>The §11 capped / finished decomposition</strong> — the one that actually decides it</li>
+      <li>Cosine against all five vectors, carried over from the build meta</li>
+    </ol>
+    <p>
+      Wiring: add one arm per benchmark to the <code>BENCHMARKS</code> dict at
+      <code>scripts/report_stats.py:65</code> pointing at
+      <code>results_for_control_vectors/...</code>; the <code>baseline</code>
+      entries stay untouched. Then <code>python scripts/report_stats.py</code>.
+    </p>
+
+    <div class="decision">
+      <strong>Decision rule, fixed in advance.</strong>
+      Call <code>R_iso</code> flat if Δaccuracy is within ±2 points
+      <em>and</em> Δtokens within ±5% on all three seeds. Any seed above +5
+      points is a live positive result: stop, extend that seed to full benchmark
+      coverage, and treat the domain-specificity claim as unsupported until it is
+      resolved. Anything in between — say a consistent +3 with −15% tokens — is
+      the genuinely awkward case, and it should be reported as a partial pass
+      with the capped/finished split shown, not rounded to either verdict.
+    </div>
+
+    <h3>Budget</h3>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Run</th><th class="num">Est. GPU-h</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>R_iso seeds 1–3, MATH-500 @ 10k</td><td class="num">3–4.5</td></tr>
+        <tr><td>Magnitude sweep, seed 1, 100 problems × 3 coefs</td><td class="num">~1</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num"><strong>~5–6</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted">
+      Per-arm estimate is 1–1.5 GPU-h on an A100 80GB; calibrate against the
+      wall-clock of the existing MATH-500 arms before committing. Against the
+      ~38 GPU-h already spent on the prior queue this is small.
+    </p>
+
+    <h2 id="answers"><span class="step">11</span>What this does and doesn't answer</h2>
+    <p>
+      <strong>It answers:</strong> whether a magnitude-matched perturbation at
+      the same site and coefficient reproduces the compression and the
+      cap-recovery gain. That is the load-bearing question for every
+      domain-specificity claim in the report.
+    </p>
+    <p>
+      <strong>It does not answer</strong> whether the SEAL <em>recipe</em> is
+      reasoning-specific. A random direction and a direction built by the same
+      contrast procedure on non-reasoning text are different objects, and the
+      second is Control B. Nor does it speak to whether the boundary
+      <em>labels</em> carry the signal — that is the shuffled-label control from
+      the research plan, which is arguably the sharpest of the three and is still
+      unscheduled.
+    </p>
+    <p>
+      The pre-registered interpretation grid stands: both controls flat with the
+      SEAL vectors at +12–15 means reasoning-specific; B gains while A stays flat
+      means the recipe generalizes; both gaining means the effect is a generic
+      length-and-layer artifact and the domain story collapses.
+    </p>
+
+    <footer>
+      Control A build plan for the SEAL steering study
+      <span class="badge plan">plan — not yet run</span><br>
+      Companion to the steering progress report (2026-08-07) §12, Priority 1.
+      Norms and cosine statistics computed from the committed vectors; all
+      evaluation numbers quoted are from prior runs, and no result in this
+      document has been measured.
+    </footer>
+  </article>
+</main>
+</body>
+</html>
