@@ -301,25 +301,75 @@
     <p>
       MATH-500 already has five SEAL arms, so "do the SEAL vectors separate from
       the random ones?" can be posed as an exact rank-sum test over the eight
-      arms. The <em>best case</em> for that test — all five SEAL arms ranking
-      above all <em>n</em> random arms — has a floor <em>p</em>-value of
-      1/C(5+<em>n</em>, <em>n</em>). That fixes the minimum useful <em>n</em>
-      before a single GPU-hour is spent:
+      arms. The useful property is that the test's <em>best achievable</em>
+      <em>p</em>-value depends only on the group sizes — so it can be computed
+      before a single GPU-hour is spent, and it fixes the minimum useful
+      <em>n</em>.
     </p>
+
+    <h3>Where the 0.018 comes from</h3>
+    <p>
+      Take the primary design: five SEAL arms and three random arms, eight arms
+      total, each with one accuracy number. Four steps:
+    </p>
+    <p>
+      <span class="step">1</span><strong>State the null.</strong> The labels
+      carry no information — SEAL and random arms come from the same
+      distribution. If that is true, which three of the eight rank positions the
+      random arms land in is pure chance, and every choice is equally likely.
+    </p>
+    <p>
+      <span class="step">2</span><strong>Count the layouts.</strong> Choosing 3
+      positions from 8 gives <code>C(8,3) = 56</code>. Under the null each has
+      probability 1/56.
+    </p>
+    <p>
+      <span class="step">3</span><strong>Find the best case.</strong> The most
+      extreme outcome favouring the SEAL vectors is all three random arms ranking
+      below all five SEAL arms. Exactly <strong>one</strong> of the 56 layouts
+      looks like that.
+    </p>
+    <p>
+      <span class="step">4</span><strong>Read off the p-value.</strong>
+      <code>1/56 = 0.018</code> one-sided. In general
+      <code>1/C(5+n, n)</code>.
+    </p>
+
+    <div class="answer">
+      <strong>Why it is a <em>floor</em>.</strong> No data can beat maximal
+      separation. If the three random arms land below all five SEAL arms you are
+      at 0.018 with nowhere further to go; any less clean result only pushes
+      <em>p</em> up. So 0.018 is the smallest <em>p</em>-value this design is
+      <em>capable</em> of, whatever the runs return — which is exactly why it can
+      be used to choose <em>n</em> in advance.
+    </div>
 
     <div class="tablewrap">
     <table>
       <thead>
-        <tr><th class="num">Random draws</th><th class="num">Floor <em>p</em></th><th>What the design can achieve</th></tr>
+        <tr>
+          <th class="num">Random draws</th>
+          <th class="num">Layouts</th>
+          <th class="num">Floor <em>p</em><br>one-sided</th>
+          <th class="num">Floor <em>p</em><br>two-sided</th>
+          <th>What the design can achieve</th>
+        </tr>
       </thead>
       <tbody>
-        <tr><td class="num">1</td><td class="num">0.167</td><td><strong>Nothing.</strong> No outcome reaches significance</td></tr>
-        <tr><td class="num">2</td><td class="num">0.048</td><td>Only just clears 0.05, and only on a perfect result</td></tr>
-        <tr><td class="num"><strong>3</strong></td><td class="num"><strong>0.018</strong></td><td>First <em>n</em> with margin</td></tr>
-        <tr><td class="num">5</td><td class="num">0.004</td><td>Comfortable</td></tr>
+        <tr><td class="num">1</td><td class="num">6</td><td class="num">0.167</td><td class="num">0.333</td><td><strong>Nothing.</strong> No outcome reaches significance</td></tr>
+        <tr><td class="num">2</td><td class="num">21</td><td class="num">0.048</td><td class="num">0.095</td><td>Fails two-sided; one-sided only just clears 0.05</td></tr>
+        <tr><td class="num"><strong>3</strong></td><td class="num">56</td><td class="num"><strong>0.018</strong></td><td class="num"><strong>0.036</strong></td><td>First <em>n</em> that works under either convention</td></tr>
+        <tr><td class="num">5</td><td class="num">252</td><td class="num">0.004</td><td class="num">0.008</td><td>Comfortable</td></tr>
       </tbody>
     </table>
     </div>
+
+    <p>
+      The progress report uses a two-sided exact McNemar throughout, so the
+      two-sided column is the one to quote for consistency. It does not change
+      the choice: <em>n</em> = 3 is the first design that can reach significance
+      either way, and <em>n</em> = 2 cannot under the report's own convention.
+    </p>
 
     <p>
       This is the precise version of "one draw tells you nothing." A single
@@ -353,7 +403,8 @@
         and the effective rank is <strong>1.19</strong>. They are close to one
         direction measured five ways. Charged honestly at an effective
         <em>m</em> ≈ 2 rather than 5, the floor <em>p</em> at <em>n</em> = 3
-        rises to 0.10, and the rank-sum framing stops being available. The
+        rises to 0.10 one-sided (0.20 two-sided) — the same failure mode as
+        <em>n</em> = 1, and the rank-sum framing stops being available. The
         per-arm McNemar tests against baseline do not depend on <em>m</em> and
         remain the primary readout.</li>
       </ul>
