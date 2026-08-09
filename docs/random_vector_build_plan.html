@@ -299,14 +299,76 @@
 
     <h2 id="seeds"><span class="step">4</span>Decision 2 — why three draws, not one</h2>
     <p>
-      A single random vector is <em>n</em> = 1. If it comes back flat you cannot
-      separate "random directions do nothing here" from "that particular draw
-      happened to do nothing," and if it comes back hot you cannot tell a real
-      effect from one unlucky draw. Neither outcome is publishable from one
-      sample.
+      MATH-500 already has five SEAL arms, so "do the SEAL vectors separate from
+      the random ones?" can be posed as an exact rank-sum test over the eight
+      arms. The <em>best case</em> for that test — all five SEAL arms ranking
+      above all <em>n</em> random arms — has a floor <em>p</em>-value of
+      1/C(5+<em>n</em>, <em>n</em>). That fixes the minimum useful <em>n</em>
+      before a single GPU-hour is spent:
     </p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th class="num">Random draws</th><th class="num">Floor <em>p</em></th><th>What the design can achieve</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="num">0.167</td><td><strong>Nothing.</strong> No outcome reaches significance</td></tr>
+        <tr><td class="num">2</td><td class="num">0.048</td><td>Only just clears 0.05, and only on a perfect result</td></tr>
+        <tr><td class="num"><strong>3</strong></td><td class="num"><strong>0.018</strong></td><td>First <em>n</em> with margin</td></tr>
+        <tr><td class="num">5</td><td class="num">0.004</td><td>Comfortable</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>
+      This is the precise version of "one draw tells you nothing." A single
+      random arm is not merely weak evidence — the design has no configuration
+      that produces a significant separation, so the run cannot answer the
+      question it was commissioned to answer.
+    </p>
+    <p>
+      Three draws are also adequate for the question actually being asked, which
+      is binary and has an enormous contrast: does a random direction reproduce
+      +12–15, or land near zero? Within-run noise is small (500 paired problems),
+      so each draw is a precise measurement rather than a noisy one. The
+      one-sided 95% <em>t</em> bound at <em>n</em> = 3 is
+      mean&nbsp;+&nbsp;1.69·sd — if three draws cluster near zero with sd of a
+      point or two, a SEAL-sized effect is excluded by a wide margin.
+    </p>
+
+    <div class="warning">
+      <strong>Three limits to state in the write-up, not discover in review.</strong>
+      <ul>
+        <li><strong>The rule of three.</strong> Zero hits in three draws bounds
+        the fraction of "hot" random directions only at <strong>63%</strong>. The
+        claim this run supports is "these three directions did not reproduce the
+        effect", not "random directions generally do not."</li>
+        <li><strong>No resolution in the middle.</strong> A consistent +3 with
+        −15% tokens is not separable from zero at <em>n</em> = 3. That outcome
+        gets reported as a partial pass (§10), not rounded to a verdict.</li>
+        <li><strong>The comparison group is not five independent samples.</strong>
+        The five SEAL vectors have singular values [2.139, 0.564, 0.325, 0.029,
+        0.0] — the top direction carries <strong>91.5%</strong> of the variance
+        and the effective rank is <strong>1.19</strong>. They are close to one
+        direction measured five ways. Charged honestly at an effective
+        <em>m</em> ≈ 2 rather than 5, the floor <em>p</em> at <em>n</em> = 3
+        rises to 0.10, and the rank-sum framing stops being available. The
+        per-arm McNemar tests against baseline do not depend on <em>m</em> and
+        remain the primary readout.</li>
+      </ul>
+    </div>
+
+    <p class="muted">
+      Five draws would move the floor <em>p</em> to 0.004, keep the rank framing
+      alive at effective <em>m</em> ≈ 2, and tighten the bound 1.77x for two
+      extra arms. Returns fall off after that — 5→10 buys only another 1.64x for
+      five more. Three is the deliberate floor here, not the optimum; see the
+      follow-ons in §11.
+    </p>
+
     <div class="decision">
-      <strong>Three seeds also settles the sign question for free.</strong>
+      <strong>Three seeds also settle the sign question for free.</strong>
       A contrast vector has a meaningful orientation — <code>S</code> points from
       execution toward reflection, and <code>coef = −1.0</code> pushes against
       it. A random vector has no such orientation, so "should we also run
@@ -660,6 +722,11 @@ python scripts/report_stats.py</code></pre>
           <td><strong><code>R_cov</code>.</strong> Covariance-matched draws, per §5.</td>
           <td><code>R_iso</code> is flat and you want that flatness to be a statement about direction rather than about orthogonality to the activation manifold.</td>
           <td class="num">3–4.5</td>
+        </tr>
+        <tr>
+          <td><strong>Two more draws.</strong> Seeds 4–5, same recipe.</td>
+          <td>The three land in the awkward middle (§4), or the write-up needs the rank-sum framing to survive the effective-rank charge.</td>
+          <td class="num">2–3</td>
         </tr>
         <tr>
           <td><strong>Extend a hot seed.</strong> One seed across the remaining benchmarks.</td>
