@@ -202,8 +202,8 @@
     <p class="lede">
       Control A from the progress report, specified end to end. The vector itself
       is four lines of arithmetic — the work is in the decisions around it: what
-      magnitude, how many draws, and what makes a flat result mean something
-      rather than nothing. No GPU is needed to build or verify it.
+      magnitude, how many draws, and which benchmark can settle it. Three arms on
+      MATH-500. No GPU is needed to build or verify the vectors.
     </p>
 
     <div class="toc">
@@ -350,36 +350,26 @@
 
     <h2 id="geometry"><span class="step">6</span>The geometry check, and what it can't catch</h2>
     <p>
-      Before spending GPU time, confirm each draw is actually unrelated to the
-      real vectors. In <em>d</em> = 1536 dimensions the cosine between a random
-      direction and any fixed vector concentrates hard around zero:
-      the standard deviation is 1/√<em>d</em> = 0.0255. Measured over 20,000
-      draws against <code>S_math</code>: mean +0.0001, sd 0.0251, matching
-      theory.
+      Before spending GPU time, confirm each draw really is unrelated to the
+      real vectors. In 1536 dimensions that is nearly automatic: the cosine
+      between a random direction and any fixed vector has mean 0 and standard
+      deviation 1/√1536 = <strong>0.0255</strong>. Measured over 20,000 draws
+      against <code>S_math</code>: mean +0.0001, sd 0.0251 — theory holds.
+    </p>
+    <p>
+      So <strong>σ ≈ 0.026</strong>, and the rule is: reject any draw with
+      |cos| &gt; <strong>0.08</strong> against any of the five vectors. That is
+      about <strong>3σ</strong> — roughly a 1-in-500 chance per draw, so across
+      three draws it should essentially never fire. A draw that does exceed it
+      is more likely a bug than bad luck.
     </p>
 
-    <div class="tablewrap">
-    <table>
-      <thead>
-        <tr><th>Threshold on |cos|</th><th class="num">≈ σ</th><th class="num">P(single draw exceeds)</th><th>Reading</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>0.050</td><td class="num">2.0</td><td class="num">5.1%</td><td>Unremarkable</td></tr>
-        <tr><td>0.064</td><td class="num">2.5</td><td class="num">1.3%</td><td>Note it in the meta</td></tr>
-        <tr><td><strong>0.080</strong></td><td class="num">3.1</td><td class="num">0.21%</td><td><strong>Redraw</strong></td></tr>
-        <tr><td>0.100</td><td class="num">3.9</td><td class="num">0.015%</td><td>Suspect a bug, not luck</td></tr>
-      </tbody>
-    </table>
-    </div>
-
     <div class="decision">
-      <strong>Pre-register the redraw rule, don't improvise it.</strong>
-      Reject and redraw any seed with |cos| &gt; 0.08 against any of the five
-      vectors, and record the rejection in the meta. Across three draws the
-      chance of triggering this by chance is about 0.6%, so it will almost
-      certainly never fire — which is the point. A discard rule invented
-      <em>after</em> seeing a hot result is the same rule with none of the
-      credibility.
+      <strong>Fix the threshold before drawing, not after.</strong>
+      The rule is set in advance and any rejection gets recorded in the meta.
+      This matters precisely <em>because</em> it will almost certainly never
+      trigger: a discard rule invented after seeing an inconvenient result is
+      the same rule with none of the credibility.
     </div>
     <p>
       What this check cannot catch: near-orthogonality to the SEAL vectors does
@@ -392,20 +382,25 @@
 
     <h2 id="script"><span class="step">7</span>The script</h2>
     <p>
-      New file <code>build_random_vector.py</code>, mirroring the structure and
-      metadata conventions of <code>build_combo_vector.py</code>.
+      <code>build_random_vector.py</code> mirrors the structure and metadata
+      conventions of <code>build_combo_vector.py</code>.
+      <code>scripts/build_random_vectors.sh</code> wraps it for the three primary
+      draws, screening each seed against the five SEAL vectors <em>and</em>
+      against every earlier seed, so the draws are verified mutually
+      near-orthogonal as they are built.
     </p>
 
-<pre><code># Primary: three isotropic draws at the mean-source norm.
-for s in 1 2 3; do
-  python build_random_vector.py \
-    --mode iso --seed $s \
-    --like results/general/S_combo.pt \
-    --check-against results/general/S_combo.pt \
-    --check-against vectors/apps_v_code.pt \
-    --check-against vectors/logiqa_v_logic.pt \
-    --out results/control/R_iso_seed$s.pt
-done</code></pre>
+<pre><code># The three primary draws. CPU only, a few seconds.
+bash scripts/build_random_vectors.sh
+
+# Equivalent single draw, if you want to see the flags.
+python build_random_vector.py \
+  --mode iso --seed 1 \
+  --like results/general/S_combo.pt \
+  --check-against S_combo=results/general/S_combo.pt \
+  --check-against S_code=vectors/apps_v_code.pt \
+  --check-against S_logic=vectors/logiqa_v_logic.pt \
+  --out results/control/R_iso_seed1.pt</code></pre>
 
     <p>Arguments, and why each exists:</p>
 
@@ -418,7 +413,7 @@ done</code></pre>
         <tr><td><code>--mode</code></td><td><code>iso</code></td><td><code>iso</code> now; leaves room for <code>cov</code> without a second script</td></tr>
         <tr><td><code>--seed</code></td><td>required</td><td>Pins the draw. Recorded in the meta so the vector is reproducible from it alone</td></tr>
         <tr><td><code>--like</code></td><td>—</td><td>Reads dim and norm off an existing vector, so 1536 and 57.06 are never typed by hand</td></tr>
-        <tr><td><code>--norm</code></td><td><code>like</code></td><td>Override for the magnitude sweep — accepts a number or <code>mean-source</code></td></tr>
+        <tr><td><code>--norm</code></td><td><code>like</code></td><td>Override for the deferred magnitude sweep (§11) — a number or <code>mean-source</code></td></tr>
         <tr><td><code>--check-against</code></td><td>repeatable</td><td>Cosine check + redraw rule; every path given is reported in the meta</td></tr>
         <tr><td><code>--max-cos</code></td><td><code>0.08</code></td><td>The pre-registered redraw threshold</td></tr>
         <tr><td><code>--out</code></td><td>required</td><td>Vector path; meta goes to the same stem</td></tr>
@@ -468,21 +463,39 @@ done</code></pre>
     </p>
 
     <h2 id="verify"><span class="step">9</span>CPU verification, before any GPU time</h2>
-    <p>Every one of these runs locally in seconds. All must pass before the vector goes near the pod.</p>
+    <p>
+      <code>scripts/verify_random_vectors.py</code> runs the whole checklist in
+      seconds and exits nonzero on any failure, so it can gate the run script —
+      which it does. All checks must pass before a vector goes near the pod.
+    </p>
+
+<pre><code>python scripts/verify_random_vectors.py</code></pre>
+
     <div class="tablewrap">
     <table>
       <thead>
-        <tr><th>Check</th><th>Expected</th></tr>
+        <tr><th>Check</th><th>Expected</th><th>What it guards against</th></tr>
       </thead>
       <tbody>
-        <tr><td>Shape and dtype</td><td><code>torch.Size([1536])</code>, <code>float32</code></td></tr>
-        <tr><td>Norm</td><td>57.060 ± 0.001</td></tr>
-        <tr><td>|cos| vs all five SEAL vectors</td><td>&lt; 0.08 for every pair</td></tr>
-        <tr><td>Seeds produce distinct vectors</td><td>pairwise |cos| between draws also &lt; 0.08</td></tr>
-        <tr><td>Reproducibility</td><td>Re-running the same seed is bit-identical</td></tr>
-        <tr><td>Loads the way the eval loads it</td><td><code>torch.load(path, weights_only=True)</code> succeeds</td></tr>
+        <tr><td>Shape and dtype</td><td>1-D, <code>float32</code></td><td>A <code>[1, 1536]</code> tensor would broadcast rather than fail</td></tr>
+        <tr><td>Norm</td><td>matches the meta within 1e-3</td><td>An unnormalized draw is a 0.7x intervention; a unit draw a 0.02x one</td></tr>
+        <tr><td>|cos| vs the five SEAL vectors</td><td>≤ 0.08</td><td>A control that is a weak copy of what it controls for</td></tr>
+        <tr><td>Pairwise |cos| between draws</td><td>≤ 0.08, tensors distinct</td><td>Three similar draws aren't three independent samples</td></tr>
+        <tr><td>Reproducibility</td><td>bit-identical rebuild from the seed</td><td>A meta that isn't a sufficient record of the vector</td></tr>
+        <tr><td>Meta agreement</td><td>dim, norm, layer 20, coef −1.0</td><td>A <code>.pt</code> and a <code>.meta.json</code> that have drifted apart</td></tr>
       </tbody>
     </table>
+    </div>
+
+    <div class="warning">
+      <strong>Reproducibility needs the unrounded target norm.</strong>
+      The meta records <code>vector_norm</code> rounded to 6 dp for readability,
+      but a rebuild that multiplies by the rounded value lands a few ULPs away
+      and is not bit-identical. The unrounded <code>target_norm</code> is
+      recorded separately and is what a rebuild must use. The rebuild also has
+      to replay any rejected draws — a rejection still advances the generator, so
+      reaching the accepted draw means discarding <code>attempts - 1</code>
+      first.
     </div>
 
     <h2 id="run"><span class="step">10</span>Running it, and the readouts</h2>
@@ -537,12 +550,18 @@ done</code></pre>
       on the chance that there might be.
     </div>
 
-<pre><code># One run per seed. Baseline is reused, not regenerated.
-for s in 1 2 3; do
-  RUN_BASELINE=0 DATASETS=math RESULT_ROOT=results/results_for_control_vectors \
-    scripts/eval_steering_vector_benchmarks.sh \
-      results/control/R_iso_seed$s.pt R_iso_seed$s 0
-done</code></pre>
+<pre><code># Verifies the vectors first, then runs one arm per seed on the given GPU.
+# Baseline is reused, not regenerated.
+bash scripts/run_random_control.sh 0
+
+# Then, once the arms land:
+python scripts/report_stats.py</code></pre>
+    <p class="muted">
+      The three control arms are already registered in
+      <code>scripts/report_stats.py</code>. Until the runs exist they report as
+      <code>[skip] … not run</code>, so the stats script picks them up on its own
+      as each finishes.
+    </p>
 
     <div class="warning">
       <strong>Reuse the baseline, but verify the pairing first.</strong>
@@ -553,17 +572,6 @@ done</code></pre>
       paired McNemar test depends on identical problem ordering, and a mismatch
       produces a number that looks fine and means nothing.
     </div>
-
-    <h3>The magnitude sweep is not optional</h3>
-    <p>
-      If all three seeds come back flat, that result is ambiguous between "the
-      direction is what matters" and "a norm-57 perturbation at layer 20 does
-      approximately nothing, whatever it is." Take seed 1 to
-      <code>COEF=-2, -4, -8</code> on 100 problems and find where output visibly
-      degrades. Establishing that the intervention site is live is what converts
-      a flat <code>R_iso</code> from an absence of evidence into evidence.
-      Roughly one GPU-hour.
-    </p>
 
     <h3>Report the same five things the SEAL arms report</h3>
     <ol>
@@ -599,8 +607,7 @@ done</code></pre>
       </thead>
       <tbody>
         <tr><td>R_iso seeds 1–3, MATH-500 @ 10k</td><td class="num">3–4.5</td></tr>
-        <tr><td>Magnitude sweep, seed 1, 100 problems × 3 coefs</td><td class="num">~1</td></tr>
-        <tr><td><strong>Total</strong></td><td class="num"><strong>~5–6</strong></td></tr>
+        <tr><td><strong>Total</strong></td><td class="num"><strong>3–4.5</strong></td></tr>
       </tbody>
     </table>
     </div>
@@ -633,13 +640,57 @@ done</code></pre>
       length-and-layer artifact and the domain story collapses.
     </p>
 
+    <h3>Suggested follow-ons, not scheduled</h3>
+    <p>
+      None of these are part of the run above. They are listed in the order they
+      become worth doing.
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Follow-on</th><th>Becomes worth doing when</th><th class="num">Est. GPU-h</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Magnitude sweep.</strong> Seed 1 at <code>COEF=-2, -4, -8</code>, 100 problems, to find where output degrades.</td>
+          <td>All three seeds come back flat and the conclusion is going into a write-up. See the caveat below.</td>
+          <td class="num">~1</td>
+        </tr>
+        <tr>
+          <td><strong><code>R_cov</code>.</strong> Covariance-matched draws, per §5.</td>
+          <td><code>R_iso</code> is flat and you want that flatness to be a statement about direction rather than about orthogonality to the activation manifold.</td>
+          <td class="num">3–4.5</td>
+        </tr>
+        <tr>
+          <td><strong>Extend a hot seed.</strong> One seed across the remaining benchmarks.</td>
+          <td>A seed clears +5 points on MATH-500.</td>
+          <td class="num">varies</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="warning">
+      <strong>What deferring the sweep costs.</strong>
+      Without it, a flat <code>R_iso</code> is ambiguous between "the direction
+      is what matters" and "a norm-57 perturbation at layer 20 does
+      approximately nothing, whatever it points at." The three seeds still
+      establish that random directions don't reproduce the gain, which is the
+      question Control A was queued to answer — but a reviewer can ask whether
+      the intervention site was live at all, and until the sweep runs the honest
+      answer is that this design doesn't check. Worth running before the result
+      is written up strongly; not worth blocking the three arms on.
+    </div>
+
     <footer>
       Control A build plan for the SEAL steering study
-      <span class="badge plan">plan — not yet run</span><br>
+      <span class="badge">vectors built &amp; verified</span>
+      <span class="badge todo">arms not yet run</span><br>
       Companion to the steering progress report (2026-08-07) §12, Priority 1.
-      Norms and cosine statistics computed from the committed vectors; all
-      evaluation numbers quoted are from prior runs, and no result in this
-      document has been measured.
+      The three <code>R_iso</code> draws exist under <code>results/control/</code>
+      and pass the §9 checklist. Norms and cosine statistics are computed from
+      the committed vectors; all evaluation numbers quoted are from prior runs,
+      and <strong>no control result in this document has been measured</strong>.
     </footer>
   </article>
 </main>
