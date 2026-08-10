@@ -1,0 +1,34 @@
+{
+  "name": "R_iso_seed1",
+  "created": "2026-08-09",
+  "recipe": "R = target_norm * g / ||g||, g ~ N(0, I_d)",
+  "role": "Control A - norm-matched random direction",
+  "mode": "iso",
+  "seed": 1,
+  "attempts": 1,
+  "rejected_draws": [],
+  "max_cos": 0.08,
+  "torch_version": "2.13.0",
+  "generator_device": "cpu",
+  "apply_coef": -1.0,
+  "apply_layer": 20,
+  "norm_mode": "like",
+  "norm_source": "--like",
+  "target_norm": 57.060245513916016,
+  "vector_dim": 1536,
+  "vector_norm": 57.060249,
+  "cosine_with_references": {
+    "S_math": -0.005067,
+    "S_code": -0.006941,
+    "S_logic": -0.020998,
+    "S_general": -0.007544,
+    "S_combo": -0.011818
+  },
+  "references": {
+    "S_math": "results/results_for_math_vectors/MATH_train/DeepSeek-R1-Distill-Qwen-1.5B/baseline_10000/vector_500_500/layer_20_transition_reflection_steervec.pt",
+    "S_code": "vectors/apps_v_code.pt",
+    "S_logic": "vectors/logiqa_v_logic.pt",
+    "S_general": "results/general/S_general_math_apps_logic_phase1.pt",
+    "S_combo": "results/general/S_combo.pt"
+  }
+}

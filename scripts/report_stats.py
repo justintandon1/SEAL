@@ -67,6 +67,13 @@ BENCHMARKS: Dict[str, dict] = {
             "S_logic": "results_for_logic_vectors/MATH500/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/rand42_500",
             "S_general": "results_for_general_vectors/MATH500/s_general_phase1/results_general_S_general_math_apps_logic_phase1/coef_-1.0_remove_bos/rand42_500",
             "S_combo": "results_for_combo_vectors/MATH500/s_combo/results_general_S_combo/coef_-1.0_remove_bos/rand42_500",
+            # Control A: norm-matched random directions, three draws. Registered
+            # ahead of the runs — missing arms report as "not run" rather than
+            # erroring, so these fill in as the pod finishes them. See
+            # docs/random_vector_build_plan.html.
+            "R_iso_seed1": "results_for_control_vectors/MATH500/R_iso_seed1/results_control_R_iso_seed1/coef_-1.0_remove_bos/rand42_500",
+            "R_iso_seed2": "results_for_control_vectors/MATH500/R_iso_seed2/results_control_R_iso_seed2/coef_-1.0_remove_bos/rand42_500",
+            "R_iso_seed3": "results_for_control_vectors/MATH500/R_iso_seed3/results_control_R_iso_seed3/coef_-1.0_remove_bos/rand42_500",
         },
     },
     "logiqa": {
