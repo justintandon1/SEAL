@@ -87,6 +87,13 @@ BENCHMARKS: Dict[str, dict] = {
             "S_logic": "results_for_logic_vectors/LogiQA/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/eval_rand42_500_clean",
             "S_general": "results_for_general_vectors/LogiQA/s_general_phase1/results_general_S_general_math_apps_logic_phase1/coef_-1.0_remove_bos/eval_rand42_500_clean",
             "S_combo": "results_for_combo_vectors/LogiQA/s_combo/results_general_S_combo/coef_-1.0_remove_bos/eval_rand42_500_clean",
+            # Control A on LogiQA. Registered ahead of the runs, like the
+            # MATH-500 arms above -- missing arms report as "not run" rather
+            # than erroring. Note the LogiQA effect is 13-20 problems out of
+            # 500, against 75 on MATH-500, so read a null here accordingly.
+            "R_iso_seed1": "results_for_control_vectors/LogiQA/R_iso_seed1/results_control_R_iso_seed1/coef_-1.0_remove_bos/eval_rand42_500_clean",
+            "R_iso_seed2": "results_for_control_vectors/LogiQA/R_iso_seed2/results_control_R_iso_seed2/coef_-1.0_remove_bos/eval_rand42_500_clean",
+            "R_iso_seed3": "results_for_control_vectors/LogiQA/R_iso_seed3/results_control_R_iso_seed3/coef_-1.0_remove_bos/eval_rand42_500_clean",
         },
     },
     "apps": {
