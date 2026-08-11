@@ -145,8 +145,8 @@ def summary_markdown(a):
         "| Metric | Baseline | Steered | Δ |",
         "|---|---|---|---|",
         f"| Accuracy | {b['accuracy']*100:.1f}% | {st['accuracy']*100:.1f}% | {d['accuracy_pts']:+.1f} pts |",
-        f"| Avg total {unit} | {b['avg_total']:.0f} | {st['avg_total']:.0f} | -{d['total_reduction_pct']:.0f}% |",
-        f"| Avg thinking {unit} | {b['avg_thinking']:.0f} | {st['avg_thinking']:.0f} | -{d['thinking_reduction_pct']:.0f}% |",
+        f"| Avg total {unit} | {b['avg_total']:.0f} | {st['avg_total']:.0f} | {-d['total_reduction_pct']:+.0f}% |",
+        f"| Avg thinking {unit} | {b['avg_thinking']:.0f} | {st['avg_thinking']:.0f} | {-d['thinking_reduction_pct']:+.0f}% |",
         f"| Median total {unit} | {b['median_total']:.0f} | {st['median_total']:.0f} | |",
         "",
     ])
@@ -181,7 +181,7 @@ def plot_tokens(ax, a):
     ax.set_xticks(x); ax.set_xticklabels(["baseline", "steered"])
     ax.set_ylabel(f"avg {unit} / problem")
     red = (1 - st.mean() / bt.mean()) * 100 if bt.mean() else 0
-    ax.set_title(f"Generation length  (-{red:.0f}% total)"); ax.legend(fontsize=9)
+    ax.set_title(f"Generation length  ({-red:+.0f}% total)"); ax.legend(fontsize=9)
 
 
 def plot_distribution(ax, a):
