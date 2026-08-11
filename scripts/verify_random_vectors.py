@@ -27,9 +27,18 @@ What each check is actually guarding against:
     samples, and the whole argument for building three collapses.
 
 ``reproducibility``
-    Rebuilds each vector from its recorded seed and requires bit-identical
-    output. This is what makes the meta a sufficient record: anyone can
-    regenerate the exact tensor without the ``.pt`` file.
+    Rebuilds each vector from its recorded seed and compares. Bit-identical
+    is required when the running torch version matches the one recorded in
+    the meta (``torch_version``) — that combination means the meta really is
+    a sufficient record to regenerate the exact tensor. Across different
+    torch versions, CPU RNG output for the same seed is not guaranteed
+    bit-identical by PyTorch, so a mismatch there is downgraded to an
+    informational skip as long as the rebuild still matches direction and
+    norm; this is expected drift, not a defect in the ``.pt`` file. Either
+    way, the eval scripts consume the committed bytes directly via
+    ``torch.load`` and never re-derive the vector from its seed, so this
+    check is an audit-trail property, not a correctness requirement for
+    steering.
 
 ``meta agreement``
     Catches a ``.pt`` and a ``.meta.json`` that have drifted apart — e.g. a
@@ -60,9 +69,11 @@ from build_random_vector import draw_iso, load_reference  # noqa: E402
 from scripts.vector_geometry import DEFAULT_VECTORS, load_vectors  # noqa: E402
 
 NORM_TOL = 1e-3
+COSINE_TOL = 1e-4  # ~3 orders of magnitude tighter than the 0.08 redraw threshold
 
 PASS = "  ok  "
 FAIL = " FAIL "
+SKIP = " skip "
 
 
 class Checker:
@@ -75,6 +86,10 @@ class Checker:
         print(f"[{PASS if ok else FAIL}] {label}" + (f"  — {detail}" if detail else ""))
         if not ok:
             self.failures.append(label)
+
+    def skip(self, label: str, detail: str = "") -> None:
+        """Record an informational skip: not a failure, not a pass."""
+        print(f"[{SKIP}] {label}" + (f"  — {detail}" if detail else ""))
 
 
 def load_meta(vector_path: str) -> Dict[str, object]:
@@ -188,11 +203,53 @@ def main() -> None:
 
         if meta:
             rebuilt = rebuild_from_meta(meta, int(vector.numel()))
-            checker.check(
-                torch.equal(rebuilt, vector),
-                f"{name}: reproducible from seed {meta['seed']}",
-                "bit-identical" if torch.equal(rebuilt, vector) else "DIFFERS",
-            )
+            identical = torch.equal(rebuilt, vector)
+            built_version = meta.get("torch_version")
+            same_version = built_version == torch.__version__
+
+            if identical:
+                checker.check(True, f"{name}: reproducible from seed {meta['seed']}", "bit-identical")
+            elif same_version:
+                # Same torch version, same seed, different output: a real bug
+                # (e.g. the replay didn't account for a rejected draw), not an
+                # RNG quirk. This must fail loudly.
+                checker.check(
+                    False,
+                    f"{name}: reproducible from seed {meta['seed']}",
+                    f"DIFFERS despite matching torch {torch.__version__} — investigate",
+                )
+            else:
+                # PyTorch does not guarantee bit-identical CPU RNG output
+                # across versions for the same seed, only within one version.
+                # A vector built on 2.13.0 and checked under 2.5.1 (this
+                # repo's pinned version, from vllm) can legitimately diverge
+                # here with no defect in the vector itself. Fall back to
+                # confirming the rebuild is at least the *same direction and
+                # magnitude* the meta claims, which is what actually matters
+                # for steering: eval scripts torch.load() the committed .pt
+                # bytes directly, they never re-derive it from the seed.
+                close = (
+                    abs(cosine(rebuilt, vector) - 1.0) <= COSINE_TOL
+                    and abs(float(rebuilt.norm()) - float(vector.norm())) <= NORM_TOL
+                )
+                checker.skip(
+                    f"{name}: reproducible from seed {meta['seed']}",
+                    f"torch {built_version} built it, {torch.__version__} is checking it — "
+                    f"bit-identity isn't guaranteed across versions; "
+                    + (
+                        f"rebuild matches direction/norm (cos={cosine(rebuilt, vector):.8f})"
+                        if close
+                        else "WARNING: rebuild also fails the looser direction/norm check"
+                    ),
+                )
+                if not close:
+                    # The version excuse doesn't cover this: something is
+                    # actually wrong, not just RNG drift.
+                    checker.check(
+                        False,
+                        f"{name}: rebuild direction/norm (cross-version fallback)",
+                        f"cos={cosine(rebuilt, vector):.8f}",
+                    )
 
     print("\n--- pairwise between draws ---")
     names = sorted(drawn)
