@@ -205,6 +205,11 @@
       magnitude, how many draws, and which benchmark can settle it. Three arms on
       MATH-500. No GPU is needed to build or verify the vectors.
     </p>
+    <p>
+      <span class="badge">seed 1 measured</span>
+      <span class="badge todo">seeds 2–3 pending</span>
+      <span class="muted">— one arm run, on a rented AWS <code>g6e.xlarge</code>; results in §11.</span>
+    </p>
 
     <div class="toc">
       <strong>On this page</strong>
@@ -219,6 +224,7 @@
         <li><a href="#gotchas">Three things that will bite</a></li>
         <li><a href="#verify">CPU verification, before any GPU time</a></li>
         <li><a href="#run">Running it, and the readouts</a></li>
+        <li><a href="#result1">First result — R_iso_seed1</a></li>
         <li><a href="#answers">What this does and doesn't answer</a></li>
       </ol>
     </div>
@@ -716,11 +722,11 @@ python scripts/report_stats.py</code></pre>
     <div class="tablewrap">
     <table>
       <thead>
-        <tr><th>Run</th><th class="num">Est. GPU-h</th></tr>
+        <tr><th>Run</th><th class="num">Est. GPU-h</th><th class="num">Measured</th></tr>
       </thead>
       <tbody>
-        <tr><td>R_iso seeds 1–3, MATH-500 @ 10k</td><td class="num">3–4.5</td></tr>
-        <tr><td><strong>Total</strong></td><td class="num"><strong>3–4.5</strong></td></tr>
+        <tr><td>R_iso seeds 1–3, MATH-500 @ 10k</td><td class="num">3–4.5</td><td class="num">10h53m / seed</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num"><strong>3–4.5</strong></td><td class="num"><strong>~33h / 3 seeds</strong></td></tr>
       </tbody>
     </table>
     </div>
@@ -729,8 +735,124 @@ python scripts/report_stats.py</code></pre>
       wall-clock of the existing MATH-500 arms before committing. Against the
       ~38 GPU-h already spent on the prior queue this is small.
     </p>
+    <div class="warning">
+      <strong>The estimate was wrong by ~5–6x — seed1 took 10h53m, not ~1.8–2.1h.</strong>
+      The original figure modeled the run as memory-bandwidth-bound (read the
+      weights and KV cache once per step). The measured rate is
+      ~196ms/decode-step, roughly 8–10x slower than a pure-bandwidth model
+      predicts. The real bottleneck is Python/kernel-launch overhead in this
+      repo's custom eager-mode <code>modeling_qwen2.py</code> — 28 layers ×
+      several small CUDA kernel launches each, dispatched from Python one at a
+      time rather than fused or batched the way vLLM's baseline path is. That
+      overhead is roughly constant per step regardless of GPU, so it hits an
+      L40S about as hard as it hit the A100 this estimate was built around.
+      Budget ~11h and ~$20 per seed on a <code>g6e.xlarge</code>, not the
+      figure above.
+    </div>
 
-    <h2 id="answers"><span class="step">11</span>What this does and doesn't answer</h2>
+    <h2 id="result1"><span class="step">11</span>First result — R_iso_seed1</h2>
+    <p>
+      One arm run so far, on a rented AWS <code>g6e.xlarge</code>. Full
+      settings — 500 examples, 10,000-token budget, baseline reused via
+      <code>RUN_BASELINE=0</code> (valid: <code>SAMPLE_SEED</code>,
+      <code>MATH_MAX_EXAMPLES</code>, <code>MAX_TOKENS</code> all match the
+      existing baseline arm). Committed at
+      <code>results/results_for_control_vectors/MATH500/R_iso_seed1/</code>.
+    </p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Arm</th><th class="num">Acc</th><th class="num">95% CI</th>
+          <th class="num">Avg tok</th><th class="num">Δ tok</th><th class="num">At cap</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>baseline</td><td class="num">64.4%</td><td class="num">±4.2</td><td class="num">4818</td><td class="num">—</td><td class="num">32.8%</td></tr>
+        <tr><td>S_combo</td><td class="num">79.4%</td><td class="num">±3.5</td><td class="num">3105</td><td class="num">−35.6%</td><td class="num">12.4%</td></tr>
+        <tr><td><strong>R_iso_seed1</strong></td><td class="num"><strong>62.0%</strong></td><td class="num">±4.3</td><td class="num"><strong>5274</strong></td><td class="num"><strong>+9.5%</strong></td><td class="num"><strong>37.2%</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>
+      Not flat — and not flat in the interesting direction. Every SEAL vector
+      <em>shortens</em> reasoning (tokens down 31–36%, cap-hit rate down to
+      12–15%). <code>R_iso_seed1</code> does the opposite: <strong>more</strong>
+      tokens on average (+9.5%) and a <strong>higher</strong> cap-hit rate
+      (37.2%, up from baseline's 32.8%) — this specific random direction makes
+      the model think longer, not less, and accuracy drops 2.4 points as a
+      result.
+    </p>
+
+    <h3>What's actually driving the drop</h3>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Arm</th><th class="num">Acc, capped subset</th><th class="num">Acc, finished subset</th><th class="num">Contribution from cap</th><th class="num">Contribution from finished</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>baseline</td><td class="num">1.2%</td><td class="num">95.2%</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>S_combo</td><td class="num">51.2%</td><td class="num">93.2%</td><td class="num">+16.4</td><td class="num">−1.4</td></tr>
+        <tr><td><strong>R_iso_seed1</strong></td><td class="num"><strong>26.8%</strong></td><td class="num"><strong>79.2%</strong></td><td class="num"><strong>+8.4</strong></td><td class="num"><strong>−10.8</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      Split by whether <em>baseline</em> hit the cap (164 capped / 336
+      finished, per §11 of the progress report): <code>R_iso_seed1</code> does
+      recover some previously-capped problems (1.2% → 26.8%, contributing
+      +8.4 points) — a real perturbation effect, roughly half of what the SEAL
+      vectors recover. But it costs far more on the problems baseline would
+      have finished correctly anyway: 95.2% → 79.2%, a −10.8 point drag,
+      2.7–7.7x larger than any SEAL vector's finished-subset cost (−1.4 to
+      −4.0). Net: +8.4 − 10.8 = −2.4, matching the overall delta exactly.
+    </p>
+
+    <h3>McNemar, exact two-sided</h3>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Pair</th><th class="num">Δ pts</th><th class="num">p</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>baseline vs R_iso_seed1</td><td class="num">−2.4</td><td class="num">0.285</td></tr>
+        <tr><td>S_math vs R_iso_seed1</td><td class="num">−16.4</td><td class="num">7.1e-16</td></tr>
+        <tr><td>S_code vs R_iso_seed1</td><td class="num">−14.8</td><td class="num">8.3e-12</td></tr>
+        <tr><td>S_logic vs R_iso_seed1</td><td class="num">−17.0</td><td class="num">2.7e-17</td></tr>
+        <tr><td>S_general vs R_iso_seed1</td><td class="num">−16.6</td><td class="num">3.4e-15</td></tr>
+        <tr><td>S_combo vs R_iso_seed1</td><td class="num">−17.4</td><td class="num">2.0e-17</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="answer">
+      <strong>What this one arm already settles.</strong> Every SEAL vector is
+      overwhelmingly distinguishable from <code>R_iso_seed1</code> (p as small
+      as 2e-17) — this random direction does not reproduce anything close to
+      the SEAL-sized effect. <code>R_iso_seed1</code> itself is not
+      significantly different from baseline (p=0.285) in raw accuracy, even
+      though the mechanism underneath it (the cap/finished split above) is
+      clearly non-null.
+    </div>
+
+    <div class="warning">
+      <strong>What it doesn't settle — this is n=1, not n=3.</strong> Against
+      the §10 decision rule (flat = within ±2 pts <em>and</em> ±5% tokens):
+      <code>R_iso_seed1</code> is outside <em>both</em> bands, in the negative
+      direction the rule didn't name (it anticipated "flat" or "a live
+      positive result ≥+5pts reproducing the SEAL effect," not "moderate net
+      negative from an asymmetric cap/finished trade"). That's the §4 "genuinely
+      awkward middle" case by the letter of the rule, and per §4's own floor-p
+      argument, a single draw cannot separate <em>"random directions do this"</em>
+      from <em>"this particular draw did this."</em> Seeds 2 and 3 are what
+      would show whether −2.4/+9.5% is a property of random directions at this
+      norm and site, or an artifact of this one draw. Currently paused, not
+      abandoned — see the budget note in §10.
+    </div>
+
+    <h2 id="answers"><span class="step">12</span>What this does and doesn't answer</h2>
     <p>
       <strong>It answers:</strong> whether a magnitude-matched perturbation at
       the same site and coefficient reproduces the compression and the
@@ -803,12 +925,14 @@ python scripts/report_stats.py</code></pre>
     <footer>
       Control A build plan for the SEAL steering study
       <span class="badge">vectors built &amp; verified</span>
-      <span class="badge todo">arms not yet run</span><br>
+      <span class="badge">seed1 measured</span>
+      <span class="badge todo">seeds 2–3 paused</span><br>
       Companion to the steering progress report (2026-08-07) §12, Priority 1.
       The three <code>R_iso</code> draws exist under <code>results/control/</code>
-      and pass the §9 checklist. Norms and cosine statistics are computed from
-      the committed vectors; all evaluation numbers quoted are from prior runs,
-      and <strong>no control result in this document has been measured</strong>.
+      and pass the §9 checklist. <code>R_iso_seed1</code> has run on MATH-500
+      (§11); norms, cosine statistics, and the pre-registered decision
+      thresholds are computed independently of that result. Seeds 2 and 3 are
+      needed before the §4 floor-p rank-sum argument applies.
     </footer>
   </article>
 </main>
