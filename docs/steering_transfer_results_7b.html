@@ -231,14 +231,17 @@
       &alpha; = &minus;1.0, 500 correct + 500 incorrect traces) on
       <code>DeepSeek-R1-Distill-Qwen-7B</code> &mdash; the same recipe used for the
       1.5B model's <a href="steering_transfer_results.html">six-benchmark transfer report</a>,
-      rebuilt from scratch at 7B scale. This report currently covers MATH-500; code (APPS)
-      and logic (LogiQA) evaluations at 7B are in progress.
+      rebuilt from scratch at 7B scale. This report covers MATH-500 (in-domain) and APPS
+      (cross-domain transfer); logic (LogiQA) at 7B is still in progress, and an
+      APPS-derived vector's in-domain/cross-domain results are pending a separate run.
     </p>
 
     <div class="takeaway">
       <strong>Result:</strong> on MATH-500, steering raised accuracy from 84.4% to 87.8%
       (+3.4 points) while cutting average reasoning tokens by 17.9% (3,381 &rarr; 2,777).
-      Same direction as the 1.5B result, on a model with 2.3x the hidden dimension.
+      The same MATH-derived vector, applied cross-domain to APPS (code) with no
+      code-specific tuning, raised pass@1 from 28.4% to 32.8% (+4.4 points, +15.5%
+      relative) &mdash; the math-reasoning steering direction transfers to code generation.
     </div>
 
     <div class="stats">
@@ -247,10 +250,10 @@
         <span class="num green">+3.4 pts</span>
         <span class="small">84.4% &rarr; 87.8% &nbsp;·&nbsp; tokens &minus;17.9%</span>
       </div>
-      <div class="stat pending">
-        <span class="label">Code &middot; APPS</span>
-        <span class="num">&mdash;</span>
-        <span class="small">in progress</span>
+      <div class="stat code">
+        <span class="label">Code &middot; APPS <span class="sub">(cross-domain)</span></span>
+        <span class="num">+4.4 pts</span>
+        <span class="small">28.4% &rarr; 32.8% pass@1 &nbsp;·&nbsp; +15.5% relative</span>
       </div>
       <div class="stat pending">
         <span class="label">Logic &middot; LogiQA</span>
@@ -287,11 +290,14 @@
           <td>2,777</td>
           <td class="down">&minus;17.9%</td>
         </tr>
-        <tr class="pending">
-          <td class="dom">Code (APPS)</td>
-          <td>&mdash;</td>
-          <td>&mdash;</td>
-          <td colspan="6">not yet run</td>
+        <tr>
+          <td class="dom">Code (APPS) <span class="sub">math vector, cross-domain</span></td>
+          <td>test, random 500</td>
+          <td>500 / 500</td>
+          <td>28.4%</td>
+          <td>32.8%</td>
+          <td class="up">+4.4</td>
+          <td colspan="3" class="sub">token counts n/a</td>
         </tr>
         <tr class="pending">
           <td class="dom">Logic (LogiQA)</td>
@@ -318,6 +324,11 @@
         <li>Vector shape confirmed <code>[3584]</code>, norm 82.4.</li>
         <li>Both models use layer 20 unchanged &mdash; the 1.5B&rarr;7B jump is almost
           entirely in width, not depth, so the same relative layer applies.</li>
+        <li>APPS uses <strong>pass@1</strong> (generated code passes all test cases) as its
+          accuracy-equivalent metric, evaluated on a random 500-example draw from the APPS
+          test split (seed 42) with the same vector, layer, and coefficient as MATH-500
+          &mdash; no code-specific retuning. Token counts for the APPS run haven't been
+          pulled yet.</li>
       </ul>
     </div>
 
@@ -697,7 +708,8 @@ Thus, the value of \( t(g(16)) \) is \(\boxed{1}\).</pre>
     <footer>
       Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-7B</code> &middot; Vector source:
       MATH train (500+500 traces) &middot; Layer 20, &alpha; = &minus;1.0 &middot;
-      Results and vector: <code>results/results_for_7b_math_vectors/</code>,
+      Results and vector: <code>results/results_for_7b_math_vectors/MATH500/</code>,
+      <code>results/results_for_7b_math_vectors/APPS/</code>,
       <code>results/MATH_train/DeepSeek-R1-Distill-Qwen-7B/baseline_10000/vector_500_500/</code>
       on branch <code>akhilbz/7b-math-results</code>.
     </footer>
