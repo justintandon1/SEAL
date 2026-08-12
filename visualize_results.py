@@ -40,15 +40,19 @@ THINK_COLOR = "#f9ab00"
 # Loading
 # --------------------------------------------------------------------------- #
 def find_eval_file(path):
-    """Accept a file or a dir; return the math_eval.jsonl with the most rows."""
+    """Accept a file or a dir; return the graded eval file with the most rows.
+
+    Tries math_eval.jsonl (MATH/GSM runs), then code_eval.jsonl (APPS/MBPP/
+    LiveCodeBench runs -- same `model_generation` + `all_eval` shape), then
+    falls back to predictions.jsonl (lengths only, no accuracy).
+    """
     if os.path.isfile(path):
         return path
-    candidates = glob.glob(os.path.join(path, "**", "math_eval.jsonl"), recursive=True)
-    if not candidates:  # fall back to predictions.jsonl (lengths only, no accuracy)
-        candidates = glob.glob(os.path.join(path, "**", "predictions.jsonl"), recursive=True)
-    if not candidates:
-        raise FileNotFoundError(f"No math_eval.jsonl / predictions.jsonl under {path}")
-    return max(candidates, key=lambda p: sum(1 for _ in open(p)))
+    for pattern in ("math_eval.jsonl", "code_eval.jsonl", "predictions.jsonl"):
+        candidates = glob.glob(os.path.join(path, "**", pattern), recursive=True)
+        if candidates:
+            return max(candidates, key=lambda p: sum(1 for _ in open(p)))
+    raise FileNotFoundError(f"No math_eval.jsonl / code_eval.jsonl / predictions.jsonl under {path}")
 
 
 def load_run(path):

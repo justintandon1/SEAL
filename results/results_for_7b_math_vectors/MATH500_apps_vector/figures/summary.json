@@ -1,0 +1,24 @@
+{
+  "dataset": "MATH-500 (APPS vector, cross-domain)",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "unit": "tokens",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.844,
+    "avg_total": 3380.44,
+    "median_total": 2055.0,
+    "avg_thinking": 3380.44
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.892,
+    "avg_total": 2770.566,
+    "median_total": 1802.5,
+    "avg_thinking": 2770.566
+  },
+  "delta": {
+    "accuracy_pts": 4.800000000000004,
+    "total_reduction_pct": 18.041260900947808,
+    "thinking_reduction_pct": 18.041260900947808
+  }
+}
