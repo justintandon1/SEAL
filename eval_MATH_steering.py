@@ -16,7 +16,8 @@ from peft import PeftModel, PeftConfig
 import sys
 import os
 import gc
-from tqdm import trange
+import glob
+from tqdm import tqdm
 
 from get_math_results import main as eval_main
 from logic_utils import load_logiqa, build_logiqa_prompt, logic_eval_main
@@ -70,6 +71,114 @@ def extract_last_number(pred_str):
     else:
         ans = None
     return ans
+
+
+# Batch-level checkpoint, so a crash 10 hours into a run costs one batch rather
+# than the whole arm. Written alongside the final predictions.jsonl and kept
+# after a successful run, so re-grading never means re-generating.
+CHECKPOINT_GLOB = "predictions.partial*.jsonl"
+
+# Settings a resume has to agree on. Ones already encoded in save_dir (vector
+# name, coef) are listed too so the check stands alone; the ones that are not --
+# steering_layer, max_tokens, batch_size, model -- are the whole point, since
+# nothing else would catch two half-arms merged into one file.
+FINGERPRINT_KEYS = [
+    "model_name_or_path", "dataset", "mmlu_subject", "sample_seed",
+    "random_sample", "max_examples", "start", "max_tokens", "batch_size",
+    "use_chat_format", "remove_bos", "steering", "steering_vector",
+    "steering_layer", "steering_coef", "logiqa_english_only",
+    "logiqa_eval_selection",
+]
+
+
+def checkpoint_path(save_dir, shard_rank, num_shards):
+    if num_shards == 1:
+        return os.path.join(save_dir, "predictions.partial.jsonl")
+    return os.path.join(save_dir, f"predictions.partial.{shard_rank}of{num_shards}.jsonl")
+
+
+def _read_checkpoint(path):
+    """Parse one checkpoint file, dropping a torn final line from a killed run."""
+    records = []
+    with open(path) as fin:
+        for line in fin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if "idx" in rec:
+                records.append(rec)
+    return records
+
+
+def load_completed(save_dir):
+    """Example index -> record, across every checkpoint file in save_dir.
+
+    Reading *all* files rather than only this process's own is what lets a run
+    resume on a different GPU count: the batch-to-shard assignment changes, but
+    a batch any earlier process finished is still skipped.
+    """
+    completed = {}
+    for path in sorted(glob.glob(os.path.join(save_dir, CHECKPOINT_GLOB))):
+        for rec in _read_checkpoint(path):
+            completed[rec["idx"]] = rec
+    return completed
+
+
+def check_or_write_fingerprint(args, n_examples):
+    """Refuse to resume a checkpoint written under different settings."""
+    path = os.path.join(args.save_dir, "run_config.json")
+    current = {k: getattr(args, k) for k in FINGERPRINT_KEYS}
+    current["n_examples"] = n_examples
+
+    if os.path.exists(path):
+        with open(path) as fin:
+            previous = json.load(fin)
+        drift = {k: (previous.get(k), v) for k, v in current.items() if previous.get(k) != v}
+        if drift:
+            raise SystemExit(
+                f"Refusing to resume: {path} was written under a different config.\n"
+                + "\n".join(f"  {k}: checkpoint={p!r} now={n!r}" for k, (p, n) in sorted(drift.items()))
+                + "\nDelete the directory to start clean, or fix the arguments."
+            )
+        return
+
+    # Atomic, so a concurrent shard never reads a half-written file.
+    tmp = f"{path}.tmp{os.getpid()}"
+    with open(tmp, "w") as fout:
+        json.dump(current, fout, indent=2, sort_keys=True)
+    os.replace(tmp, path)
+
+
+def finalize(save_dir, dataset):
+    """Merge the checkpoints into predictions.jsonl, then score."""
+    completed = load_completed(save_dir)
+    with open(os.path.join(save_dir, "run_config.json")) as fin:
+        n = json.load(fin)["n_examples"]
+
+    missing = [i for i in range(n) if i not in completed]
+    if missing:
+        # A partial arm is worse than no arm: the accuracy still looks plausible.
+        raise SystemExit(
+            f"Incomplete: {len(missing)}/{n} predictions missing (first: {missing[:5]}). "
+            "Re-run the same command -- finished batches are skipped."
+        )
+
+    out = os.path.join(save_dir, "predictions.jsonl")
+    with open(out, "w") as fout:
+        for i in range(n):
+            rec = dict(completed[i])
+            rec.pop("idx")  # keep the artifact identical to pre-checkpoint runs
+            fout.write(json.dumps(rec) + "\n")
+    print(f"Merged {n} predictions -> {out}")
+
+    if dataset in ("LogiQA", "MMLU"):
+        logic_eval_main(out, save=True, output_dir=save_dir)
+    else:
+        eval_main(out, save=True, k=None, output_dir=save_dir)
 
 
 def main(args):
@@ -145,8 +254,7 @@ def main(args):
         if args.max_examples and len(test_data) > args.max_examples:
             test_data = test_data[:args.max_examples]
 
-    if not os.path.exists(args.save_dir):
-        os.makedirs(args.save_dir)
+    os.makedirs(args.save_dir, exist_ok=True)
 
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name_or_path if args.tokenizer_name_or_path else args.model_name_or_path)
 
@@ -177,48 +285,83 @@ def main(args):
             if args.remove_bos and tokenizer.bos_token is not None and prompt.startswith(tokenizer.bos_token):
                 prompt = prompt[len(tokenizer.bos_token):]
         prompts.append(prompt)
-    with open(os.path.join(args.save_dir, "example_prompt.txt"), 'w') as fout:
-        fout.write(prompts[0])
+    if args.shard_rank == 0:
+        with open(os.path.join(args.save_dir, "example_prompt.txt"), 'w') as fout:
+            fout.write(prompts[0])
 
+    check_or_write_fingerprint(args, len(prompts))
+
+
+    # The batch is the unit of both work and recovery. That is not just because
+    # generate() produces one at a time: batches are left-padded to their
+    # longest member, so an example's neighbours are part of its numerics.
+    # Keeping batch boundaries at fixed global offsets -- across shards, and
+    # across a resume -- means every example is scored in the same company it
+    # would have had in a single uninterrupted run. The paired McNemar test
+    # depends on that, the same way it depends on identical problem ordering.
+    batch_starts = list(range(0, len(prompts), args.batch_size))
+    my_starts = [s for j, s in enumerate(batch_starts)
+                 if j % args.num_shards == args.shard_rank]
+
+    completed = load_completed(args.save_dir)
+    todo = [s for s in my_starts
+            if not all(i in completed for i in range(s, min(s + args.batch_size, len(prompts))))]
+
+    tag = "" if args.num_shards == 1 else f"[shard {args.shard_rank}/{args.num_shards}] "
+    print(f"{tag}{len(my_starts)} batches assigned, "
+          f"{len(my_starts) - len(todo)} already checkpointed, {len(todo)} to run")
+
+    checkpoint = checkpoint_path(args.save_dir, args.shard_rank, args.num_shards)
+    # Rewrite our own file from its parsed records, so a torn trailing line from
+    # a killed run cannot corrupt the lines about to be appended.
+    if os.path.exists(checkpoint):
+        mine = _read_checkpoint(checkpoint)
+        with open(checkpoint, "w") as fout:
+            for rec in mine:
+                fout.write(json.dumps(rec) + "\n")
+
+    if not todo:
+        print(f"{tag}nothing to generate")
+        return
 
     if "qwen" in args.model_name_or_path.lower():
         model = Qwen2ForCausalLM.from_pretrained(args.model_name_or_path, device_map="auto")
     else:
         raise ValueError("Model not supported")
-    
+
     if args.steering:
         steer_vec = torch.load(args.steering_vector, weights_only=True)
         steer_vec = steer_vec.to(model.device)
         model.set_steering_flag(steering_flag=True, steering_layer=args.steering_layer, steer_vec=steer_vec,  steer_coef=args.steering_coef, tokenizer=tokenizer)
 
-    outputs = []
-    for i in trange(0, len(prompts), args.batch_size):
-        if args.steering:
-            model.start_new_round()
-        batch = prompts[i:i+args.batch_size]
-        tokenized_batch = tokenizer(batch, return_tensors="pt", padding=True)
-        tokenized_batch = {k: v.to(model.device) for k, v in tokenized_batch.items()}
-        with torch.no_grad():
-            output = model.generate(**tokenized_batch, do_sample=False, max_new_tokens=args.max_tokens,use_cache=True)
-        prompt_len = tokenized_batch["input_ids"].shape[1]
-        output = [tokenizer.decode(o[prompt_len:], skip_special_tokens=True) for o in output]
-        outputs.extend(output)
+    with open(checkpoint, "a") as fout:
+        for s in tqdm(todo, desc=tag.strip() or None):
+            if args.steering:
+                model.start_new_round()
+            batch = prompts[s:s+args.batch_size]
+            tokenized_batch = tokenizer(batch, return_tensors="pt", padding=True)
+            tokenized_batch = {k: v.to(model.device) for k, v in tokenized_batch.items()}
+            with torch.no_grad():
+                output = model.generate(**tokenized_batch, do_sample=False, max_new_tokens=args.max_tokens,use_cache=True)
+            prompt_len = tokenized_batch["input_ids"].shape[1]
+            output = [tokenizer.decode(o[prompt_len:], skip_special_tokens=True) for o in output]
 
-    outputs = [[trim_output(o)] for o in outputs]
+            for offset, text in enumerate(output):
+                i = s + offset
+                fout.write(json.dumps({
+                    "idx": i,
+                    "prompt": prompts[i],
+                    "problem": test_data[i]["question"],
+                    "answer": test_data[i]["gt"],
+                    "solution": test_data[i]["answer"],
+                    "model_generation": [trim_output(text)],
+                }) + "\n")
+            # A batch lands all-or-nothing, and hits the disk before the next
+            # generate() call -- which is ~30 min at this decode rate. So a
+            # crash, an OOM or a spot reclaim costs one batch, not the run.
+            fout.flush()
+            os.fsync(fout.fileno())
 
-
-    predictions = [{
-        "prompt": prompt,
-        "problem": example["question"],
-        "answer": example["gt"],
-        "solution":  example["answer"],
-        "model_generation": output,
-    } for example, output, prompt in zip(test_data, outputs, prompts)]
-
-    with open(os.path.join(args.save_dir, "predictions.jsonl"), "w") as fout:
-        for prediction in predictions:
-            fout.write(json.dumps(prediction) + "\n")
-    
 
 
 if __name__ == "__main__":
@@ -326,9 +469,32 @@ if __name__ == "__main__":
         type=float,
         default=0.0
     )
-
+    parser.add_argument(
+        "--num_shards",
+        type=int,
+        default=1,
+        help="Split the batches across this many independent processes, one per "
+             "GPU. Each writes its own checkpoint; the arm is only scored once "
+             "every example is present. The shards never communicate -- there "
+             "are no gradients here, so do not reach for torchrun.",
+    )
+    parser.add_argument(
+        "--shard_rank",
+        type=int,
+        default=0,
+        help="Which shard this process is, in [0, num_shards).",
+    )
+    parser.add_argument(
+        "--print_save_dir",
+        action="store_true",
+        help="Print the derived save_dir and exit, so a launcher can address "
+             "the same directory without reimplementing the path logic.",
+    )
 
     args = parser.parse_args()
+
+    if not 0 <= args.shard_rank < args.num_shards:
+        parser.error(f"--shard_rank must be in [0, {args.num_shards}), got {args.shard_rank}")
 
     if args.steering:
         vector_name_split = args.steering_vector.split("/")[-3:]
@@ -353,12 +519,19 @@ if __name__ == "__main__":
         end = start + args.max_examples if args.max_examples is not None else -1
         args.save_dir = os.path.join(args.save_dir, f"{start}_{end}")
         
+    if args.print_save_dir:
+        print(args.save_dir)
+        sys.exit(0)
+
     print(args.save_dir)
     main(args)
-    if args.dataset in ("LogiQA", "MMLU"):
-        logic_eval_main(os.path.join(args.save_dir, "predictions.jsonl"), save=True, output_dir=args.save_dir)
+
+    if args.num_shards == 1:
+        finalize(args.save_dir, args.dataset)
     else:
-        eval_main(os.path.join(args.save_dir, "predictions.jsonl"), save=True, k=None, output_dir=args.save_dir)
+        # Scoring waits for every shard; one finishing says nothing about the rest.
+        print(f"[shard {args.shard_rank}/{args.num_shards}] generation done. Merge with:\n"
+              f"  python scripts/merge_shards.py --save_dir {args.save_dir} --dataset {args.dataset}")
 
 
         
