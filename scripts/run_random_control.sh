@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
-# Control A: three R_iso draws. ~11 GPU-h per arm per benchmark.
+# Control A: R_iso draws. Budget ~7.4 GPU-h per MATH-500 arm, measured against
+# the seed-1 run of 2026-08-15 (16:22-23:50 on an A100 PCIe). APPS costs several
+# times that; see the build plan's budget table before launching one.
 #
-#   bash scripts/run_random_control.sh 0                    # MATH-500 (default)
-#   DATASETS=logiqa bash scripts/run_random_control.sh 0     # LogiQA clean-500
+# The plan was re-split on 2026-08-17 into two phases:
 #
-# The build plan scopes this to MATH-500 alone: the full 3x6 grid would be 18
-# runs, on the order of the entire ~38 GPU-h already spent on the study, and
-# MATH-500 carries it because the control belongs where the effect is strongest
-# (+15.0, so a pass generalizes downward), where the truncation mechanism is
-# most visible (32.8% baseline cap rate), and where an arm is cheapest. The
-# plan's rule is: expand only if a seed comes back hot -- and then extend that
-# seed, not all three.
+#   PHASE 1 -- seed 1 across MATH-500, LogiQA and APPS. MATH-500 is done.
+#     SEEDS=1 DATASETS=logiqa bash scripts/run_random_control.sh 0
+#     SEEDS=1 DATASETS=apps   bash scripts/run_random_control.sh 0
 #
-# LogiQA is wired up here so that expansion is one env var rather than a
-# rebuild. Note before using it that the LogiQA effect is much smaller than
-# MATH's -- baseline 0.258 against 0.284-0.298 for the SEAL vectors, i.e. 13-20
-# problems out of 500 -- so a control arm there has far less room to distinguish
-# "does nothing" from "reproduces the effect" than it does on MATH.
+#   PHASE 2 -- seeds 2 and 3, MATH-500 first.
+#     SEEDS="2 3" DATASETS=math bash scripts/run_random_control.sh 0
+#
+# Phase 2 is required, not optional. The rank-sum test over 5 SEAL arms and n
+# random arms has floor p = 1/C(5+n, n), so at n=1 it is 0.167 one-sided and
+# 0.333 two-sided: no phase-1 result reaches significance, on any benchmark.
+# Adding benchmarks does not help -- the floor is set by the number of draws.
+# Phase 1 supports the per-arm paired McNemar and nothing beyond it.
+#
+# Note before running LogiQA that its effect is much smaller than MATH's --
+# baseline 0.258 against 0.284-0.298 for the SEAL vectors, i.e. 13-20 problems
+# out of 500 -- so a control arm there has far less room to distinguish "does
+# nothing" from "reproduces the effect" than it does on MATH.
+#
+# Always tee to a log on disk: the Aug 15 APPS baseline died at startup and left
+# no record of why. See docs/vast_runbook.md.
 #
 # Rationale: docs/random_vector_build_plan.html
 set -euo pipefail

@@ -107,6 +107,14 @@ BENCHMARKS: Dict[str, dict] = {
             "S_logic": "results_for_logic_vectors/APPS/logic_vector/baseline_3000_regraded_vector_logic_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/test_rand42_500",
             "S_general": "results_for_general_vectors/APPS/s_general_phase1/results_general_S_general_math_apps_logic_phase1/coef_-1.0_remove_bos/test_rand42_500",
             "S_combo": "results_for_combo_vectors/APPS/s_combo/results_general_S_combo/coef_-1.0_remove_bos/test_rand42_500",
+            # Control A on APPS, phase 1 of the two-phase plan (2026-08-17).
+            # Only seed 1 is registered here: phase 2 brings seeds 2 and 3 back
+            # on MATH-500 first, and extends outward only if budget allows.
+            # Registered ahead of the run -- a missing arm reports as "not run"
+            # rather than erroring. The path shape is confirmed by the n=5 smoke
+            # under results_for_control_vectors/smoke_apps/, which differs only
+            # in the trailing selection dir. See docs/random_vector_build_plan.html.
+            "R_iso_seed1": "results_for_control_vectors/APPS/R_iso_seed1/results_control_R_iso_seed1/coef_-1.0_remove_bos/test_rand42_500",
         },
     },
     "mbpp": {

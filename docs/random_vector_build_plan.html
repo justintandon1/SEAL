@@ -202,13 +202,14 @@
     <p class="lede">
       Control A from the progress report, specified end to end. The vector itself
       is four lines of arithmetic — the work is in the decisions around it: what
-      magnitude, how many draws, and which benchmark can settle it. Three arms on
-      MATH-500. No GPU is needed to build or verify the vectors.
+      magnitude, how many draws, and which benchmark can settle it. No GPU is
+      needed to build or verify the vectors.
     </p>
     <p>
-      <span class="badge">seed 1 measured</span>
-      <span class="badge todo">seeds 2–3 pending</span>
-      <span class="muted">— one arm run, on a rented AWS <code>g6e.xlarge</code>; results in §11.</span>
+      <span class="badge">seed 1 · MATH-500 measured</span>
+      <span class="badge todo">seed 1 · LogiQA + APPS pending</span>
+      <span class="badge plan">seeds 2–3 · phase 2</span>
+      <span class="muted">— MATH-500 run on a rented AWS <code>g6e.xlarge</code>; results in §11. Scope revised 2026-08-17, see §10.</span>
     </p>
 
     <div class="toc">
@@ -618,18 +619,40 @@ python build_random_vector.py \
     </div>
 
     <h2 id="run"><span class="step">10</span>Running it, and the readouts</h2>
+
+    <div class="warning">
+      <strong>Revised 2026-08-17: re-split into two phases.</strong>
+      The original design below ran three seeds on MATH-500 alone. It is now
+      breadth first, depth second:
+      <ul>
+        <li><strong>Phase 1</strong> — <code>R_iso_seed1</code> across
+        <strong>MATH-500, LogiQA and APPS</strong>. MATH-500 is done (§11);
+        LogiQA and APPS remain.</li>
+        <li><strong>Phase 2</strong> — <strong>seeds 2 and 3</strong>, MATH-500
+        first. Not cancelled, and not optional: §4's floor-<em>p</em> argument
+        means every rank-sum claim waits on the third draw.</li>
+      </ul>
+      The "why one benchmark is enough" reasoning that follows is kept because
+      it still explains why MATH-500 is the right home for phase 2 — but it no
+      longer describes the scope. Read it as the argument for where depth goes,
+      not as a limit on breadth.
+    </div>
+
     <p>
-      <strong>Three runs total: three seeds, MATH-500 only.</strong> Not three
-      seeds across all six benchmarks. The baseline arm already exists and is
-      reused, so the control costs three new evaluations, nothing else.
+      <strong>Phase 1 is three benchmarks, one seed.</strong> Every baseline arm
+      already exists and is reused, so each benchmark costs one new evaluation.
+      MBPP, GSM8K and MMLU stay out of scope — and note
+      <code>run_random_control.sh</code> could not run them anyway, since
+      <code>DATASETS</code> accepts only
+      <code>math,apps,logiqa,livecodebench</code>.
     </p>
 
-    <h3>Why one benchmark is enough</h3>
+    <h3>Why MATH-500 still carries the depth</h3>
     <p>
       The full grid would be 3 vectors × 6 benchmarks = 18 runs, on the order of
-      the entire ~38 GPU-h already spent on the study. Doubling the project's
-      compute for a control is the wrong trade, and the extra 15 runs would not
-      change the conclusion. Three reasons MATH-500 carries it alone:
+      the entire ~38 GPU-h already spent on the study — and at the measured
+      10h53m per arm (§10 budget), far more. Three reasons phase 2 belongs on
+      MATH-500 rather than spread across benchmarks:
     </p>
     <p>
       <strong>Test a control where the effect is strongest.</strong> This is the
@@ -651,8 +674,8 @@ python build_random_vector.py \
     <p>
       <strong>It is the cheapest of the six.</strong> APPS runs at
       <code>batch_size 1</code> with 8,893 average tokens and an 83.6% cap rate,
-      costing several times a MATH-500 arm. Picking the most informative
-      benchmark and the cheapest benchmark happens to be the same choice here.
+      costing several times a MATH-500 arm. For phase 2 — where three arms are
+      needed and only their spread matters — that cost difference is decisive.
     </p>
     <p>
       Comparability is free as well: all five SEAL vectors already have MATH-500
@@ -661,25 +684,38 @@ python build_random_vector.py \
     </p>
 
     <div class="decision">
-      <strong>Expand only if something moves.</strong>
-      If all three seeds are flat, the control is finished — report it and move
-      to Control B. If a seed comes back hot, extend <em>that seed</em> to the
-      other benchmarks: one vector across more benchmarks, never three. The wide
-      budget gets spent once there is a result that justifies it, not in advance
-      on the chance that there might be.
+      <strong>Phase 1 order: cheapest first, APPS last.</strong>
+      LogiQA before APPS. APPS is several times a MATH-500 arm, and it is also
+      the benchmark whose baseline died at startup on the Aug 15 pod without
+      writing a single prediction — read <code>docs/vast_runbook.md</code>
+      before starting it. Bank the LogiQA result first so phase 1 has two
+      domains on the board even if APPS has to be deferred again.
+      <br><br>
+      <strong>What still triggers a stop.</strong> The original rule stands for
+      its own case: if any arm comes back <em>hot</em> — reproducing the SEAL
+      signature rather than merely moving — stop and treat the
+      domain-specificity claim as unsupported until it is resolved. §11 already
+      records that seed 1 on MATH-500 did not do this.
     </div>
 
-<pre><code># Verifies the vectors first, then runs one arm per seed on the given GPU.
-# Baseline is reused, not regenerated.
-bash scripts/run_random_control.sh 0
+<pre><code># Phase 1. Verifies the vectors first, then runs seed 1 on the named benchmark.
+# Baseline is reused, not regenerated. Always tee — see docs/vast_runbook.md.
+SEEDS=1 DATASETS=logiqa bash scripts/run_random_control.sh 0 2>&amp;1 | tee -a /workspace/run.log
+SEEDS=1 DATASETS=apps   bash scripts/run_random_control.sh 0 2>&amp;1 | tee -a /workspace/run.log
+
+# Phase 2, once phase 1 has landed.
+SEEDS="2 3" DATASETS=math bash scripts/run_random_control.sh 0 2>&amp;1 | tee -a /workspace/run.log
 
 # Then, once the arms land:
 python scripts/report_stats.py</code></pre>
     <p class="muted">
-      The three control arms are already registered in
-      <code>scripts/report_stats.py</code>. Until the runs exist they report as
+      The control arms are already registered in
+      <code>scripts/report_stats.py</code>: seeds 1–3 on MATH-500 and LogiQA,
+      and seed 1 on APPS. Until the runs exist they report as
       <code>[skip] … not run</code>, so the stats script picks them up on its own
-      as each finishes.
+      as each finishes. The APPS path shape was confirmed by the n=5 smoke under
+      <code>results_for_control_vectors/smoke_apps/</code>, which differs only in
+      the trailing selection directory.
     </p>
 
     <div class="warning">
@@ -690,6 +726,16 @@ python scripts/report_stats.py</code></pre>
       <code>MAX_TOKENS=10000</code> match the existing arm exactly — the exact
       paired McNemar test depends on identical problem ordering, and a mismatch
       produces a number that looks fine and means nothing.
+      <br><br>
+      <strong>The same applies to the phase-1 benchmarks, against their own
+      baselines.</strong> LogiQA's reuse is already verified — the runner pins
+      <code>LOGIQA_SELECTION=data/LogiQA/eval_rand42_500_clean.json</code>,
+      English-only, 10k budget, batch 25, matching every existing LogiQA arm.
+      APPS pairs against
+      <code>results_for_math_vectors/APPS/baseline/base_remove_bos/test_rand42_500</code>,
+      so <code>APPS_SPLIT=test</code>, <code>APPS_MAX_EXAMPLES=500</code> and
+      <code>SAMPLE_SEED=42</code> have to match it. Check before the run, not
+      after: a mismatched pairing is not detectable from the output.
     </div>
 
     <h3>Report the same five things the SEAL arms report</h3>
@@ -735,6 +781,44 @@ python scripts/report_stats.py</code></pre>
       wall-clock of the existing MATH-500 arms before committing. Against the
       ~38 GPU-h already spent on the prior queue this is small.
     </p>
+
+    <h3>Budget, restated for the two-phase plan</h3>
+    <p>
+      Scaled from the measured 10h53m rather than the original estimate. APPS is
+      taken at 3–5× a MATH-500 arm from its own cost drivers
+      (<code>batch_size 1</code>, 8,893 average tokens, 83.6% cap rate); it is
+      the only figure here that is still a projection rather than a measurement.
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>Run</th><th class="num">Est. GPU-h</th><th class="num">@ ~$1.85/h</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>MATH-500, seed 1 <em>(done — §11)</em></td><td class="num">10h53m</td><td class="num">spent</td></tr>
+        <tr><td>1</td><td>LogiQA, seed 1</td><td class="num">~11</td><td class="num">~$20</td></tr>
+        <tr><td>1</td><td>APPS, seed 1 <em>(projection)</em></td><td class="num">33–55</td><td class="num">$60–100</td></tr>
+        <tr><td>2</td><td>MATH-500, seeds 2–3</td><td class="num">~22</td><td class="num">~$40</td></tr>
+        <tr><td colspan="2"><strong>Remaining</strong></td><td class="num"><strong>66–88</strong></td><td class="num"><strong>$120–160</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="warning">
+      <strong>A faster GPU does not buy a shorter run — pick the cheapest adequate card.</strong>
+      This follows directly from the diagnosis below: the bottleneck is
+      per-step Python and kernel-launch overhead, "roughly constant per step
+      regardless of GPU." An A100 or H100 will not meaningfully beat a 4090 here
+      and costs several times as much per hour. The model is 1.5B — the vectors
+      are 1536-dim — so 24 GB is ample and the extra VRAM buys nothing either.
+      Choose on price per hour, not on TFLOPS.
+      <br><br>
+      <strong>The corollary is that this is now an expensive plan.</strong> The
+      remaining 66–88 GPU-h is roughly twice the ~38 GPU-h the entire prior study
+      consumed, and APPS alone is over half of it. Run LogiQA, bank it, and price
+      APPS deliberately before committing to it — the honest option of dropping
+      APPS from phase 1 and reporting two domains should stay on the table.
+    </div>
     <div class="warning">
       <strong>The estimate was wrong by ~5–6x — seed1 took 10h53m, not ~1.8–2.1h.</strong>
       The original figure modeled the run as memory-bandwidth-bound (read the
@@ -925,14 +1009,17 @@ python scripts/report_stats.py</code></pre>
     <footer>
       Control A build plan for the SEAL steering study
       <span class="badge">vectors built &amp; verified</span>
-      <span class="badge">seed1 measured</span>
-      <span class="badge todo">seeds 2–3 paused</span><br>
+      <span class="badge">seed1 · MATH-500 measured</span>
+      <span class="badge todo">seed1 · LogiQA + APPS next</span>
+      <span class="badge plan">seeds 2–3 · phase 2</span><br>
       Companion to the steering progress report (2026-08-07) §12, Priority 1.
       The three <code>R_iso</code> draws exist under <code>results/control/</code>
       and pass the §9 checklist. <code>R_iso_seed1</code> has run on MATH-500
       (§11); norms, cosine statistics, and the pre-registered decision
-      thresholds are computed independently of that result. Seeds 2 and 3 are
-      needed before the §4 floor-p rank-sum argument applies.
+      thresholds are computed independently of that result. Scope revised
+      2026-08-17 (§10): phase 1 takes seed 1 to LogiQA and APPS, phase 2 brings
+      seeds 2 and 3 back — still needed before the §4 floor-p rank-sum argument
+      applies.
     </footer>
   </article>
 </main>
