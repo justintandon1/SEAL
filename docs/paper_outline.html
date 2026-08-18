@@ -200,12 +200,12 @@
     <div class="eyebrow">Write-up planning · paper outline</div>
     <h1>Paper outline: reasoning calibration across domains</h1>
     <p class="lede">
-      Structure for the workshop write-up. The lead claim is that reasoning
-      calibration is a <em>single domain-general direction</em> — vectors built
-      from math, code and logic traces are geometrically near-identical and
-      behaviourally indistinguishable, so pooling and combining them change
-      nothing. Calibration is not a per-skill object the way task and content
-      directions are.
+      Structure for the workshop write-up, built around one question:
+      <strong>can one general reasoning-calibration vector replace the
+      domain-specific ones — same accuracy, same shorter CoT, on math and code and
+      logic?</strong> The answer is yes, and for a stronger reason than
+      substitution: the &ldquo;three&rdquo; vectors turn out to be near-identical
+      directions to begin with.
     </p>
     <p>
       <span class="badge">workshop · 4–8 pages</span>
@@ -234,10 +234,15 @@
     <h2 id="claims"><span class="step">1</span>The claim, and what backs it</h2>
 
     <div class="answer">
-      <strong>Lead claim.</strong> Reasoning calibration is a <strong>single
-      domain-general direction</strong>. Vectors extracted by the SEAL recipe from
-      math, code and logic traces are geometrically near-identical and
-      behaviourally indistinguishable — pooling and combining them change nothing.
+      <strong>The question.</strong> Can one general reasoning-calibration vector
+      replace the domain-specific ones — <em>same accuracy, same shorter CoT, on
+      math and code and logic?</em>
+      <br><br>
+      <strong>The claim.</strong> Yes. You do not need a math vector for math, a
+      code vector for code and a logic vector for logic; one general direction does
+      all three jobs on both metrics. And it does so for a stronger reason than
+      substitution — the three domain vectors are near-identical directions, so
+      pooling and combining them change nothing.
     </div>
 
     <p>Two supporting claims, in order of strength:</p>
@@ -360,7 +365,7 @@
         <thead><tr><th>Beat</th><th>Content</th></tr></thead>
         <tbody>
           <tr><td><strong>Problem</strong></td><td>Reasoning models overthink; SEAL calibrates this with one training-free direction</td></tr>
-          <tr><td><strong>Open question</strong></td><td>Inherited from task arithmetic and Steer2Adapt: is a <em>general</em> capability direction the combination of <em>domain</em> directions? Prior work assumes yes; nobody tests it</td></tr>
+          <tr><td><strong>Open question</strong></td><td>Steering vectors are built and deployed <em>per domain</em>. Can one general reasoning-calibration vector replace the domain-specific ones — same accuracy, same shorter CoT, on math and code and logic?</td></tr>
           <tr><td><strong>What we do</strong></td><td>Five vectors under one fixed recipe (3 domain, 1 pooled, 1 combined), 6 benchmarks, plus a magnitude-matched random control</td></tr>
           <tr><td><strong>Finding</strong></td><td>The question dissolves. There is one direction. Recovery is ~100% because there is nothing to recover from</td></tr>
           <tr><td><strong>Contributions</strong></td><td>(i) domain-generality result with matched extraction; (ii) geometry that predicts it a priori, plus a magnitude-matched random control showing the direction is what carries it</td></tr>
@@ -408,13 +413,18 @@
           </tr>
           <tr>
             <td><strong>2.4</strong></td>
-            <td><strong>Gap statement</strong> (1 para, closes §2). Nobody has tested
-              whether a <em>calibration</em> direction — as opposed to a skill or
-              content direction — decomposes by domain at all, and prior compositional
-              work assumes rather than checks that domain directions are the right
-              unit</td>
-            <td>Sets up the headline claim. Keep it to the composition question — the
-              budget/truncation issue is a limitation, not a gap we claim to fill</td>
+            <td><strong>Gap statement</strong> (1 para, closes §2).
+              <em>SEAL shows a calibration vector works. It is unknown whether you need a
+              separate vector per reasoning domain, or whether one general direction is
+              enough. Prior work that combines domain vectors assumes the domain split is
+              real; it does not test whether a single general vector already recovers
+              each domain vector's gain.</em> Define &ldquo;gain&rdquo; as both halves —
+              same accuracy <em>and</em> the same shorter CoT — since a vector that keeps
+              the accuracy but loses the token saving has replaced nothing</td>
+            <td>Sets up the headline claim in the terms the primary RQ actually uses —
+              recovery/substitution, not geometry. Geometry is how we <em>explain</em>
+              the answer in §4, not the question being asked. Keep the budget/truncation
+              issue out of here; it is a limitation, not a gap we claim to fill</td>
           </tr>
         </tbody>
       </table>
