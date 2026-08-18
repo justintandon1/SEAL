@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paper outline · reasoning calibration across domains</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #1c2530;
+      --muted: #667281;
+      --line: #dfe4ea;
+      --blue: #1769aa;
+      --blue-soft: #eaf4ff;
+      --green: #24784b;
+      --green-soft: #eaf7f0;
+      --orange: #a45a19;
+      --orange-soft: #fff3e7;
+      --purple: #6849a8;
+      --purple-soft: #f2edff;
+      --code: #121a24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.62;
+    }
+    main {
+      width: min(880px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+    article {
+      padding: 42px 48px 52px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 20px 55px -48px rgba(28, 37, 48, .7);
+    }
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 8px 0 18px;
+      font-size: clamp(32px, 5.6vw, 46px);
+      line-height: 1.1;
+      letter-spacing: -.045em;
+    }
+    h2 {
+      margin: 40px 0 12px;
+      padding-top: 4px;
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: -.02em;
+    }
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 16px;
+      color: var(--blue);
+    }
+    p { margin: 0 0 13px; }
+    .lede {
+      color: var(--muted);
+      font-size: 18px;
+    }
+    code {
+      padding: 1px 5px;
+      background: #f1f3f5;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      margin: 14px 0 17px;
+      padding: 17px 19px;
+      overflow-x: auto;
+      color: #e8eef4;
+      background: var(--code);
+      border-radius: 11px;
+      font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    pre code { padding: 0; background: none; border: 0; color: inherit; font-size: inherit; }
+    .answer {
+      margin: 25px 0 8px;
+      padding: 17px 19px;
+      background: var(--blue-soft);
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+    }
+    .step {
+      display: inline-grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      margin-right: 7px;
+      color: #fff;
+      background: var(--blue);
+      border-radius: 50%;
+      font-size: 13px;
+      vertical-align: 2px;
+    }
+    .result {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--green-soft);
+      border: 1px solid #c5e1d1;
+      border-radius: 11px;
+    }
+    .warning {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--orange-soft);
+      border: 1px solid #f0d3b6;
+      border-radius: 11px;
+    }
+    .decision {
+      margin: 17px 0;
+      padding: 16px 18px;
+      background: var(--purple-soft);
+      border: 1px solid #ddd0f5;
+      border-radius: 11px;
+    }
+    .decision strong { color: var(--purple); }
+    .muted { color: var(--muted); }
+    .tablewrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      margin: 14px 0 18px;
+      border-collapse: collapse;
+      font-size: 14.5px;
+    }
+    th, td {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+    th {
+      background: #f8f9fb;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td strong { color: var(--ink); }
+    .toc {
+      margin: 22px 0 8px;
+      padding: 16px 19px;
+      background: #f8f9fb;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 14.5px;
+    }
+    .toc a { color: var(--blue); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc ol { margin: 6px 0 0; padding-left: 20px; }
+    .toc li { margin: 4px 0; }
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      margin-left: 6px;
+      background: var(--green-soft);
+      color: var(--green);
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      vertical-align: 2px;
+    }
+    .badge.todo { background: var(--orange-soft); color: var(--orange); }
+    .badge.plan { background: var(--purple-soft); color: var(--purple); }
+    footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+    @media (max-width: 620px) {
+      main { width: min(100% - 20px, 880px); padding: 18px 0 42px; }
+      article { padding: 27px 20px 34px; }
+      table { font-size: 13px; }
+      th, td { padding: 7px 8px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <article>
+    <div class="eyebrow">Write-up planning · paper outline</div>
+    <h1>Paper outline: reasoning calibration across domains</h1>
+    <p class="lede">
+      Structure for the workshop write-up. The lead claim is that reasoning
+      calibration is a <em>single domain-general direction</em> — vectors built
+      from math, code and logic traces are geometrically near-identical and
+      behaviourally indistinguishable, so pooling and combining them change
+      nothing. Calibration is not a per-skill object the way task and content
+      directions are.
+    </p>
+    <p>
+      <span class="badge">workshop · 4–8 pages</span>
+      <span class="badge">hypothesis pre-registered &amp; confirmed</span>
+      <span class="badge todo">R_iso · APPS + seeds 2–3 pending</span>
+      <span class="badge plan">7B replication scoped</span>
+      <span class="muted">— companion to the <a href="steering_progress_report.html">progress report</a>, the <a href="steering_seal_research_plan.html">v2 research plan</a> and the <a href="random_vector_build_plan.html">R_iso build plan</a>.</span>
+    </p>
+
+    <div class="toc">
+      <strong>On this page</strong>
+      <ol>
+        <li><a href="#claims">The claim, and what backs it</a></li>
+        <li><a href="#rqs">Research questions, pre-registered</a></li>
+        <li><a href="#s1">§1 Introduction</a></li>
+        <li><a href="#s2">§2 Background</a></li>
+        <li><a href="#s3">§3 Experimental design</a></li>
+        <li><a href="#s4">§4 Results</a></li>
+        <li><a href="#s5">§5 Limitations</a></li>
+        <li><a href="#s6">§6 Conclusion, and the appendix</a></li>
+        <li><a href="#evidence">Evidence status: have, need, deferred</a></li>
+        <li><a href="#scale">Scale — the 7B gap</a></li>
+      </ol>
+    </div>
+
+    <h2 id="claims"><span class="step">1</span>The claim, and what backs it</h2>
+
+    <div class="answer">
+      <strong>Lead claim.</strong> Reasoning calibration is a <strong>single
+      domain-general direction</strong>. Vectors extracted by the SEAL recipe from
+      math, code and logic traces are geometrically near-identical and
+      behaviourally indistinguishable — pooling and combining them change nothing.
+    </div>
+
+    <p>Two supporting claims, in order of strength:</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Claim</th><th>Evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td><strong>Geometry predicts behaviour</strong></td>
+            <td>86.7% of domain-vector variance sits in one singular direction;
+              cos(S_general, S_combo) = 0.981; then all 10 pairwise McNemar tests
+              come back non-significant on all three fully-covered benchmarks</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td><strong>Direction is load-bearing, not magnitude</strong></td>
+            <td>A norm-matched isotropic random vector at the same site and
+              coefficient moves the <em>opposite</em> way: tokens +9.5% (MATH) /
+              +17.5% (LogiQA), cap rate up, accuracy down</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="rqs"><span class="step">2</span>Research questions, pre-registered</h2>
+
+    <p>
+      From the <a href="steering_seal_research_plan.html">v2 research plan</a>,
+      stated before any results were in. Restate them in §1 and answer them
+      explicitly in §4 — pre-registration is a real strength here and should be
+      visible rather than implied.
+    </p>
+
+    <div class="decision">
+      <strong>Primary RQ.</strong> When a single general reasoning-calibration
+      vector is extracted (SEAL recipe) from a mixture of reasoning tasks, how much
+      of each task-specific vector's accuracy and token-efficiency gain does it
+      recover — and is the general vector a linear combination of the task-specific
+      vectors, or a distinct direction?
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Question as stated</th><th>Answer</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Q1 · Recovery.</strong> How much of each task-specific
+              vector's home-benchmark gain — accuracy <em>and</em> token reduction —
+              does the pooled general vector recover, and at what cost?</td>
+            <td>~100%, but the question is <strong>degenerate</strong>: there is
+              nothing to recover from. S_general is within 0.6 pts of every domain
+              vector on MATH-500 and 0.2–0.4 on LogiQA, all non-significant</td>
+            <td>Answered</td>
+          </tr>
+          <tr>
+            <td><strong>Q2 · Geometry.</strong> Is the general vector well explained
+              by the span of the three task-specific vectors, or does a non-trivial
+              residual remain?</td>
+            <td>Well explained. cos(S_general, S_combo) = 0.981; the domain vectors
+              are near rank-1 (86.7% of variance in one singular direction)</td>
+            <td>Answered — <strong>needs ‖r‖/‖S_general‖ computed</strong> to close
+              it formally</td>
+          </tr>
+          <tr>
+            <td><strong>Q3 · Specificity.</strong> (a) Do task-specific vectors help
+              their home benchmark while degrading others? (b) Does negating a
+              vector (−S) re-introduce over-thinking?</td>
+            <td>(a) <strong>No.</strong> S_code is the best vector on LogiQA;
+              S_math beats S_code on MBPP. No home-benchmark advantage anywhere.
+              (b) not run</td>
+            <td>(a) answered; <strong>(b) registered, deferred</strong> — see §9</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="result">
+      <strong>The pre-registered hypothesis was confirmed.</strong> The plan
+      predicted “S_general ≈ S_combo with a small residual — establishing that the
+      reasoning-calibration direction is largely domain-general, in contrast to
+      skill/content directions which tend to be domain-specific.” That is exactly
+      what the geometry and the effect matrix show. Say so in §1: a confirmed
+      advance prediction is much stronger than the same finding reported post-hoc.
+    </div>
+
+    <h3>Two deviations from the plan — state them plainly in §3, do not bury</h3>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Plan specified</th><th>Actually run</th><th>Consequence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>DeepSeek-R1-Distill-Qwen-<strong>7B</strong></td>
+            <td><strong>1.5B</strong> for all five vectors and all six benchmarks;
+              7B has S_math on MATH-500 only</td>
+            <td>Describe the 7B row as a scale check, not as the main model</td>
+          </tr>
+          <tr>
+            <td>Traces from GSM8K / MBPP / LogiQA</td>
+            <td><strong>MATH train / APPS train / LogiQA</strong></td>
+            <td>Extraction corpora differ from the plan; GSM8K and MBPP became
+              <em>evaluation</em> benchmarks instead. Harmless, but the paper must
+              describe what was done</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h2 id="s1"><span class="step">3</span>§1 Introduction <span class="muted">(~0.75 p)</span></h2>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Beat</th><th>Content</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Problem</strong></td><td>Reasoning models overthink; SEAL calibrates this with one training-free direction</td></tr>
+          <tr><td><strong>Open question</strong></td><td>Inherited from task arithmetic and Steer2Adapt: is a <em>general</em> capability direction the combination of <em>domain</em> directions? Prior work assumes yes; nobody tests it</td></tr>
+          <tr><td><strong>What we do</strong></td><td>Five vectors under one fixed recipe (3 domain, 1 pooled, 1 combined), 6 benchmarks, plus a magnitude-matched random control</td></tr>
+          <tr><td><strong>Finding</strong></td><td>The question dissolves. There is one direction. Recovery is ~100% because there is nothing to recover from</td></tr>
+          <tr><td><strong>Contributions</strong></td><td>(i) domain-generality result with matched extraction; (ii) geometry that predicts it a priori, plus a magnitude-matched random control showing the direction is what carries it</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="s2"><span class="step">4</span>§2 Background <span class="muted">(~1 p — three subsections, compressed for workshop length)</span></h2>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Sub</th><th>Content</th><th>Purpose in the argument</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>2.1</strong></td>
+            <td><strong>Overthinking and activation steering.</strong> Reasoning models
+              (R1-distill family) emit long self-verifying CoT; the efficiency
+              literature attacks this directly (budget forcing, concise-CoT, early
+              exit). Activation steering is the alternative: one direction, one layer,
+              added at decode, no retraining — CAA / ITI / refusal-direction lineage.
+              Primitive: <code>h ← h + α·S</code></td>
+            <td>Establishes the problem and defines the object. ~2 paragraphs; setup,
+              not contribution. Merged from what would be two sections at full length</td>
+          </tr>
+          <tr>
+            <td><strong>2.2</strong></td>
+            <td><strong>SEAL's calibration recipe.</strong> The contrast at
+              <code>\n\n</code> boundaries inside <code>&lt;think&gt;</code>, the keyword
+              taxonomy (reflection / transition / execution) from SEAL Appendix B, the
+              defaults (layer 20, α = −1.0)</td>
+            <td>State explicitly that we hold this recipe <em>fixed</em> and vary only
+              the source corpus. That is the methodological precondition for the
+              domain-generality claim, so it belongs here, not in Methods</td>
+          </tr>
+          <tr>
+            <td><strong>2.3</strong></td>
+            <td><strong>Do interventions compose?</strong> Task arithmetic (Ilharco et
+              al. 2022): in weight space, adding task vectors adds skills and negating
+              removes them. Steer2Adapt: composes steering vectors in activation space
+              and treats a general capability as a combination of domain directions —
+              but assumes the composition works. ATLAS: extraction should match
+              evaluation (traces, not role descriptions)</td>
+            <td>The pivot. Steer2Adapt is the foil — it assumes what we test. ATLAS
+              justifies our extraction design</td>
+          </tr>
+          <tr>
+            <td><strong>2.4</strong></td>
+            <td><strong>Gap statement</strong> (1 para, closes §2). Nobody has tested
+              whether a <em>calibration</em> direction — as opposed to a skill or
+              content direction — decomposes by domain at all, and prior compositional
+              work assumes rather than checks that domain directions are the right
+              unit</td>
+            <td>Sets up the headline claim. Keep it to the composition question — the
+              budget/truncation issue is a limitation, not a gap we claim to fill</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      <strong>At full-conference length</strong> this becomes five subsections,
+      splitting 2.1 and adding a dedicated “controls and confounds in steering
+      evaluation” section. At workshop length that confound material lives in §3.4
+      and §5 instead.
+    </p>
+
+    <h2 id="s3"><span class="step">5</span>§3 Experimental design <span class="muted">(~1.5 p)</span></h2>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Sub</th><th>Content</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>3.1</strong></td>
+            <td><strong>Setup.</strong> One table: model DeepSeek-R1-Distill-Qwen-1.5B
+              (1536-d); site = residual stream, layer 20, all generated positions, BOS
+              excluded; intervention <code>h ← h + coef·S</code> at coef −1.0; decoding
+              vLLM greedy (T=0), n=1, max_tokens 10,000; pairing = identical problems in
+              identical order across every arm (verified)</td>
+            <td>Layer 20 and α = −1.0 are <strong>SEAL's published defaults, adopted
+              unchanged</strong> — not parameters we selected. Say so explicitly: the
+              operating point is part of the recipe held fixed (§2.2), the same as the
+              boundary definition and keyword taxonomy. The study varies the source
+              corpus and nothing else</td>
+          </tr>
+          <tr>
+            <td><strong>3.2</strong></td>
+            <td><strong>Five vectors, one recipe.</strong> Four steps: generate traces
+              (500 correct + 500 incorrect, so it is not a correctness direction) →
+              segment at <code>\n\n</code> inside <code>&lt;think&gt;</code> → tag by
+              keyword → contrast the piles</td>
+            <td>See the sign-convention note and per-vector table below</td>
+          </tr>
+          <tr>
+            <td><strong>3.3</strong></td>
+            <td><strong>Geometry analysis.</strong> Pairwise cosine matrix (5×5); SVD of
+              the stacked domain vectors, singular values [1.613, 0.541, 0.325], top
+              direction carrying 86.7% of squared variance; least-squares projection of
+              S_general onto span{S_math, S_code, S_logic} reporting ‖r‖/‖S_general‖;
+              cos(S_general, S_combo) = 0.981</td>
+            <td>Costs no GPU time and <em>predicts</em> the benchmark result — present
+              it in that order. The 0.981 is the single most direct pooling-vs-combining
+              test</td>
+          </tr>
+          <tr>
+            <td><strong>3.4</strong></td>
+            <td><strong>Benchmarks, metrics, statistics.</strong> Six benchmarks:
+              MATH-500, LogiQA (clean English-500), APPS (rand42-500), MBPP-500, GSM8K
+              (1,319), MMLU philosophy (311); full 5-vector coverage on the first three.
+              Graders: Omni-MATH rule grader / executed unit tests / reasoning
+              extractor. Metrics: accuracy, avg + median tokens (model tokenizer),
+              cap-hit rate. Statistics: exact two-sided McNemar on discordant pairs</td>
+            <td>Report cap-hit rate alongside tokens for every arm — it is cheap, and it
+              is what makes the §5 budget limitation checkable rather than asserted.
+              Disclose the MATH extractor's no-answer fallback (it credits 2 truncated
+              baseline generations); note that correcting it <em>strengthens</em> the
+              effect and we keep the conservative number. Justify McNemar over
+              independent CIs in one sentence: arms agree on 86–93% of problems and
+              unpaired tests discard that. No multiple-comparison correction, stated as
+              the conservative choice</td>
+          </tr>
+          <tr>
+            <td><strong>3.5</strong></td>
+            <td><strong>Controls.</strong> <code>R_iso</code> — isotropic random,
+              rescaled to 57.06, three pinned seeds, identical site and coefficient.
+              Answers: does any perturbation of this magnitude reproduce the effect?
+              State the pre-registered interpretation grid</td>
+            <td>Scope out the null-keyword (B) and shuffled-label (C) controls
+              <strong>explicitly</strong>: they answer reasoning-<em>specificity</em>, a
+              different claim than domain-generality. Naming them and saying why they
+              are not required here is stronger than omitting them</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warning">
+      <strong>Sign convention — state <code>S</code> and <code>α</code> together, never
+      apart.</strong> The code stores
+      <code>S = mean(H_reflection ∪ H_transition) − mean(H_execution)</code> and applies
+      it at <code>coef = −1.0</code>; the net intervention is therefore
+      <code>+(H_E − H_RT)</code>, pushing the residual stream toward the execution mean.
+      Use the code convention in Methods so every number, <code>meta.json</code> and
+      script flag in the released artifacts matches the paper without translation — then
+      add one plain interpretive sentence immediately after. Verified in
+      <code>vector_generation.py:47</code>, <code>build_general_vector.py:298</code> and
+      <code>build_combo_vector.py:130</code> (which rejects inputs using the opposite
+      convention). Note that the v2 research plan uses the <em>other</em> convention
+      (<code>E − RT</code> with <code>+α</code>); the two are equivalent but must not be
+      mixed. <strong>Open item:</strong> check which convention SEAL's own paper uses.
+    </div>
+
+    <h3>Per-vector notes for §3.2</h3>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Vector</th><th>Source</th><th>Traces</th><th class="num">RT bounds</th><th class="num">Exec bounds</th><th class="num">‖S‖</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>S_math</strong></td><td>MATH train</td><td>500 + 500</td><td class="num">51,317</td><td class="num">101,743</td><td class="num">59.67</td></tr>
+          <tr><td><strong>S_code</strong></td><td>codeparrot/apps train</td><td>500 + 500</td><td class="num">76,452</td><td class="num">113,249</td><td class="num">56.22</td></tr>
+          <tr><td><strong>S_logic</strong></td><td>LogiQA 2.0 MRC, English</td><td>500 + 500</td><td class="num">9,683</td><td class="num">13,680</td><td class="num">55.29</td></tr>
+          <tr><td><strong>S_general</strong></td><td>pooled raw activations, phase 1</td><td>—</td><td class="num">137,452</td><td class="num">228,672</td><td class="num">55.78</td></tr>
+          <tr><td><strong>S_combo</strong></td><td>unit-sum of the three, rescaled</td><td>—</td><td class="num">—</td><td class="num">—</td><td class="num">57.06</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      <strong>S_general</strong> pools raw boundary activations across all three domains
+      into one contrast. Phase 1 is count-weighted, so MATH+APPS supply 93.6% of rows and
+      LogiQA only 6.4%. Report this as a <em>design fact here</em>, not as a caveat later
+      — it is why S_general sits at cos 0.797 from S_logic. Phase 2 (domain-balanced) is
+      implemented but unrun, so it goes to limitations.
+    </p>
+    <p>
+      <strong>S_combo</strong> unit-normalizes each source, weights them equally, and
+      rescales to the mean-source norm 57.06. Justify the equal weights in one sentence:
+      the sources are near rank-1, so across a 4× weight range the direction stays within
+      cos 0.985 — a grid search would resolve about 0.015 of cosine.
+    </p>
+    <h2 id="s4"><span class="step">6</span>§4 Results <span class="muted">(~1.5 p)</span></h2>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Sub</th><th>Content</th><th>Figure / table</th></tr></thead>
+        <tbody>
+          <tr><td><strong>4.1</strong></td><td>Geometry</td><td>Cosine heatmap + SVD spectrum</td></tr>
+          <tr><td><strong>4.2</strong></td><td>Effect matrix — 5 vectors × 3 benchmarks, accuracy and tokens</td><td>Main table</td></tr>
+          <tr><td><strong>4.3</strong></td><td>Indistinguishability — pairwise McNemar; 376/500 unanimity on MATH-500, 410/500 on APPS. Emphasise the <em>flatness of the columns</em>, not who leads</td><td>Pairwise table (one benchmark in body, rest to appendix)</td></tr>
+          <tr><td><strong>4.4</strong></td><td>Random control — R_iso does not reproduce the effect and inverts the token change</td><td>R_iso vs baseline vs S_combo</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="s5"><span class="step">7</span>§5 Limitations <span class="muted">(~0.75 p) — write it, do not bury it</span></h2>
+
+    <div class="warning">
+      <strong>The budget paragraph — write it plainly, it is the one a reviewer will
+      test.</strong> All runs cap generation at 10,000 tokens, and 33–84% of baseline
+      generations reach that cap depending on benchmark. Our MATH-500 baseline of 64.4%
+      sits below the commonly cited 83.9% for this model because that figure uses a 32k
+      budget with sampling; ours is greedy at 10k. Because a capped generation states no
+      answer and scores zero, a large share of the measured accuracy change on every
+      benchmark comes from previously-capped problems rather than from problems the model
+      could already finish — on MATH-500 the 164 capped problems move ~0% → 51.2% while
+      the 336 finished ones move 95.2% → 93.2%.
+    </div>
+
+    <p>
+      The 7B numbers make this concrete rather than suggestive. That model truncates on
+      <strong>13.0%</strong> of MATH-500 against the 1.5B's 32.8% — roughly a quarter the
+      truncation — and returns roughly a quarter the effect, with the same shape:
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Pile</th><th class="num">n</th><th class="num">baseline</th><th class="num">S_math_7b</th><th class="num">Contribution</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Baseline hit the cap</td><td class="num">65</td><td class="num">6.2%</td><td class="num">53.8%</td><td class="num"><strong>+6.2</strong></td></tr>
+          <tr><td>Baseline finished</td><td class="num">435</td><td class="num">96.1%</td><td class="num">92.9%</td><td class="num"><strong>−2.8</strong></td></tr>
+          <tr><td>All</td><td class="num">500</td><td class="num">84.4%</td><td class="num">87.8%</td><td class="num">+3.4</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      We therefore report our results as holding <strong>at this operating point</strong>,
+      and do not claim the intervention improves reasoning quality independent of the
+      budget. Cap-hit rates are reported for every arm (§3.4) so this is checkable.
+    </p>
+
+    <div class="decision">
+      <strong>On the operating point.</strong> Layer 20 and α = −1.0 are SEAL's published
+      defaults, adopted unchanged and held constant across every arm including the
+      controls. We do not sweep them: the study's design is to fix the recipe and vary
+      only the source corpus, and the coefficient is part of that recipe. Magnitude
+      comparability across the five vectors is handled <em>by construction</em> rather
+      than by tuning — the domain vectors span ‖S‖ 55.29–59.67, S_general lands at 55.78,
+      and S_combo is rescaled to the mean source norm 57.06, so no vector is advantaged
+      by strength at a shared coefficient. The consequence to state is narrow: our results
+      characterise these vectors at SEAL's operating point, not the best achievable effect
+      for any of them.
+    </div>
+
+    <p>The rest of the limitations, stated briefly:</p>
+    <ul>
+      <li>Single greedy sample; no sampling variance measured.</li>
+      <li>Coverage holes — S_general and S_combo on MBPP, GSM8K and MMLU.</li>
+      <li>S_general is Phase 1 (count-weighted) only; the domain-balanced Phase 2 build is implemented but unrun.</li>
+      <li>Reasoning-specificity untested — Controls B (null-keyword) and C (shuffled-label).</li>
+      <li><strong>Q3(b), the anti-vector arm, was pre-registered and left unrun.</strong> Say so rather than dropping it from the RQ list.</li>
+      <li>Scale — the 7B arm covers one vector on one benchmark, so it supports “the intervention transfers to 7B” but not the domain-generality claim itself (§10).</li>
+    </ul>
+
+    <h2 id="s6"><span class="step">8</span>§6 Conclusion, and the appendix <span class="muted">(~0.25 p)</span></h2>
+
+    <p>
+      <strong>Appendix.</strong> A. Full coverage matrix · B. Per-benchmark pairwise
+      McNemar tables · C. S_combo build derivation and SVD · D. Ablation plan (budget
+      check, Phase-2 balanced S_general, rank-1 direction steering) · E. Compute costs.
+    </p>
+
+    <h2 id="evidence"><span class="step">9</span>Evidence status: have, need, deferred</h2>
+
+    <div class="result">
+      <strong>Have it.</strong> Geometry; MATH-500, LogiQA and APPS at full five-vector
+      coverage; MBPP, GSM8K and MMLU partial; all pairwise stats; the cap decomposition on
+      all six; R_iso seed 1 on MATH-500 and LogiQA; 7B S_math on MATH-500 with tokens and
+      McNemar.
+    </div>
+
+    <h3>Still needed, ranked</h3>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Item</th><th>Why</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td>R_iso seed 1 on APPS, then seeds 2–3</td>
+            <td>Serves claim 2 directly. Without ≥3 seeds the rank-sum framing does not apply and the control is n = 1</td>
+            <td>2–3 GPU-h + APPS arm</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td>Coverage holes; Phase-2 S_general</td>
+            <td>Acceptable as limitations if they do not land</td>
+            <td>varies</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Deferred — not in this submission</h3>
+
+    <p>
+      Name each of these in future work so a reviewer sees they were considered rather
+      than missed, and let §5 carry the consequence squarely instead of promising a
+      future check.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Deferred</th><th>Why it is out of scope</th><th>What §5 must then say</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>32k budget sweep</strong></td>
+            <td>Right experiment, no time before the deadline</td>
+            <td>The budget caveat stands on its own; do not promise the check</td>
+          </tr>
+          <tr>
+            <td><strong>Coefficient sweep</strong></td>
+            <td>Layer 20 and α = −1.0 are SEAL's defaults adopted unchanged, not parameters we selected</td>
+            <td>Results characterise these vectors at SEAL's operating point</td>
+          </tr>
+          <tr>
+            <td><strong>Anti-vector (−S), Q3(b)</strong></td>
+            <td>Registered in the v2 plan; no time to run. Setup is free — one flag,
+              <code>COEF=1.0</code> — but the arm is ~7.4 GPU-h, and it would land at the
+              expensive end since more over-thinking means more cap hits and no batch
+              finishes early</td>
+            <td>State plainly that Q3(b) was registered and left unrun; do not quietly
+              drop it from the RQ list</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      <strong>No longer blocking under this framing:</strong> Control B (null-keyword) and
+      the shuffled-label control. They test reasoning-specificity, which this paper does
+      not claim.
+    </p>
+    <h2 id="scale"><span class="step">10</span>Scale — the 7B gap</h2>
+
+    <p><strong>What exists.</strong> One vector, one benchmark.</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Asset</th><th>State</th></tr></thead>
+        <tbody>
+          <tr><td>S_math_7b (dim 3584, ‖S‖ 82.44)</td><td>built, committed</td></tr>
+          <tr>
+            <td>MATH-500 baseline + S_math_7b</td>
+            <td>84.4% → 87.8%, <strong>+3.4, McNemar p = 0.030</strong>, agreement 89.0%
+              (403 both-correct, 42 both-wrong, b = 19, c = 36)</td>
+          </tr>
+          <tr>
+            <td>Tokens (7B tokenizer)</td>
+            <td>baseline 3,380 avg / 2,055 median / 13.0% at cap → steered 2,776 / 1,782 /
+              8.6%, <strong>−17.9%</strong> — the same shorten-and-improve pattern as the
+              1.5B</td>
+          </tr>
+          <tr>
+            <td>Cap decomposition</td>
+            <td>65 capped: 6.2% → 53.8% (<strong>+6.2</strong>); 435 finished:
+              96.1% → 92.9% (<strong>−2.8</strong>); net +3.4</td>
+          </tr>
+          <tr><td>R_iso_7b seeds 1–3 (norm-matched 82.44)</td><td><strong>built and verified, never evaluated</strong></td></tr>
+          <tr><td>S_code_7b, S_logic_7b, S_general_7b, S_combo_7b</td><td>do not exist</td></tr>
+          <tr><td>Any 7B benchmark other than MATH-500</td><td>none</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warning">
+      <strong>The problem for the paper.</strong> The headline claim is that vectors from
+      different domains are indistinguishable. <em>One vector cannot test that.</em>
+      S_math_7b alone shows “SEAL works at 7B,” which is SEAL's result, not ours. As it
+      stands 7B is a sanity check, not a replication — and a reviewer of a 1.5B-only claim
+      will ask about scale.
+    </div>
+
+    <h3>Ranked 7B plan, by value per GPU-hour</h3>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Item</th><th>Buys</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td><s>Recompute 7B token counts</s> — <strong>done.</strong>
+              <code>scripts/report_stats.py</code> now registers a <code>math500_7b</code>
+              benchmark with a per-benchmark tokenizer:
+              <code>python scripts/report_stats.py --benchmark math500_7b</code></td>
+            <td>Closed the stated limitation and supplied the §5 decomposition above</td>
+            <td><span class="badge">done</span></td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td>Build <strong>S_logic_7b</strong> — cheapest second domain: short CoTs,
+              existing <code>gen_logiqa_vllm.py</code> pipeline</td>
+            <td>The 7B <strong>cosine matrix</strong>. If the 7B domain vectors are also
+              near rank-1, claim 1's <em>geometric</em> half replicates at scale
+              <strong>with no eval arms at all</strong></td>
+            <td>trace gen + extraction</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td>One eval arm: S_logic_7b on MATH-500, reusing the existing 7B baseline</td>
+            <td>Tests indistinguishability at 7B — does a logic-derived vector match a
+              math-derived one on MATH, as it does at 1.5B? Directly replicates the
+              headline</td>
+            <td>1 eval arm</td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td>R_iso_7b_seed1 on MATH-500</td>
+            <td>Replicates claim 2 at scale. Vectors already built and verified — pure
+              eval cost</td>
+            <td>1 eval arm</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="answer">
+      <strong>The key move is #2.</strong> Splitting the replication into a
+      <em>geometric</em> half (needs vectors only) and a <em>behavioural</em> half (needs
+      eval arms) means the cheap half can land even if GPU budget runs out. A 7B cosine
+      matrix showing the same near-rank-1 structure is a real scale result on its own, and
+      it costs no evaluation.
+    </div>
+
+    <footer>
+      Paper outline · reasoning calibration across domains · workshop draft structure.
+      Companion to the <a href="steering_progress_report.html">progress report</a> (2026-08-07),
+      the <a href="steering_seal_research_plan.html">v2 research plan</a> and the
+      <a href="random_vector_build_plan.html">R_iso build plan</a>.
+      Statistics reproducible with <code>python scripts/report_stats.py</code> ·
+      <a href="index.html">all docs</a>.
+    </footer>
+  </article>
+</main>
+</body>
+</html>

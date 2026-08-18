@@ -50,6 +50,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from logic_utils import extract_choice, options_from_prompt  # noqa: E402
 
 MODEL = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+MODEL_7B = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 MAX_TOKENS = 10000
 
 # Arm -> path relative to the results root. Runs are filed under the vector that
@@ -74,6 +75,23 @@ BENCHMARKS: Dict[str, dict] = {
             "R_iso_seed1": "results_for_control_vectors/MATH500/R_iso_seed1/results_control_R_iso_seed1/coef_-1.0_remove_bos/rand42_500",
             "R_iso_seed2": "results_for_control_vectors/MATH500/R_iso_seed2/results_control_R_iso_seed2/coef_-1.0_remove_bos/rand42_500",
             "R_iso_seed3": "results_for_control_vectors/MATH500/R_iso_seed3/results_control_R_iso_seed3/coef_-1.0_remove_bos/rand42_500",
+        },
+    },
+    # The 7B arms live in their own tree and need their own tokenizer -- the two
+    # models do not share a vocabulary, so counting 7B generations with the 1.5B
+    # tokenizer would be wrong rather than merely imprecise. R_iso_7b is
+    # registered ahead of its runs, same as the 1.5B control arms above.
+    "math500_7b": {
+        "label": "MATH-500 on DeepSeek-R1-Distill-Qwen-7B",
+        "eval_file": "math_eval.jsonl",
+        "scorer": "math",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_math_vectors/MATH500/baseline/base_remove_bos/rand42_500",
+            "S_math_7b": "results_for_7b_math_vectors/MATH500/math_vector_7b/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/rand42_500",
+            "R_iso_7b_seed1": "results_for_control_vectors/MATH500_7b/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/rand42_500",
+            "R_iso_7b_seed2": "results_for_control_vectors/MATH500_7b/R_iso_7b_seed2/results_control_R_iso_7b_seed2/coef_-1.0_remove_bos/rand42_500",
+            "R_iso_7b_seed3": "results_for_control_vectors/MATH500_7b/R_iso_7b_seed3/results_control_R_iso_7b_seed3/coef_-1.0_remove_bos/rand42_500",
         },
     },
     "logiqa": {
@@ -149,16 +167,27 @@ BENCHMARKS: Dict[str, dict] = {
 }
 
 
-def get_tokenizer():
-    """Return the model tokenizer, or None if transformers/files are unavailable."""
+_TOKENIZERS: Dict[str, Optional[object]] = {}
+
+
+def get_tokenizer(model: str = MODEL):
+    """Return ``model``'s tokenizer, or None if transformers/files are unavailable.
+
+    Cached per model: benchmarks are reported in a loop and the 1.5B tokenizer
+    would otherwise be reloaded once per benchmark.
+    """
+    if model in _TOKENIZERS:
+        return _TOKENIZERS[model]
     try:
         from transformers import AutoTokenizer
 
-        return AutoTokenizer.from_pretrained(MODEL)
+        tok = AutoTokenizer.from_pretrained(model)
     except Exception as exc:  # noqa: BLE001 - any failure means "fall back"
-        print(f"  [warn] tokenizer unavailable ({type(exc).__name__}); "
+        print(f"  [warn] tokenizer for {model} unavailable ({type(exc).__name__}); "
               f"lengths in characters, cap split uses the answer-marker proxy")
-        return None
+        tok = None
+    _TOKENIZERS[model] = tok
+    return tok
 
 
 def mcnemar_exact(b: int, c: int) -> float:
@@ -334,10 +363,10 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    tokenizer = get_tokenizer()
     keys = list(BENCHMARKS) if args.benchmark == "all" else [args.benchmark]
     for key in keys:
-        report(args.results_root, key, BENCHMARKS[key], tokenizer)
+        spec = BENCHMARKS[key]
+        report(args.results_root, key, spec, get_tokenizer(spec.get("model", MODEL)))
 
 
 if __name__ == "__main__":
