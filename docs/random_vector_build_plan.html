@@ -207,7 +207,8 @@
     </p>
     <p>
       <span class="badge">seed 1 · MATH-500 measured</span>
-      <span class="badge todo">seed 1 · LogiQA + APPS pending</span>
+      <span class="badge">seed 1 · LogiQA measured</span>
+      <span class="badge todo">seed 1 · APPS pending</span>
       <span class="badge plan">seeds 2–3 · phase 2</span>
       <span class="muted">— MATH-500 run on a rented AWS <code>g6e.xlarge</code>; results in §11. Scope revised 2026-08-17, see §10.</span>
     </p>
@@ -225,7 +226,8 @@
         <li><a href="#gotchas">Three things that will bite</a></li>
         <li><a href="#verify">CPU verification, before any GPU time</a></li>
         <li><a href="#run">Running it, and the readouts</a></li>
-        <li><a href="#result1">First result — R_iso_seed1</a></li>
+        <li><a href="#result1">First result — R_iso_seed1 on MATH-500</a></li>
+        <li><a href="#result2">Second result — R_iso_seed1 on LogiQA</a></li>
         <li><a href="#answers">What this does and doesn't answer</a></li>
       </ol>
     </div>
@@ -796,7 +798,7 @@ python scripts/report_stats.py</code></pre>
       </thead>
       <tbody>
         <tr><td>1</td><td>MATH-500, seed 1 <em>(done — §11)</em></td><td class="num">10h53m</td><td class="num">spent</td></tr>
-        <tr><td>1</td><td>LogiQA, seed 1</td><td class="num">~11</td><td class="num">~$20</td></tr>
+        <tr><td>1</td><td>LogiQA, seed 1 <em>(done — §12)</em></td><td class="num">7h22m</td><td class="num">$8.88</td></tr>
         <tr><td>1</td><td>APPS, seed 1 <em>(projection)</em></td><td class="num">33–55</td><td class="num">$60–100</td></tr>
         <tr><td>2</td><td>MATH-500, seeds 2–3</td><td class="num">~22</td><td class="num">~$40</td></tr>
         <tr><td colspan="2"><strong>Remaining</strong></td><td class="num"><strong>66–88</strong></td><td class="num"><strong>$120–160</strong></td></tr>
@@ -834,7 +836,7 @@ python scripts/report_stats.py</code></pre>
       figure above.
     </div>
 
-    <h2 id="result1"><span class="step">11</span>First result — R_iso_seed1</h2>
+    <h2 id="result1"><span class="step">11</span>First result — R_iso_seed1 on MATH-500</h2>
     <p>
       One arm run so far, on a rented AWS <code>g6e.xlarge</code>. Full
       settings — 500 examples, 10,000-token budget, baseline reused via
@@ -936,7 +938,148 @@ python scripts/report_stats.py</code></pre>
       abandoned — see the budget note in §10.
     </div>
 
-    <h2 id="answers"><span class="step">12</span>What this does and doesn't answer</h2>
+    <h2 id="result2"><span class="step">12</span>Second result — R_iso_seed1 on LogiQA</h2>
+    <p>
+      Phase 1's second benchmark, run 2026-08-17/18 on a rented Vast.ai
+      <code>A100 SXM4 80GB</code>. Full settings — the contamination-free
+      <code>eval_rand42_500_clean</code> selection, English-only, 10,000-token
+      budget, batch 25, baseline reused via <code>RUN_BASELINE=0</code>. The
+      pairing was verified before the run rather than after: the problem
+      sequence hashes identically across the baseline and all five SEAL arms.
+    </p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Arm</th><th class="num">Acc</th><th class="num">95% CI</th><th class="num">Avg tok</th><th class="num">Δ len</th><th class="num">At cap</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>baseline</td><td class="num">25.8%</td><td class="num">±3.8</td><td class="num">4089</td><td class="num">—</td><td class="num">36.2%</td></tr>
+        <tr><td>S_math</td><td class="num">28.6%</td><td class="num">±4.0</td><td class="num">2989</td><td class="num">−26.9%</td><td class="num">24.2%</td></tr>
+        <tr><td>S_code</td><td class="num">29.8%</td><td class="num">±4.0</td><td class="num">2818</td><td class="num">−31.1%</td><td class="num">22.8%</td></tr>
+        <tr><td>S_logic</td><td class="num">28.4%</td><td class="num">±4.0</td><td class="num">3022</td><td class="num">−26.1%</td><td class="num">24.0%</td></tr>
+        <tr><td>S_general</td><td class="num">28.8%</td><td class="num">±4.0</td><td class="num">2997</td><td class="num">−26.7%</td><td class="num">24.2%</td></tr>
+        <tr><td>S_combo</td><td class="num">28.4%</td><td class="num">±4.0</td><td class="num">2859</td><td class="num">−30.1%</td><td class="num">22.6%</td></tr>
+        <tr><td><strong>R_iso_seed1</strong></td><td class="num"><strong>22.2%</strong></td><td class="num">±3.6</td><td class="num"><strong>4805</strong></td><td class="num"><strong>+17.5%</strong></td><td class="num"><strong>43.6%</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="answer">
+      <strong>The control is the mirror image of the SEAL vectors on all three
+      axes.</strong> Every SEAL vector shortens reasoning (−26 to −31% tokens),
+      pulls the cap-hit rate down from 36.2% to ~23%, and gains 2.6–4.0 points.
+      <code>R_iso_seed1</code> <em>lengthens</em> it (+17.5%), pushes the cap
+      rate <em>up</em> to 43.6%, and loses 3.6 points. It is not a weak version
+      of the SEAL effect — it points the other way. This reproduces the MATH-500
+      direction (§11: +9.5% tokens, cap rate up, −2.4 points).
+    </div>
+
+    <h3>McNemar, exact two-sided</h3>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Pair</th><th class="num">Δ pts</th><th class="num">p</th></tr></thead>
+      <tbody>
+        <tr><td>baseline vs R_iso_seed1</td><td class="num">−3.6</td><td class="num">0.054</td></tr>
+        <tr><td>S_code vs R_iso_seed1</td><td class="num">−7.6</td><td class="num">3.3e-4</td></tr>
+        <tr><td>S_general vs R_iso_seed1</td><td class="num">−6.6</td><td class="num">1.8e-3</td></tr>
+        <tr><td>S_math vs R_iso_seed1</td><td class="num">−6.4</td><td class="num">3.2e-3</td></tr>
+        <tr><td>S_combo vs R_iso_seed1</td><td class="num">−6.2</td><td class="num">4.2e-3</td></tr>
+        <tr><td>S_logic vs R_iso_seed1</td><td class="num">−6.2</td><td class="num">4.9e-3</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>The capped / finished decomposition</h3>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Arm</th><th class="num">Acc, capped</th><th class="num">Acc, finished</th><th class="num">From cap</th><th class="num">From finished</th></tr></thead>
+      <tbody>
+        <tr><td>baseline</td><td class="num">0.0%</td><td class="num">40.4%</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>S_combo</td><td class="num">22.1%</td><td class="num">32.0%</td><td class="num">+8.0</td><td class="num">−5.4</td></tr>
+        <tr><td><strong>R_iso_seed1</strong></td><td class="num"><strong>9.9%</strong></td><td class="num"><strong>29.2%</strong></td><td class="num"><strong>+3.6</strong></td><td class="num"><strong>−7.2</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      Split by whether the <em>baseline</em> hit the cap (181 capped / 319
+      finished): the random direction does recover some previously-capped
+      problems (+3.6 points) but costs more than twice that on the ones the
+      baseline would have finished correctly (−7.2). Net −3.6. The same
+      asymmetric trade as MATH-500, where it was +8.4 / −10.8 for a net −2.4.
+    </p>
+
+    <div class="warning">
+      <strong>Read the SEAL arms' own significance before reading the control's.</strong>
+      On LogiQA the SEAL gains are <em>not</em> individually significant against
+      baseline — <code>S_code</code> is the best at p=0.075, and the rest sit at
+      p=0.20–0.27. That is the small-effect warning in
+      <code>run_random_control.sh</code> playing out: 13–20 problems out of 500.
+      So the claim this arm supports is not "SEAL beats baseline on LogiQA" but
+      "SEAL is clearly distinguishable from a magnitude-matched random
+      direction" (p&nbsp;&lt;&nbsp;0.005 against all five), which is the
+      question Control A was commissioned to answer.
+    </div>
+
+    <div class="warning">
+      <strong>Against the §10 decision rule, this is not flat.</strong>
+      Flat requires Δaccuracy within ±2 points <em>and</em> Δtokens within ±5%.
+      <code>R_iso_seed1</code> is at −3.6 points and +17.5% tokens — outside
+      both bands, in the negative direction the rule did not name. That is the
+      same "genuinely awkward middle" verdict the MATH-500 arm received, and it
+      is reported as a partial pass with the decomposition shown, not rounded to
+      a verdict. Two benchmarks now agree on the qualitative answer; neither
+      supports the rank-sum framing at <em>n</em>&nbsp;=&nbsp;1 (§4).
+    </div>
+
+    <h3>Measured cost, and what it says about the timing dispute</h3>
+    <p>
+      The arm took <strong>7h21m41s</strong> for 20 batches — 1325.09 s per
+      batch, and every batch runs the full 10,000 decode steps because 181 of
+      the 500 baseline generations hit the cap, so no batch of 25 can finish
+      early. That is <strong>132.5 ms per decode step</strong>, measured on a
+      single pinned GPU with <code>CUDA_VISIBLE_DEVICES=0</code> so that
+      <code>device_map="auto"</code> at
+      <code>eval_MATH_steering.py:328</code> could not pipeline the model
+      across cards.
+    </p>
+    <p>
+      A single-batch probe run beforehand predicted 1326.81 s/batch — the full
+      arm came in <strong>0.1% off that prediction</strong>, confirming that one
+      batch is a legitimate predictor for this workload.
+    </p>
+
+    <div class="warning">
+      <strong>This does not match the 196 ms/step the budget sections are built on.</strong>
+      The three figures in the repo, converted to a common unit over the fixed
+      200,000 decode steps an arm requires:
+      <ul>
+        <li><code>run_random_control.sh</code> — "7.4 GPU-h … A100 PCIe" →
+        <strong>134 ms/step</strong></li>
+        <li>this measurement, A100 SXM4 → <strong>132.5 ms/step</strong></li>
+        <li>§10 and <code>docs/aws_runbook.md</code> — "10h53m on
+        <code>g6e.xlarge</code>" → <strong>196 ms/step</strong></li>
+      </ul>
+      The first two agree to within 1%. The third is 48% higher. Either the
+      seed-1 MATH-500 arm did not take 10h53m, or an A100 is ~32% faster than an
+      L40S here — and the second reading would contradict the
+      "a faster GPU does not buy a shorter run" claim in §10 and the runbook.
+      This document does not resolve which; it records that the two A100
+      figures agree and the L40S figure does not.
+    </div>
+
+    <div class="warning">
+      <strong>VRAM: ~50 GB steady, 63.8 GB peak reserved — not the ~21 GB the runbook predicts.</strong>
+      <code>docs/aws_runbook.md</code> budgets 6.6 GB of fp32 weights plus a
+      13.8 GB KV cache and concludes "24 GB is enough." Sampled through this
+      arm, <code>nvidia-smi</code> reported 44–64 GB in use. Some of that is
+      PyTorch's caching allocator rather than live tensors, but the working set
+      is far above 24 GB, so <strong>this configuration cannot run on a 24 GB
+      card</strong> at batch 25 with a 10,000-token budget. The 4090 claim in
+      the Vast runbook cannot be right at these settings.
+    </div>
+
+    <h2 id="answers"><span class="step">13</span>What this does and doesn't answer</h2>
     <p>
       <strong>It answers:</strong> whether a magnitude-matched perturbation at
       the same site and coefficient reproduces the compression and the
@@ -1010,7 +1153,8 @@ python scripts/report_stats.py</code></pre>
       Control A build plan for the SEAL steering study
       <span class="badge">vectors built &amp; verified</span>
       <span class="badge">seed1 · MATH-500 measured</span>
-      <span class="badge todo">seed1 · LogiQA + APPS next</span>
+      <span class="badge">seed1 · LogiQA measured</span>
+      <span class="badge todo">seed1 · APPS next</span>
       <span class="badge plan">seeds 2–3 · phase 2</span><br>
       Companion to the steering progress report (2026-08-07) §12, Priority 1.
       The three <code>R_iso</code> draws exist under <code>results/control/</code>
@@ -1019,7 +1163,7 @@ python scripts/report_stats.py</code></pre>
       thresholds are computed independently of that result. Scope revised
       2026-08-17 (§10): phase 1 takes seed 1 to LogiQA and APPS, phase 2 brings
       seeds 2 and 3 back — still needed before the §4 floor-p rank-sum argument
-      applies.
+      applies. LogiQA landed 2026-08-18 (§12); APPS is the last phase-1 arm.
     </footer>
   </article>
 </main>
