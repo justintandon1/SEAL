@@ -12,6 +12,7 @@
 # costs one batch. Re-running resumes; it never redoes finished work.
 #
 #   DATASET=logiqa scripts/run_arm_multigpu.sh results/control/R_iso_seed1.pt R_iso_seed1
+#   DATASET=apps   scripts/run_arm_multigpu.sh results/control/R_iso_seed1.pt R_iso_seed1
 #   DATASET=math   scripts/run_arm_multigpu.sh results/control/R_iso_seed2.pt R_iso_seed2
 #
 # Env: DATASET NUM_GPUS MAX_ATTEMPTS RESULT_ROOT MODEL LAYER COEF MAX_TOKENS
@@ -21,7 +22,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
-  echo "usage: DATASET=math|logiqa $0 VECTOR_PATH|baseline [VECTOR_NAME]" >&2
+  echo "usage: DATASET=math|logiqa|apps $0 VECTOR_PATH|baseline [VECTOR_NAME]" >&2
   exit 2
 fi
 
@@ -46,6 +47,9 @@ MAX_ATTEMPTS=${MAX_ATTEMPTS:-3}
 # used. Changing it silently breaks the pairing with those arms.
 LOGIQA_SELECTION=${LOGIQA_SELECTION:-data/LogiQA/eval_rand42_500_clean.json}
 
+# APPS runs through the code harness, the other two through the text one.
+EVAL_SCRIPT=eval_MATH_steering.py
+
 case "$DATASET" in
   math)
     DATASET_ARG=MATH500
@@ -61,8 +65,21 @@ case "$DATASET" in
     fi
     DATASET_ARGS=(--dataset LogiQA --logiqa_english_only --logiqa_eval_selection "$LOGIQA_SELECTION")
     ;;
+  apps)
+    DATASET_ARG=APPS
+    BENCH_DIR=APPS
+    EVAL_SCRIPT=eval_code_steering.py
+    # APPS generates one sequence at a time: prompts are long and outputs run to
+    # the cap 83.6% of the time, so there is no padding win from batching. That
+    # also makes recovery per-example rather than per-batch.
+    BATCH_SIZE=${APPS_BATCH_SIZE:-1}
+    DATASET_ARGS=(--benchmark apps --apps_split "${APPS_SPLIT:-test}"
+                  --random_sample --sample_seed "$SAMPLE_SEED"
+                  --max_examples "$MAX_EXAMPLES"
+                  --eval_workers "${EVAL_WORKERS:-12}" --timeout "${APPS_TIMEOUT:-10}")
+    ;;
   *)
-    echo "Unknown DATASET '$DATASET'. Use math or logiqa." >&2
+    echo "Unknown DATASET '$DATASET'. Use math, logiqa or apps." >&2
     exit 2
     ;;
 esac
@@ -104,7 +121,7 @@ fi
 
 # Ask the eval for the directory it will actually write to, rather than
 # reimplementing its nesting rules here and drifting from them later.
-SAVE_DIR=$(python eval_MATH_steering.py "${ARGS[@]}" --print_save_dir)
+SAVE_DIR=$(python "$EVAL_SCRIPT" "${ARGS[@]}" --print_save_dir)
 LOG_DIR="$SAVE_DIR/logs"
 mkdir -p "$LOG_DIR"
 
@@ -117,7 +134,7 @@ echo
 
 # Warm the model cache serially. N processes racing to download the same 7 GB of
 # fp32 weights is how you get a corrupt cache and N crashed shards. LogiQA reads
-# from data/LogiQA/ on disk, so only MATH needs the dataset warmed too.
+# from data/LogiQA/ on disk; MATH and APPS both pull theirs from the Hub.
 echo ">>> Warming caches"
 python - "$MODEL" "$DATASET" <<'PY'
 import sys
@@ -126,6 +143,11 @@ snapshot_download(sys.argv[1])
 if sys.argv[2] == "math":
     from datasets import load_dataset
     load_dataset("HuggingFaceH4/MATH-500", split="test")
+elif sys.argv[2] == "apps":
+    # Same reason as the weights: N processes racing for the same parquet files
+    # is how you get a corrupt cache and N crashed shards.
+    from apps_utils import load_apps
+    load_apps(split="test", max_examples=1)
 print("caches ready")
 PY
 echo
@@ -135,7 +157,7 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
   pids=()
   ranks=()
   for rank in $(seq 0 $((NUM_GPUS - 1))); do
-    CUDA_VISIBLE_DEVICES="$rank" python eval_MATH_steering.py \
+    CUDA_VISIBLE_DEVICES="$rank" python "$EVAL_SCRIPT" \
       "${ARGS[@]}" --shard_rank "$rank" \
       >"$LOG_DIR/rank${rank}.log" 2>&1 &
     pids+=($!)
@@ -165,4 +187,10 @@ done
 
 echo
 echo ">>> Merging shards and scoring"
-python scripts/merge_shards.py --save_dir "$SAVE_DIR" --dataset "$DATASET_ARG"
+if [[ "$DATASET" == "apps" ]]; then
+  # Scoring APPS executes the generated code, so it runs once, here -- not
+  # concurrently inside each shard.
+  python "$EVAL_SCRIPT" "${ARGS[@]}" --num_shards 1 --finalize_only
+else
+  python scripts/merge_shards.py --save_dir "$SAVE_DIR" --dataset "$DATASET_ARG"
+fi
