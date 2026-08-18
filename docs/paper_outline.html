@@ -329,12 +329,31 @@
     </div>
 
     <div class="result">
-      <strong>The pre-registered hypothesis was confirmed.</strong> The plan
-      predicted “S_general ≈ S_combo with a small residual — establishing that the
-      reasoning-calibration direction is largely domain-general, in contrast to
-      skill/content directions which tend to be domain-specific.” That is exactly
-      what the geometry and the effect matrix show. Say so in §1: a confirmed
-      advance prediction is much stronger than the same finding reported post-hoc.
+      <strong>The geometric prediction was confirmed; the behavioural one was not.</strong>
+      The plan made two forecasts, and separating them is the most interesting thing in §4.
+      <br><br>
+      <strong>Confirmed.</strong> “S_general ≈ S_combo with a small residual —
+      establishing that the reasoning-calibration direction is largely domain-general.”
+      Measured: cos = 0.981, with the domain vectors near rank-1. Say so in §1 — a
+      confirmed advance prediction is much stronger than the same finding reported
+      post-hoc.
+      <br><br>
+      <strong>Not confirmed — and we expected otherwise.</strong> The plan's anticipated
+      effect matrix has specific vectors “light up their own column” and cut “tokens
+      hardest on their home benchmark,” with general and combo taking a “smaller home
+      gain, positive everywhere.” That is a trade-off, and we predicted it. It does not
+      appear: there is no home-benchmark advantage anywhere — S_code is the best vector
+      on LogiQA, S_math beats S_code on MBPP, and S_general matches the domain vectors on
+      their own turf at no measurable cost.
+    </div>
+
+    <div class="warning">
+      <strong>Why the two predictions were never compatible.</strong> The plan expected
+      domain-general <em>geometry</em> and domain-specific <em>behaviour</em> at the same
+      time. Once the vectors are near rank-1 the second cannot follow — a specialist
+      column needs a direction the generalist lacks, and there is no such direction.
+      Worth one sentence in §4: the anticipated trade-off was ruled out by the geometry we
+      also predicted, and we did not see that at planning time.
     </div>
 
     <h3>Two deviations from the plan — state them plainly in §3, do not bury</h3>
@@ -370,7 +389,7 @@
           <tr><td><strong>Problem</strong></td><td>Reasoning models overthink; SEAL calibrates this with one training-free direction</td></tr>
           <tr><td><strong>Open question</strong></td><td>Steering vectors are built and deployed <em>per domain</em>. Can one general reasoning-calibration vector replace the domain-specific ones on math, code and logic — and how much accuracy or token saving does that cost?</td></tr>
           <tr><td><strong>What we do</strong></td><td>Five vectors under one fixed recipe (3 domain, 1 pooled, 1 combined), 6 benchmarks, plus a magnitude-matched random control</td></tr>
-          <tr><td><strong>Finding</strong></td><td>The expected trade-off does not appear, and the question dissolves: recovery is ~100% because there is nothing to recover from. There was never more than one direction</td></tr>
+          <tr><td><strong>Finding</strong></td><td>We predicted a trade-off — specialists winning their own column, the generalist moderate everywhere — and it does not appear. Recovery is ~100% because there is nothing to recover from: there was never more than one direction</td></tr>
           <tr><td><strong>Contributions</strong></td><td>(i) domain-generality result with matched extraction; (ii) geometry that predicts it a priori, plus a magnitude-matched random control showing the direction is what carries it</td></tr>
         </tbody>
       </table>
