@@ -1,0 +1,11 @@
+<｜User｜>Read the passage and answer the multiple-choice question. Think step-by-step, then end your response with 'Answer: X' where X is A, B, C, or D.
+
+Passage: A college will continue to implement the overseas funding plan this year. It plans to select several of the six teachers from Mr. Liu, Mr. Zhang, Mr. Wang, Mr. Ma, Mr. Niu and Mr. Zhou to visit abroad. Due to the limitations of funding, the needs of discipline development, curriculum arrangement, place and time of each student's visit, the selection shall meet the following conditions: (1) Mr. Liu is the reserve discipline leader of the college, This time we have to send out. (2) if we choose Mr. Liu, we should also choose Mr. Zhou, but we can't choose Mr. Zhang. (3) only if Mr. Niu can't choose, at least one of Mr. Wang and Mr. Ma can choose. (4) if we don't choose Mr. Wang, we don't choose Mr. Zhou either.
+
+Question: If the above statement is true, which of the followings must be true?
+
+Options:
+A. Mr. Niu didn't choose, but Mr. Zhou did
+B. Mr. Liu was chose, but Mr. Ma didn't
+C. Mr. Wang and Mr. Ma were chosen
+D. Neither Mr. Wang nor Mr. Niu was elected<｜Assistant｜><think>
