@@ -1,0 +1,11 @@
+<｜User｜>Read the passage and answer the multiple-choice question. Think step-by-step, then end your response with 'Answer: X' where X is A, B, C, or D.
+
+Passage: One seminar had 18 participants. It is known that :(1) At least 5 young teachers are female; (2) At least 6 female teachers are over middle age; (3) At least seven young women are teachers;
+
+Question: According to the above information, which of the following can be concluded about the participants?
+
+Options:
+A. Some young teachers are not women
+B. Some young women are not teachers
+C. There are at least 11 young teachers
+D. There are at least 13 female teachers<｜Assistant｜><think>

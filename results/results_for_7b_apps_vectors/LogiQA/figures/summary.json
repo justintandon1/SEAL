@@ -1,0 +1,24 @@
+{
+  "dataset": "LogiQA (APPS vector, cross-domain)",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "unit": "tokens",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.514,
+    "avg_total": 1538.466,
+    "median_total": 723.5,
+    "avg_thinking": 1538.466
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.546,
+    "avg_total": 1219.546,
+    "median_total": 602.0,
+    "avg_thinking": 1219.546
+  },
+  "delta": {
+    "accuracy_pts": 3.200000000000003,
+    "total_reduction_pct": 20.729739883754327,
+    "thinking_reduction_pct": 20.729739883754327
+  }
+}

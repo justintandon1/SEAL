@@ -1,0 +1,24 @@
+{
+  "dataset": "APPS (APPS vector, in-domain)",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "unit": "tokens",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.284,
+    "avg_total": 7851.452,
+    "median_total": 10000.0,
+    "avg_thinking": 7851.452
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.33,
+    "avg_total": 7271.496,
+    "median_total": 10000.0,
+    "avg_thinking": 7271.496
+  },
+  "delta": {
+    "accuracy_pts": 4.600000000000004,
+    "total_reduction_pct": 7.386608235011815,
+    "thinking_reduction_pct": 7.386608235011815
+  }
+}
