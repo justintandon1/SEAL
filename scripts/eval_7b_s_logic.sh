@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Evaluate 7B S_logic on MATH-500 / APPS / LogiQA (clean English-500).
+# Build the vector first with scripts/generate_vector_7b_logiqa.sh.
 #
 # Protocol:
 #   DeepSeek-R1-Distill-Qwen-7B, layer 20, coef -1.0, max_tokens 10000,
