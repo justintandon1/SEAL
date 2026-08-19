@@ -1322,12 +1322,15 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
 
     <div class="combo-grid">
       <div class="combo">
-        <div class="combo-head"><span class="pill todo">Queued</span></div>
+        <div class="combo-head"><span class="pill good">Done</span></div>
         <h4>A. Norm-matched random vector</h4>
-        <p><em>(Done &mdash; &sect;14.)</em> A random direction in 1536-d, rescaled to <strong>&Vert;S_combo&Vert; = 57.06</strong>,
-        applied at layer 20 with coef &minus;1.0. Answers: does <em>any</em> perturbation of
-        this magnitude at this site shorten the CoT and recover truncated answers? This is the
-        same control we ran in the CAA phase. Cheap &mdash; one eval run.</p>
+        <p><em>Run as <code>R_iso_seed1</code> on MATH-500, LogiQA and APPS &mdash;
+        see &sect;9.</em> A random direction in 1536-d at the mean-source norm
+        57.06, layer 20, coef &minus;1.0. The answer: no &mdash; the random
+        direction <em>lengthens</em> the CoT on all three benchmarks and loses
+        2.4&ndash;3.6 points (significant on APPS, p&nbsp;=&nbsp;0.006), the
+        mirror image of the SEAL arms. Seeds 2&ndash;3 remain queued: the
+        rank-sum framing needs three draws.</p>
       </div>
       <div class="combo">
         <div class="combo-head"><span class="pill todo">Queued</span></div>
