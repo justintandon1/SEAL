@@ -299,6 +299,7 @@
         <li><a href="#mechanism">What is actually driving the gain</a></li>
         <li><a href="#caveats">Caveats and known gaps</a></li>
         <li><a href="#next">Next steps: controls and ablations</a></li>
+        <li><a href="#controls">Addendum: the first control has run</a></li>
       </ol>
     </div>
 
@@ -1230,7 +1231,7 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
     <h2 id="caveats"><span class="n">12</span>Caveats and known gaps</h2>
 
     <ol>
-      <li><strong>No controls yet.</strong> The biggest gap, and the subject of &sect;13.
+      <li><strong>No controls yet.</strong> The biggest gap when this report was written; the first control has since run &mdash; see the &sect;14 addendum.
       Nothing here rules out that <em>any</em> intervention of this norm at this layer
       shortens the CoT and produces the same gain.</li>
       <li><strong>Single greedy sample, 10,000-token budget.</strong> No sampling variance is
@@ -1279,7 +1280,7 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       <div class="combo">
         <div class="combo-head"><span class="pill todo">Queued</span></div>
         <h4>A. Norm-matched random vector</h4>
-        <p>A random direction in 1536-d, rescaled to <strong>&Vert;S_combo&Vert; = 57.06</strong>,
+        <p><em>(Done &mdash; &sect;14.)</em> A random direction in 1536-d, rescaled to <strong>&Vert;S_combo&Vert; = 57.06</strong>,
         applied at layer 20 with coef &minus;1.0. Answers: does <em>any</em> perturbation of
         this magnitude at this site shorten the CoT and recover truncated answers? This is the
         same control we ran in the CAA phase. Cheap &mdash; one eval run.</p>
@@ -1366,6 +1367,56 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       earlier five-eval sequence took roughly 38 GPU-hours end to end.
     </div>
 
+
+    <h2 id="controls"><span class="n">14</span>Addendum (2026-08-19): the first control has run</h2>
+    <p>
+      Control A from &sect;13 &mdash; the norm-matched random vector &mdash; has
+      now run as <code>R_iso_seed1</code> on all three phase-1 benchmarks, plus a
+      first 7B arm. Full construction, decision rules and per-benchmark detail
+      live in the <a href="random_vector_build_plan.html">build-plan companion</a>;
+      this section records the outcome against this report's own tables.
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Benchmark</th><th>baseline</th><th>best SEAL arm</th>
+        <th>R_iso_seed1</th><th>&Delta; vs baseline</th><th>&Delta; length</th>
+        <th>vs baseline<br><span class="sub">McNemar</span></th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="dom">MATH-500</td><td>64.4%</td><td>79.4%</td><td>62.0%</td><td class="down">&minus;2.4</td><td>+9.5% tok</td><td class="mono">0.285</td></tr>
+        <tr><td class="dom">LogiQA</td><td>25.8%</td><td>29.8%</td><td>22.2%</td><td class="down">&minus;3.6</td><td>+17.5% tok</td><td class="mono">0.054</td></tr>
+        <tr><td class="dom">APPS</td><td>11.2%</td><td>13.8%</td><td>7.8%</td><td class="down">&minus;3.4</td><td>+5.3% chars</td><td class="mono"><strong>0.0060</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      <strong>The control is the mirror image of the SEAL vectors on every
+      axis this report measures.</strong> The SEAL arms shorten reasoning,
+      cut the cap-hit rate, and gain accuracy; the magnitude-matched random
+      direction lengthens reasoning on all three benchmarks, raises the cap
+      rate (MATH 32.8&rarr;37.2%, LogiQA 36.2&rarr;43.6%), and loses 2.4&ndash;3.6
+      points &mdash; significantly so on APPS, where an unfinished generation
+      is an automatic zero. The &sect;11 decomposition carries over: the random
+      direction does recover some baseline-capped problems, but costs more on
+      the problems baseline finished, on every benchmark. Every SEAL arm is
+      overwhelmingly distinguishable from it (p &le; 5e&minus;12 on MATH-500).
+      The &sect;12 &ldquo;no controls yet&rdquo; gap is closed for one draw;
+      per the pre-registered floor-<em>p</em> argument, no rank-sum claim is
+      available until seeds 2&ndash;3 run.
+    </p>
+    <p>
+      <strong>Two further results from the same runs.</strong> The &sect;12
+      batch-size caveat is resolved empirically: 20 APPS problems regenerated
+      at batch 20 are character-identical to their batch-1 outputs (20/20 over
+      ~200k tokens), so S_general&rsquo;s batch-20 arm needs no asterisk and
+      batched suites are validated. And the 7B extension is genuinely open:
+      <code>R_iso_7b_seed1</code> on MATH-500 lands at <strong>86.2%</strong>,
+      <em>between</em> the 7B baseline (84.4%) and 7B S_math (87.8%),
+      statistically indistinguishable from both &mdash; at 7B this design
+      cannot yet distinguish the SEAL vector from a random direction. Seeds
+      2&ndash;3 at both scales are the outstanding runs.
+    </p>
     <footer>
       SEAL · reasoning-calibration steering · progress report, 2026-08-07<br>
       Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B</code> · layer 20 · coef &minus;1.0 · greedy · max_tokens 10,000<br>
