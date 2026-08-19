@@ -470,7 +470,7 @@
     <p>Because every arm sees the same problems, the right significance test is the
     <strong>paired</strong> one. Throughout we use an exact two-sided McNemar (binomial) test
     on the discordant pairs, which is more sensitive than comparing two independent error
-    bars. Every statistic in &sect;6&ndash;&sect;11 is reproducible with
+    bars. Every statistic in &sect;6&ndash;&sect;12 is reproducible with
     <code>python scripts/report_stats.py</code>.</p>
 
     <!-- ================================================================ -->
@@ -1056,7 +1056,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
       The <strong>7B row is the most informative sanity check we have</strong>. At a baseline
       of 84.4% &mdash; where far less of the eval set is budget-limited &mdash; the same
       intervention buys <strong>+3.4</strong> points instead of +14. That is what the
-      truncation-recovery account in <a href="#mechanism">&sect;11</a> predicts: less
+      truncation-recovery account in <a href="#mechanism">&sect;12</a> predicts: less
       truncation to recover, less headroom for this intervention.
     </div>
 
@@ -1314,7 +1314,7 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       stated &rarr; wrong&rdquo; rule: when a generation contains no <code>\boxed{}</code>
       and no &ldquo;the answer is&rdquo; phrase, it falls back to the raw text. On the
       MATH-500 baseline this credits 2 truncated generations that never stated an answer
-      (<a href="#mechanism">&sect;11</a>). The effect on the headline is small and in the
+      (<a href="#mechanism">&sect;12</a>). The effect on the headline is small and in the
       conservative direction &mdash; correcting it would raise S_combo's gain from +15.0 to
       +15.4 &mdash; but the fallback is the same failure mode as the LogiQA extractor we
       replaced, and the MATH/GSM8K/MMLU results deserve the same audit.</li>
