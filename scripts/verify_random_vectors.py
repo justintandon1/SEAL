@@ -190,16 +190,32 @@ def main() -> None:
         max_cos = args.max_cos if args.max_cos is not None else float(
             meta.get("max_cos", 0.08)
         )
-        worst_name, worst = "", 0.0
-        for seal_name, seal_vec in seal.items():
-            c = abs(cosine(vector, seal_vec))
-            if c > worst:
-                worst_name, worst = seal_name, c
-        checker.check(
-            worst <= max_cos,
-            f"{name}: near-orthogonal to all {len(seal)} SEAL vectors",
-            f"worst |cos| {worst:.4f} vs {worst_name}, threshold {max_cos}",
-        )
+        # Compare only against references in the same hidden dimension. The
+        # default list is the 1.5B set (d=1536); a 7B draw (d=3584) is instead
+        # checked against the reference paths its own meta records, which the
+        # build screened it against. A cross-dim cosine is not defined.
+        refs = {n: v for n, v in seal.items() if v.numel() == vector.numel()}
+        for ref_name, ref_path in (meta.get("references") or {}).items():
+            if ref_name not in refs and os.path.exists(ref_path):
+                ref_vec = load_reference(ref_path)
+                if ref_vec.numel() == vector.numel():
+                    refs[ref_name] = ref_vec
+        if refs:
+            worst_name, worst = "", 0.0
+            for seal_name, seal_vec in refs.items():
+                c = abs(cosine(vector, seal_vec))
+                if c > worst:
+                    worst_name, worst = seal_name, c
+            checker.check(
+                worst <= max_cos,
+                f"{name}: near-orthogonal to all {len(refs)} same-dim reference vectors",
+                f"worst |cos| {worst:.4f} vs {worst_name}, threshold {max_cos}",
+            )
+        else:
+            checker.check(
+                False,
+                f"{name}: no same-dim reference vectors found to check against",
+            )
 
         if meta:
             rebuilt = rebuild_from_meta(meta, int(vector.numel()))
