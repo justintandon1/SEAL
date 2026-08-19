@@ -1,0 +1,30 @@
+{
+  "model_name_or_path": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "save_dir": "results/train_logic/DeepSeek-R1-Distill-Qwen-7B/baseline_10000",
+  "split": "train",
+  "max_tokens": 10000,
+  "target": 500,
+  "chunk_size": 250,
+  "max_problems": 0,
+  "max_prompt_tokens": 4096,
+  "max_cjk": 0.1,
+  "resume": true,
+  "force_config": false,
+  "train_set": "train_logic",
+  "decoding": {
+    "temperature": 0,
+    "n": 1,
+    "max_tokens": 10000,
+    "remove_bos": true,
+    "use_chat_format": true
+  },
+  "english_filter": {
+    "max_cjk": 0.1,
+    "n_excluded_non_english": 0
+  },
+  "status": "finished",
+  "n_attempted": 1250,
+  "n_correct": 724,
+  "n_incorrect": 526,
+  "reached_target": true
+}
