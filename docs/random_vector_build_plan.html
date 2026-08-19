@@ -1109,7 +1109,7 @@ python scripts/report_stats.py</code></pre>
       (discordant 26 baseline-only vs 9 R_iso-only) — the first per-arm
       significant control result of the three, on the benchmark where the SEAL
       gains themselves are smallest. The mechanism is the familiar one at its
-      harshest: the random direction lengthens generations (+5.3% mean chars),
+      harshest: the random direction lengthens generations (+4.8% mean tokens),
       the finish rate drops 16.4% → 9.8%, and on APPS an unfinished generation
       is an automatic zero rather than a truncated-but-gradeable answer.
     </p>
@@ -1120,7 +1120,7 @@ python scripts/report_stats.py</code></pre>
       <tbody>
         <tr><td>MATH-500</td><td class="num">−2.4</td><td class="num">+9.5% tok</td><td class="num">0.285</td></tr>
         <tr><td>LogiQA</td><td class="num">−3.6</td><td class="num">+17.5% tok</td><td class="num">0.054</td></tr>
-        <tr><td>APPS</td><td class="num">−3.4</td><td class="num">+5.3% chars</td><td class="num"><strong>0.0060</strong></td></tr>
+        <tr><td>APPS</td><td class="num">−3.4</td><td class="num">+4.8% tok</td><td class="num"><strong>0.0060</strong></td></tr>
       </tbody></table></div>
       A magnitude-matched random direction at the same site degrades all three
       benchmarks modestly, lengthens reasoning everywhere, and is the mirror

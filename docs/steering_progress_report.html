@@ -967,7 +967,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
       <tbody>
         <tr><td class="dom">MATH-500</td><td>64.4%</td><td>79.4%</td><td>62.0%</td><td class="down">&minus;2.4</td><td>+9.5% tok</td><td class="mono">0.285</td></tr>
         <tr><td class="dom">LogiQA</td><td>25.8%</td><td>29.8%</td><td>22.2%</td><td class="down">&minus;3.6</td><td>+17.5% tok</td><td class="mono">0.054</td></tr>
-        <tr><td class="dom">APPS</td><td>11.2%</td><td>13.8%</td><td>7.8%</td><td class="down">&minus;3.4</td><td>+5.3% chars</td><td class="mono"><strong>0.0060</strong></td></tr>
+        <tr><td class="dom">APPS</td><td>11.2%</td><td>13.8%</td><td>7.8%</td><td class="down">&minus;3.4</td><td>+4.8% tok</td><td class="mono"><strong>0.0060</strong></td></tr>
       </tbody>
     </table>
     </div>
@@ -1313,22 +1313,14 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
     <!-- ================================================================ -->
     <h2 id="next"><span class="n">14</span>Next steps: controls and ablations</h2>
 
-    <p>The findings above make the controls the critical path, not a nicety. If the effect is
+    <p>The findings above make the controls the critical path, not a nicety. Control A (the norm-matched random vector) has run and did not reproduce the gain &mdash; results in &sect;9; Control B below is what remains. If the effect is
     &ldquo;terser CoT recovers truncated answers,&rdquo; then interventions with nothing to
     do with reasoning may reproduce it &mdash; and we need to know that before claiming a
     reasoning-specific direction.</p>
 
-    <h3>Priority 1 — the two controls, same 500 problems, same harness</h3>
+    <h3>Priority 1 &mdash; the remaining control, same 500 problems, same harness</h3>
 
     <div class="combo-grid">
-      <div class="combo">
-        <div class="combo-head"><span class="pill todo">Queued</span></div>
-        <h4>A. Norm-matched random vector</h4>
-        <p><em>(Done &mdash; &sect;14.)</em> A random direction in 1536-d, rescaled to <strong>&Vert;S_combo&Vert; = 57.06</strong>,
-        applied at layer 20 with coef &minus;1.0. Answers: does <em>any</em> perturbation of
-        this magnitude at this site shorten the CoT and recover truncated answers? This is the
-        same control we ran in the CAA phase. Cheap &mdash; one eval run.</p>
-      </div>
       <div class="combo">
         <div class="combo-head"><span class="pill todo">Queued</span></div>
         <h4>B. Null-keyword vector from non-reasoning text</h4>
@@ -1351,11 +1343,11 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
         &ldquo;stop hedging, commit&rdquo; direction in any text.</li>
         <li><strong>Both controls gain</strong> &rarr; the effect is a generic
         length/decoding intervention at this layer and coefficient, and the domain story
-        collapses. Given &sect;11, this is a live possibility and we should say so up front
+        collapses. Given &sect;12, this is a live possibility and we should say so up front
         rather than discover it later.</li>
       </ul>
-      <p style="margin-top:10px">In all three cases we should report the token savings and
-      the cap-hit decomposition from &sect;11 for the control arms, since that is where the
+      <p style="margin-top:10px">Half the grid is now resolved: Control A did not reproduce the gain (&sect;9), so the two rows where &ldquo;A gains&rdquo; are excluded; which of the remaining two holds waits on Control B. In all three cases we should report the token savings and
+      the cap-hit decomposition from &sect;12 for the control arms, since that is where the
       signal lives.</p>
     </div>
 
@@ -1377,10 +1369,15 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
 
     <h3>Priority 3 — ablations, once the controls land</h3>
     <ul>
-      <li><strong>Budget sweep.</strong> Re-run MATH-500 baseline and one steered arm at
-      32,000 tokens. If the gain shrinks toward the 7B-sized +3, that confirms &sect;11
-      directly and tells us how much of the headline is protocol. Highest-value single
-      experiment on this list.</li>
+      <li><span class="pill good">Running</span> <strong>Budget sweep.</strong> Queued 2026-08-19 in a
+      revised single-arm design: S_general (the claim-carrying arm) on MATH-500
+      at <strong>32,768</strong> tokens &mdash; the DeepSeek-R1 protocol length
+      &mdash; batch 12, with a 50-example baseline-config probe alongside for
+      the 32k cap rate and a rough greedy-32k reference. A full paired 32k
+      baseline, if a sharp gain-at-32k claim is later needed, pairs against
+      this arm via the fixed selection. If the gain shrinks toward the 7B-sized
+      +3, that confirms &sect;12 directly and tells us how much of the headline
+      is protocol. Highest-value single experiment on this list.</li>
       <li><span class="pill good">Done for APPS</span> &nbsp;<strong>Fill the coverage
       matrix</strong> &mdash; both S_combo (13.2%, +2.0 pts) and S_general (12.4%, +1.2 pts)
       now have APPS, non-significant vs. every other arm, same as MATH-500/LogiQA. APPS was
