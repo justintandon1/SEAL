@@ -208,7 +208,8 @@
     <p>
       <span class="badge">seed 1 · MATH-500 measured</span>
       <span class="badge">seed 1 · LogiQA measured</span>
-      <span class="badge todo">seed 1 · APPS pending</span>
+      <span class="badge">seed 1 · APPS measured — phase 1 complete</span>
+      <span class="badge">7B · MATH measured</span>
       <span class="badge plan">seeds 2–3 · phase 2</span>
       <span class="muted">— MATH-500 run on a rented AWS <code>g6e.xlarge</code>; results in §11. Scope revised 2026-08-17, see §10.</span>
     </p>
@@ -228,6 +229,9 @@
         <li><a href="#run">Running it, and the readouts</a></li>
         <li><a href="#result1">First result — R_iso_seed1 on MATH-500</a></li>
         <li><a href="#result2">Second result — R_iso_seed1 on LogiQA</a></li>
+        <li><a href="#result3">Third result — APPS, and phase 1 complete</a></li>
+        <li><a href="#batchcheck">The batch cross-check</a></li>
+        <li><a href="#result7b">The 7B extension — seed 1</a></li>
         <li><a href="#answers">What this does and doesn't answer</a></li>
       </ol>
     </div>
@@ -799,7 +803,7 @@ python scripts/report_stats.py</code></pre>
       <tbody>
         <tr><td>1</td><td>MATH-500, seed 1 <em>(done — §11)</em></td><td class="num">10h53m</td><td class="num">spent</td></tr>
         <tr><td>1</td><td>LogiQA, seed 1 <em>(done — §12)</em></td><td class="num">7h22m</td><td class="num">$8.88</td></tr>
-        <tr><td>1</td><td>APPS, seed 1 <em>(projection)</em></td><td class="num">33–55</td><td class="num">$60–100</td></tr>
+        <tr><td>1</td><td>APPS, seed 1 <em>(done — §13; 4× A100-40GB shards, free Algoverse node)</em></td><td class="num">12.3 wall / ~49 GPU-h</td><td class="num">$0</td></tr>
         <tr><td>2</td><td>MATH-500, seeds 2–3</td><td class="num">~22</td><td class="num">~$40</td></tr>
         <tr><td colspan="2"><strong>Remaining</strong></td><td class="num"><strong>66–88</strong></td><td class="num"><strong>$120–160</strong></td></tr>
       </tbody>
@@ -1079,7 +1083,121 @@ python scripts/report_stats.py</code></pre>
       the Vast runbook cannot be right at these settings.
     </div>
 
-    <h2 id="answers"><span class="step">13</span>What this does and doesn't answer</h2>
+    <h2 id="result3"><span class="step">13</span>Third result — APPS, and phase 1 complete</h2>
+    <p>
+      Run 2026-08-18/19 on a shared 8×A100-40GB Algoverse node, sharded four
+      ways with the PR&nbsp;#63 checkpoint/shard harness (batch 1, per-example
+      recovery), pinned to the free GPUs with <code>GPU_LIST</code>. Paired
+      against the committed baseline; scoring executes the generated code.
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Arm</th><th class="num">pass@1</th><th class="num">Finished (has code)</th></tr></thead>
+      <tbody>
+        <tr><td>baseline</td><td class="num">11.2%</td><td class="num">16.4%</td></tr>
+        <tr><td>S_math</td><td class="num">13.0%</td><td class="num">—</td></tr>
+        <tr><td>S_code</td><td class="num">13.8%</td><td class="num">—</td></tr>
+        <tr><td>S_logic</td><td class="num">13.4%</td><td class="num">—</td></tr>
+        <tr><td>S_general</td><td class="num">12.4%</td><td class="num">—</td></tr>
+        <tr><td>S_combo</td><td class="num">13.2%</td><td class="num">—</td></tr>
+        <tr><td><strong>R_iso_seed1</strong></td><td class="num"><strong>7.8%</strong></td><td class="num"><strong>9.8%</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      <strong>−3.4 points against baseline, exact McNemar p = 0.0060</strong>
+      (discordant 26 baseline-only vs 9 R_iso-only) — the first per-arm
+      significant control result of the three, on the benchmark where the SEAL
+      gains themselves are smallest. The mechanism is the familiar one at its
+      harshest: the random direction lengthens generations (+5.3% mean chars),
+      the finish rate drops 16.4% → 9.8%, and on APPS an unfinished generation
+      is an automatic zero rather than a truncated-but-gradeable answer.
+    </p>
+    <div class="answer">
+      <strong>Phase 1 is complete: three benchmarks, one draw, one story.</strong>
+      <div class="tablewrap"><table>
+      <thead><tr><th>Benchmark</th><th class="num">Δ acc</th><th class="num">Δ length</th><th class="num">p</th></tr></thead>
+      <tbody>
+        <tr><td>MATH-500</td><td class="num">−2.4</td><td class="num">+9.5% tok</td><td class="num">0.285</td></tr>
+        <tr><td>LogiQA</td><td class="num">−3.6</td><td class="num">+17.5% tok</td><td class="num">0.054</td></tr>
+        <tr><td>APPS</td><td class="num">−3.4</td><td class="num">+5.3% chars</td><td class="num"><strong>0.0060</strong></td></tr>
+      </tbody></table></div>
+      A magnitude-matched random direction at the same site degrades all three
+      benchmarks modestly, lengthens reasoning everywhere, and is the mirror
+      image of the SEAL vectors on every axis. It does not come close to
+      reproducing their gains. Per §4, none of this supports the rank-sum
+      framing at <em>n</em>&nbsp;=&nbsp;1 — that still waits on seeds 2–3.
+    </div>
+
+    <h2 id="batchcheck"><span class="step">14</span>The batch cross-check</h2>
+    <p>
+      The §12 caveat in the progress report — S_general's APPS arm ran at
+      <code>APPS_BATCH_SIZE=20</code> against everything else's batch 1,
+      "should not change results under greedy decoding, but not empirically
+      cross-checked" — is now checked. The first 20 problems of the APPS
+      selection were regenerated in one batch of 20 on the same box, same
+      weights, same steering as the batch-1 arm, and diffed
+      character-for-character:
+    </p>
+    <div class="result">
+      <strong>20/20 outputs identical.</strong> Roughly 200,000 generated
+      tokens, not one differs. Batching does not change greedy fp32 outputs in
+      this codebase on same-model, same-box conditions. The S_general asterisk
+      is resolved, and batched suites (~6× cheaper on APPS-class benchmarks)
+      are validated for future runs.
+    </div>
+    <p>
+      The same night produced the sharp contrast:
+      <strong>cross-environment</strong> reproduction is <em>not</em> exact —
+      re-generating 7B baseline examples on a different card/torch build
+      produced <strong>0/44 string-identical</strong> generations (accuracy
+      shifts only ~1 point on an 84-example paired probe, but token streams
+      diverge). Batching is safe; changing machines is the thing that moves
+      outputs.
+    </p>
+
+    <h2 id="result7b"><span class="step">15</span>The 7B extension — seed 1</h2>
+    <p>
+      The three <code>R_iso_7b</code> draws (dim 3584, norm 80.6283 =
+      mean-source over the two 7B vectors, screened against both) were run as
+      seed 1 on MATH-500, paired against the committed 7B baseline —
+      per-problem artifacts in
+      <code>results/results_for_7b_math_vectors/</code>, same problems in the
+      same order (0/500 mismatches).
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Arm</th><th class="num">Acc</th><th class="num">vs baseline</th><th class="num">p</th></tr></thead>
+      <tbody>
+        <tr><td>7B baseline <span class="muted">(original env)</span></td><td class="num">84.4%</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>7B S_math <span class="muted">(original env)</span></td><td class="num">87.8%</td><td class="num">+3.4</td><td class="num"><strong>0.030</strong></td></tr>
+        <tr><td><strong>R_iso_7b_seed1</strong> <span class="muted">(batch 4, Algoverse)</span></td><td class="num"><strong>86.2%</strong></td><td class="num">+1.8</td><td class="num">0.31</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="warning">
+      <strong>The 7B control question is open, and seed 1 leans the wrong way
+      for the domain story.</strong> At 1.5B the random direction degraded
+      every benchmark. At 7B it lands <em>between</em> baseline and S_math and
+      is statistically indistinguishable from both (vs S_math: −1.6,
+      p = 0.30). The lengthening signature persists (+5.9% mean generation
+      length) but costs nothing — the 7B has headroom, so longer reasoning does
+      not cascade into cap failures. Read strictly: S_math's 7B gain is real,
+      but this design cannot distinguish it from a magnitude-matched random
+      direction. Caveats that keep this preliminary: one draw (§4's floor-p
+      argument), batch 4 against the original arms' unknown batch, and ~1 point
+      of measured cross-environment noise. Seeds 2–3 at 7B — on the planned
+      batch-25 / 80&nbsp;GB suite, now that batching is validated (§14) — are
+      what settle it.
+    </div>
+    <p class="muted">
+      R_iso_7b_seed1 on LogiQA is generating as this section is written; its
+      arm banks under <code>results_for_control_vectors_7b/LogiQA/</code> and
+      pairs against any correctly-run 7B LogiQA baseline via the explicit
+      <code>eval_rand42_500_clean</code> selection.
+    </p>
+
+    <h2 id="answers"><span class="step">16</span>What this does and doesn't answer</h2>
     <p>
       <strong>It answers:</strong> whether a magnitude-matched perturbation at
       the same site and coefficient reproduces the compression and the
@@ -1154,7 +1272,8 @@ python scripts/report_stats.py</code></pre>
       <span class="badge">vectors built &amp; verified</span>
       <span class="badge">seed1 · MATH-500 measured</span>
       <span class="badge">seed1 · LogiQA measured</span>
-      <span class="badge todo">seed1 · APPS next</span>
+      <span class="badge">seed1 · APPS measured</span>
+      <span class="badge">7B · MATH measured</span>
       <span class="badge plan">seeds 2–3 · phase 2</span><br>
       Companion to the steering progress report (2026-08-07) §12, Priority 1.
       The three <code>R_iso</code> draws exist under <code>results/control/</code>
@@ -1163,7 +1282,7 @@ python scripts/report_stats.py</code></pre>
       thresholds are computed independently of that result. Scope revised
       2026-08-17 (§10): phase 1 takes seed 1 to LogiQA and APPS, phase 2 brings
       seeds 2 and 3 back — still needed before the §4 floor-p rank-sum argument
-      applies. LogiQA landed 2026-08-18 (§12); APPS is the last phase-1 arm.
+      applies. LogiQA landed 2026-08-18 (§12); APPS landed 2026-08-19 (§13), completing phase 1. The batch cross-check (§14) and the first 7B arm (§15) landed the same night.
     </footer>
   </article>
 </main>

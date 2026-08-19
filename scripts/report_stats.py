@@ -135,6 +135,34 @@ BENCHMARKS: Dict[str, dict] = {
             "R_iso_seed1": "results_for_control_vectors/APPS/R_iso_seed1/results_control_R_iso_seed1/coef_-1.0_remove_bos/test_rand42_500",
         },
     },
+    "math500_7b": {
+        "label": "MATH-500 7B (DeepSeek-R1-Distill-Qwen-7B, Omni-MATH rule grader)",
+        "eval_file": "math_eval.jsonl",
+        "scorer": "math",
+        "arms": {
+            # The baseline and S_math arms are the original-environment runs
+            # whose per-problem artifacts live in results_for_7b_math_vectors.
+            # R_iso_7b_seed1 was generated at batch 4 on a different box; the
+            # batch cross-check (build plan §14) showed batching is exact
+            # same-box, but cross-environment token streams diverge, so
+            # comparisons against the original arms carry that caveat.
+            "baseline": "results_for_7b_math_vectors/MATH500/baseline/base_remove_bos/rand42_500",
+            "S_math": "results_for_7b_math_vectors/MATH500/math_vector_7b/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/rand42_500",
+            "R_iso_7b_seed1": "results_for_control_vectors_7b/MATH500/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/rand42_500",
+        },
+    },
+    "logiqa_7b": {
+        "label": "LogiQA clean-500 7B (reasoning grader applied to every arm)",
+        "eval_file": "predictions.jsonl",
+        "scorer": "logiqa",
+        "arms": {
+            # No 7B LogiQA baseline is committed yet; the R_iso arm is
+            # registered ahead of one so the explicit eval_rand42_500_clean
+            # selection pairs them whenever it lands. Missing arms report as
+            # "not run" rather than erroring.
+            "R_iso_7b_seed1": "results_for_control_vectors_7b/LogiQA/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/eval_rand42_500_clean",
+        },
+    },
     "mbpp": {
         "label": "MBPP test-500 (pass@1, tests executed)",
         "eval_file": "code_eval.jsonl",
