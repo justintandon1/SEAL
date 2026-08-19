@@ -13,9 +13,10 @@
 #
 #   DATASET=logiqa scripts/run_arm_multigpu.sh results/control/R_iso_seed1.pt R_iso_seed1
 #   DATASET=apps   scripts/run_arm_multigpu.sh results/control/R_iso_seed1.pt R_iso_seed1
+#   GPU_LIST=6,0,2,5 DATASET=apps scripts/run_arm_multigpu.sh ...   # shared box
 #   DATASET=math   scripts/run_arm_multigpu.sh results/control/R_iso_seed2.pt R_iso_seed2
 #
-# Env: DATASET NUM_GPUS MAX_ATTEMPTS RESULT_ROOT MODEL LAYER COEF MAX_TOKENS
+# Env: DATASET NUM_GPUS GPU_LIST MAX_ATTEMPTS RESULT_ROOT MODEL LAYER COEF MAX_TOKENS
 #      BATCH_SIZE SAMPLE_SEED MAX_EXAMPLES LOGIQA_SELECTION
 set -euo pipefail
 
@@ -38,7 +39,18 @@ BATCH_SIZE=${BATCH_SIZE:-25}
 SAMPLE_SEED=${SAMPLE_SEED:-42}
 MAX_EXAMPLES=${MAX_EXAMPLES:-500}
 RESULT_ROOT=${RESULT_ROOT:-results/results_for_control_vectors}
-NUM_GPUS=${NUM_GPUS:-$(nvidia-smi -L | wc -l | tr -d ' ')}
+# GPU_LIST pins the shards to specific devices, e.g. GPU_LIST="6,0,2,5" on a
+# shared box where the other cards belong to someone else. Default is every GPU,
+# 0..N-1, which is right only when the machine is yours alone.
+GPU_LIST=${GPU_LIST:-}
+if [[ -n "$GPU_LIST" ]]; then
+  IFS=',' read -r -a GPUS <<< "$GPU_LIST"
+  NUM_GPUS=${#GPUS[@]}
+else
+  NUM_GPUS=${NUM_GPUS:-$(nvidia-smi -L | wc -l | tr -d ' ')}
+  GPUS=()
+  for _i in $(seq 0 $((NUM_GPUS - 1))); do GPUS+=("$_i"); done
+fi
 # Resume is free, so a transient failure is worth retrying before giving up.
 MAX_ATTEMPTS=${MAX_ATTEMPTS:-3}
 
@@ -127,7 +139,7 @@ mkdir -p "$LOG_DIR"
 
 echo ">>> arm      : $VECTOR_NAME"
 echo ">>> dataset  : $DATASET_ARG"
-echo ">>> gpus     : $NUM_GPUS"
+echo ">>> gpus     : $NUM_GPUS  (devices: ${GPUS[*]})"
 echo ">>> save_dir : $SAVE_DIR"
 echo ">>> logs     : $LOG_DIR/rank<N>.log"
 echo
@@ -157,7 +169,7 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
   pids=()
   ranks=()
   for rank in $(seq 0 $((NUM_GPUS - 1))); do
-    CUDA_VISIBLE_DEVICES="$rank" python "$EVAL_SCRIPT" \
+    CUDA_VISIBLE_DEVICES="${GPUS[$rank]}" python "$EVAL_SCRIPT" \
       "${ARGS[@]}" --shard_rank "$rank" \
       >"$LOG_DIR/rank${rank}.log" 2>&1 &
     pids+=($!)
