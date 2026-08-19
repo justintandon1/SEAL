@@ -294,12 +294,12 @@
         <li><a href="#math500">MATH-500</a></li>
         <li><a href="#logiqa">LogiQA</a></li>
         <li><a href="#code">Code: APPS</a></li>
+        <li><a href="#controls">The random-vector control &mdash; R_iso</a></li>
         <li><a href="#rest">Secondary: MBPP, GSM8K, MMLU, 7B</a></li>
         <li><a href="#tokens">Token savings across all benchmarks</a></li>
         <li><a href="#mechanism">What is actually driving the gain</a></li>
         <li><a href="#caveats">Caveats and known gaps</a></li>
         <li><a href="#next">Next steps: controls and ablations</a></li>
-        <li><a href="#controls">Addendum: the first control has run</a></li>
       </ol>
     </div>
 
@@ -386,6 +386,12 @@
             <td class="sep">13.2%</td><td class="up">+2.0</td><td class="down">&minus;7.5%</td>
             <td class="sep">28.4%</td><td class="up">+2.6</td><td class="down">&minus;30.1%</td>
           </tr>
+          <tr>
+            <td class="dom">R_iso_seed1</td>
+            <td class="sep">62.0%</td><td class="down">&minus;2.4</td><td class="up">+9.5%</td>
+            <td class="sep">7.8%</td><td class="down">&minus;3.4</td><td class="up">+4.8%</td>
+            <td class="sep">22.2%</td><td class="down">&minus;3.6</td><td class="up">+17.5%</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -399,7 +405,7 @@
       p &ge; 0.39). Which vector &ldquo;wins&rdquo; a column would likely change on a
       different 500 problems. The finding is that the columns are flat, not who is on top.
       Every cell in this table is now filled. GSM8K, MBPP and MMLU are in
-      <a href="#rest">&sect;9</a>; the remaining gaps (S_general and S_combo on MBPP and
+      <a href="#rest">&sect;10</a>; the remaining gaps (S_general and S_combo on MBPP and
       GSM8K) are in the coverage matrix in <a href="#coverage">&sect;5</a>.
     </div>
 
@@ -600,7 +606,7 @@
     activations the same as summing the finished vectors,&rdquo; and at 0.981 the answer is
     essentially yes: pooling and combining land almost on top of each other. Computed once
     both <code>.pt</code> files were committed to the repo (previously S_general's vector
-    existed only as a <code>.meta.json</code>) &mdash; see <a href="#caveats">&sect;12</a>.</p>
+    existed only as a <code>.meta.json</code>) &mdash; see <a href="#caveats">&sect;13</a>.</p>
 
     <div class="takeaway info">
       Stacking the three domain vectors and taking the SVD gives singular values
@@ -653,7 +659,7 @@
     one benchmark where the general vectors are tested furthest from their MATH-heavy
     pooling, and where they land in the same non-significant cluster as everything else
     (&sect;8). Both are still missing on MBPP, GSM8K and MMLU. Closing the remaining six
-    S_general / S_combo cells is listed under Priority 3 in <a href="#next">&sect;13</a>.</p>
+    S_general / S_combo cells is listed under Priority 3 in <a href="#next">&sect;14</a>.</p>
 
     <!-- ================================================================ -->
     <h2 id="math500"><span class="n">06</span>MATH-500</h2>
@@ -854,7 +860,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
     clearest: the problems are so long-form that the baseline hits the token cap on
     <strong>83.6%</strong> of them. Metric is pass@1 on 500 seeded-random test problems,
     scored by executing the unit tests. (MBPP, the other code benchmark, is in
-    <a href="#rest">&sect;9</a>.)</p>
+    <a href="#rest">&sect;10</a>.)</p>
 
     <div class="table-wrap">
       <table class="res wide">
@@ -885,7 +891,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
     arms are indistinguishable from each other &mdash; every steered-vs-steered pair on APPS
     is non-significant (all p &ge; 0.39) &mdash; agreeing on 410/500 problems (27 all-correct,
     383 all-wrong). S_general also ran at a different batch size than the other four arms
-    (batch 20 vs their batch 1); see the note in <a href="#caveats">&sect;12</a>.</p>
+    (batch 20 vs their batch 1); see the note in <a href="#caveats">&sect;13</a>.</p>
 
     <p>Broken out by APPS difficulty tier, the gain concentrates in the easiest tier. (This
     split comes from <code>metrics.json</code>'s own <code>breakdown.difficulty</code> field,
@@ -943,7 +949,57 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
     </div>
 
     <!-- ================================================================ -->
-    <h2 id="rest"><span class="n">09</span>Secondary benchmarks: MBPP, GSM8K, MMLU, and the 7B model</h2>
+    <h2 id="controls"><span class="n">09</span>The random-vector control &mdash; R_iso (2026-08-18/19)</h2>
+    <p>
+      Control A from &sect;14 &mdash; the norm-matched random vector &mdash; has
+      now run as <code>R_iso_seed1</code> on all three phase-1 benchmarks, plus a
+      first 7B arm. Full construction, decision rules and per-benchmark detail
+      live in the <a href="random_vector_build_plan.html">build-plan companion</a>;
+      this section records the outcome against this report's own tables.
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Benchmark</th><th>baseline</th><th>best SEAL arm</th>
+        <th>R_iso_seed1</th><th>&Delta; vs baseline</th><th>&Delta; length</th>
+        <th>vs baseline<br><span class="sub">McNemar</span></th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="dom">MATH-500</td><td>64.4%</td><td>79.4%</td><td>62.0%</td><td class="down">&minus;2.4</td><td>+9.5% tok</td><td class="mono">0.285</td></tr>
+        <tr><td class="dom">LogiQA</td><td>25.8%</td><td>29.8%</td><td>22.2%</td><td class="down">&minus;3.6</td><td>+17.5% tok</td><td class="mono">0.054</td></tr>
+        <tr><td class="dom">APPS</td><td>11.2%</td><td>13.8%</td><td>7.8%</td><td class="down">&minus;3.4</td><td>+5.3% chars</td><td class="mono"><strong>0.0060</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      <strong>The control is the mirror image of the SEAL vectors on every
+      axis this report measures.</strong> The SEAL arms shorten reasoning,
+      cut the cap-hit rate, and gain accuracy; the magnitude-matched random
+      direction lengthens reasoning on all three benchmarks, raises the cap
+      rate (MATH 32.8&rarr;37.2%, LogiQA 36.2&rarr;43.6%), and loses 2.4&ndash;3.6
+      points &mdash; significantly so on APPS, where an unfinished generation
+      is an automatic zero. The &sect;12 decomposition carries over: the random
+      direction does recover some baseline-capped problems, but costs more on
+      the problems baseline finished, on every benchmark. Every SEAL arm is
+      overwhelmingly distinguishable from it (p &le; 5e&minus;12 on MATH-500).
+      The &sect;13 &ldquo;no controls yet&rdquo; gap is closed for one draw;
+      per the pre-registered floor-<em>p</em> argument, no rank-sum claim is
+      available until seeds 2&ndash;3 run.
+    </p>
+    <p>
+      <strong>Two further results from the same runs.</strong> The &sect;13
+      batch-size caveat is resolved empirically: 20 APPS problems regenerated
+      at batch 20 are character-identical to their batch-1 outputs (20/20 over
+      ~200k tokens), so S_general&rsquo;s batch-20 arm needs no asterisk and
+      batched suites are validated. And the 7B extension is genuinely open:
+      <code>R_iso_7b_seed1</code> on MATH-500 lands at <strong>86.2%</strong>,
+      <em>between</em> the 7B baseline (84.4%) and 7B S_math (87.8%),
+      statistically indistinguishable from both &mdash; at 7B this design
+      cannot yet distinguish the SEAL vector from a random direction. Seeds
+      2&ndash;3 at both scales are the outstanding runs.
+    </p>
+
+    <h2 id="rest"><span class="n">10</span>Secondary benchmarks: MBPP, GSM8K, MMLU, and the 7B model</h2>
 
     <p>These four are supporting evidence rather than the benchmarks the study is built
     around. They cover fewer vectors and, in MMLU's case, far fewer problems &mdash; but the
@@ -1005,7 +1061,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
     </div>
 
     <!-- ================================================================ -->
-    <h2 id="tokens"><span class="n">10</span>Token savings across all benchmarks</h2>
+    <h2 id="tokens"><span class="n">11</span>Token savings across all benchmarks</h2>
 
     <p>Steering shortens the chain of thought everywhere, but by very different amounts. This
     table uses S_math, the only vector run on all six benchmarks, so the rows are
@@ -1065,7 +1121,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
     less room for any vector to differ.</p>
 
     <!-- ================================================================ -->
-    <h2 id="mechanism"><span class="n">11</span>What is actually driving the gain</h2>
+    <h2 id="mechanism"><span class="n">12</span>What is actually driving the gain</h2>
 
     <p>The headline is &ldquo;+15 points on MATH-500.&rdquo; This section asks
     <em>which problems</em> those points came from, and the answer turns out to be narrow
@@ -1138,7 +1194,7 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
       two as wrong would move the baseline from 64.4% to 64.0% and S_combo's gain from +15.0
       to <strong>+15.4</strong> &mdash; it slightly <em>strengthens</em> the effect, so the
       tables throughout this report keep the committed 64.4% as the conservative number. See
-      <a href="#caveats">&sect;12</a>.
+      <a href="#caveats">&sect;13</a>.
       <br><br>
       The same near-zero appears on GSM8K, MBPP, LogiQA and APPS &mdash; 0.0&ndash;1.2% in
       every case. MMLU is the one real exception at 23.1%, because it is 4-way multiple
@@ -1228,10 +1284,10 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
     7B result (+3.4 at an 84.4% baseline) is the same effect seen from the other side.</p>
 
     <!-- ================================================================ -->
-    <h2 id="caveats"><span class="n">12</span>Caveats and known gaps</h2>
+    <h2 id="caveats"><span class="n">13</span>Caveats and known gaps</h2>
 
     <ol>
-      <li><strong>No controls yet.</strong> The biggest gap when this report was written; the first control has since run &mdash; see the &sect;14 addendum.
+      <li><strong>No controls yet.</strong> The biggest gap when this report was written; the first control has since run &mdash; see &sect;9.
       Nothing here rules out that <em>any</em> intervention of this norm at this layer
       shortens the CoT and produces the same gain.</li>
       <li><strong>Single greedy sample, 10,000-token budget.</strong> No sampling variance is
@@ -1267,7 +1323,7 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
     </ol>
 
     <!-- ================================================================ -->
-    <h2 id="next"><span class="n">13</span>Next steps: controls and ablations</h2>
+    <h2 id="next"><span class="n">14</span>Next steps: controls and ablations</h2>
 
     <p>The findings above make the controls the critical path, not a nicety. If the effect is
     &ldquo;terser CoT recovers truncated answers,&rdquo; then interventions with nothing to
@@ -1367,56 +1423,6 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
       earlier five-eval sequence took roughly 38 GPU-hours end to end.
     </div>
 
-
-    <h2 id="controls"><span class="n">14</span>Addendum (2026-08-19): the first control has run</h2>
-    <p>
-      Control A from &sect;13 &mdash; the norm-matched random vector &mdash; has
-      now run as <code>R_iso_seed1</code> on all three phase-1 benchmarks, plus a
-      first 7B arm. Full construction, decision rules and per-benchmark detail
-      live in the <a href="random_vector_build_plan.html">build-plan companion</a>;
-      this section records the outcome against this report's own tables.
-    </p>
-    <div class="tablewrap">
-    <table>
-      <thead>
-        <tr><th>Benchmark</th><th>baseline</th><th>best SEAL arm</th>
-        <th>R_iso_seed1</th><th>&Delta; vs baseline</th><th>&Delta; length</th>
-        <th>vs baseline<br><span class="sub">McNemar</span></th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="dom">MATH-500</td><td>64.4%</td><td>79.4%</td><td>62.0%</td><td class="down">&minus;2.4</td><td>+9.5% tok</td><td class="mono">0.285</td></tr>
-        <tr><td class="dom">LogiQA</td><td>25.8%</td><td>29.8%</td><td>22.2%</td><td class="down">&minus;3.6</td><td>+17.5% tok</td><td class="mono">0.054</td></tr>
-        <tr><td class="dom">APPS</td><td>11.2%</td><td>13.8%</td><td>7.8%</td><td class="down">&minus;3.4</td><td>+5.3% chars</td><td class="mono"><strong>0.0060</strong></td></tr>
-      </tbody>
-    </table>
-    </div>
-    <p>
-      <strong>The control is the mirror image of the SEAL vectors on every
-      axis this report measures.</strong> The SEAL arms shorten reasoning,
-      cut the cap-hit rate, and gain accuracy; the magnitude-matched random
-      direction lengthens reasoning on all three benchmarks, raises the cap
-      rate (MATH 32.8&rarr;37.2%, LogiQA 36.2&rarr;43.6%), and loses 2.4&ndash;3.6
-      points &mdash; significantly so on APPS, where an unfinished generation
-      is an automatic zero. The &sect;11 decomposition carries over: the random
-      direction does recover some baseline-capped problems, but costs more on
-      the problems baseline finished, on every benchmark. Every SEAL arm is
-      overwhelmingly distinguishable from it (p &le; 5e&minus;12 on MATH-500).
-      The &sect;12 &ldquo;no controls yet&rdquo; gap is closed for one draw;
-      per the pre-registered floor-<em>p</em> argument, no rank-sum claim is
-      available until seeds 2&ndash;3 run.
-    </p>
-    <p>
-      <strong>Two further results from the same runs.</strong> The &sect;12
-      batch-size caveat is resolved empirically: 20 APPS problems regenerated
-      at batch 20 are character-identical to their batch-1 outputs (20/20 over
-      ~200k tokens), so S_general&rsquo;s batch-20 arm needs no asterisk and
-      batched suites are validated. And the 7B extension is genuinely open:
-      <code>R_iso_7b_seed1</code> on MATH-500 lands at <strong>86.2%</strong>,
-      <em>between</em> the 7B baseline (84.4%) and 7B S_math (87.8%),
-      statistically indistinguishable from both &mdash; at 7B this design
-      cannot yet distinguish the SEAL vector from a random direction. Seeds
-      2&ndash;3 at both scales are the outstanding runs.
-    </p>
     <footer>
       SEAL · reasoning-calibration steering · progress report, 2026-08-07<br>
       Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B</code> · layer 20 · coef &minus;1.0 · greedy · max_tokens 10,000<br>
