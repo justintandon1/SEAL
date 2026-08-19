@@ -1,0 +1,18 @@
+{
+  "batch_size": 8,
+  "dataset": "LogiQA",
+  "logiqa_eval_selection": "data/LogiQA/eval_rand42_500.json",
+  "max_examples": 500,
+  "max_tokens": 10000,
+  "model_name_or_path": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "n_examples": 500,
+  "random_sample": true,
+  "remove_bos": true,
+  "sample_seed": 42,
+  "start": null,
+  "steering": true,
+  "steering_coef": -1.0,
+  "steering_layer": 20,
+  "steering_vector": "results/MATH_train/DeepSeek-R1-Distill-Qwen-7B/baseline_10000/vector_500_500/layer_20_transition_reflection_steervec.pt",
+  "use_chat_format": true
+}
