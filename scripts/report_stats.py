@@ -165,6 +165,19 @@ BENCHMARKS: Dict[str, dict] = {
             "R_iso_7b_seed1": "results_for_control_vectors_7b/LogiQA/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/eval_rand42_500_clean",
         },
     },
+    # 7B S_math → LogiQA transfer, run before the clean selection existed.
+    # Different 500 than logiqa_7b (16 train overlaps in eval_rand42_500.json).
+    # Keep it a separate benchmark so McNemar never pairs mismatched problems.
+    "logiqa_7b_legacy": {
+        "label": "LogiQA n=500 seed 42 7B (legacy eval_rand42_500.json, 16 train overlaps)",
+        "eval_file": "predictions.jsonl",
+        "scorer": "logiqa",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_math_vectors/LogiQA/baseline/base_remove_bos/rand42_500",
+            "S_math_7b": "results_for_7b_math_vectors/LogiQA/math_vector_7b/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/rand42_500",
+        },
+    },
     "mbpp": {
         "label": "MBPP test-500 (pass@1, tests executed)",
         "eval_file": "code_eval.jsonl",
