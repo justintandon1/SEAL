@@ -178,6 +178,20 @@ BENCHMARKS: Dict[str, dict] = {
             "S_math_7b": "results_for_7b_math_vectors/LogiQA/math_vector_7b/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/rand42_500",
         },
     },
+    "apps_7b": {
+        "label": "APPS test rand42-500 7B (pass@1, tests executed)",
+        "eval_file": "code_eval.jsonl",
+        "scorer": "code",
+        "arms": {
+            # baseline and S_code live on akhilbz/7b-math-results until that
+            # branch merges; they report as "not run" from a main checkout.
+            # R_iso ran at batch 5 -- the measured ceiling on 40 GB cards
+            # (ladder: 8 and 6 OOM) -- so future 7B APPS arms must match it.
+            "baseline": "results_for_7b_apps_vectors/APPS/baseline/base_remove_bos/test_rand42_500",
+            "S_code": "results_for_7b_apps_vectors/APPS/apps_vector_500_500/baseline_10000_vector_500_500_layer_20_transition_reflection_steervec/coef_-1.0_remove_bos/test_rand42_500",
+            "R_iso_7b_seed1": "results_for_control_vectors_7b/APPS/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/test_rand42_500",
+        },
+    },
     "mbpp": {
         "label": "MBPP test-500 (pass@1, tests executed)",
         "eval_file": "code_eval.jsonl",
