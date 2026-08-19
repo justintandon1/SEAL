@@ -986,18 +986,6 @@ S_code vs S_combo:  b = 28, c = 41,  b + c = 69
       per the pre-registered floor-<em>p</em> argument, no rank-sum claim is
       available until seeds 2&ndash;3 run.
     </p>
-    <p>
-      <strong>Two further results from the same runs.</strong> The &sect;13
-      batch-size caveat is resolved empirically: 20 APPS problems regenerated
-      at batch 20 are character-identical to their batch-1 outputs (20/20 over
-      ~200k tokens), so S_general&rsquo;s batch-20 arm needs no asterisk and
-      batched suites are validated. And the 7B extension is genuinely open:
-      <code>R_iso_7b_seed1</code> on MATH-500 lands at <strong>86.2%</strong>,
-      <em>between</em> the 7B baseline (84.4%) and 7B S_math (87.8%),
-      statistically indistinguishable from both &mdash; at 7B this design
-      cannot yet distinguish the SEAL vector from a random direction. Seeds
-      2&ndash;3 at both scales are the outstanding runs.
-    </p>
 
     <h2 id="rest"><span class="n">10</span>Secondary benchmarks: MBPP, GSM8K, MMLU, and the 7B model</h2>
 
