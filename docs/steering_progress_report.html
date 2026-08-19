@@ -1354,11 +1354,11 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
         &ldquo;stop hedging, commit&rdquo; direction in any text.</li>
         <li><strong>Both controls gain</strong> &rarr; the effect is a generic
         length/decoding intervention at this layer and coefficient, and the domain story
-        collapses. Given &sect;11, this is a live possibility and we should say so up front
+        collapses. Given &sect;12, this is a live possibility and we should say so up front
         rather than discover it later.</li>
       </ul>
-      <p style="margin-top:10px">In all three cases we should report the token savings and
-      the cap-hit decomposition from &sect;11 for the control arms, since that is where the
+      <p style="margin-top:10px">Half the grid is now resolved: Control A did not reproduce the gain (&sect;9), so the two rows where &ldquo;A gains&rdquo; are excluded; which of the remaining two holds waits on Control B. In all three cases we should report the token savings and
+      the cap-hit decomposition from &sect;12 for the control arms, since that is where the
       signal lives.</p>
     </div>
 
@@ -1380,10 +1380,15 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
 
     <h3>Priority 3 — ablations, once the controls land</h3>
     <ul>
-      <li><strong>Budget sweep.</strong> Re-run MATH-500 baseline and one steered arm at
-      32,000 tokens. If the gain shrinks toward the 7B-sized +3, that confirms &sect;11
-      directly and tells us how much of the headline is protocol. Highest-value single
-      experiment on this list.</li>
+      <li><span class="pill good">Running</span> <strong>Budget sweep.</strong> Queued 2026-08-19 in a
+      revised single-arm design: S_general (the claim-carrying arm) on MATH-500
+      at <strong>32,768</strong> tokens &mdash; the DeepSeek-R1 protocol length
+      &mdash; batch 12, with a 50-example baseline-config probe alongside for
+      the 32k cap rate and a rough greedy-32k reference. A full paired 32k
+      baseline, if a sharp gain-at-32k claim is later needed, pairs against
+      this arm via the fixed selection. If the gain shrinks toward the 7B-sized
+      +3, that confirms &sect;12 directly and tells us how much of the headline
+      is protocol. Highest-value single experiment on this list.</li>
       <li><span class="pill good">Done for APPS</span> &nbsp;<strong>Fill the coverage
       matrix</strong> &mdash; both S_combo (13.2%, +2.0 pts) and S_general (12.4%, +1.2 pts)
       now have APPS, non-significant vs. every other arm, same as MATH-500/LogiQA. APPS was
