@@ -156,10 +156,12 @@ BENCHMARKS: Dict[str, dict] = {
         "eval_file": "predictions.jsonl",
         "scorer": "logiqa",
         "arms": {
-            # No 7B LogiQA baseline is committed yet; the R_iso arm is
-            # registered ahead of one so the explicit eval_rand42_500_clean
-            # selection pairs them whenever it lands. Missing arms report as
-            # "not run" rather than erroring.
+            # baseline and S_logic land with PR #69; until it merges they
+            # report as "not run" rather than erroring. Pairing is pinned by
+            # the explicit eval_rand42_500_clean selection (verified 0/500
+            # problem mismatches across all three arms).
+            "baseline": "results_for_7b_logic_vectors/LogiQA/baseline/base_remove_bos/eval_rand42_500_clean",
+            "S_logic": "results_for_7b_logic_vectors/LogiQA/logic_vector_7b/workspace_vectors_logiqa2_v_logic/coef_-1.0_remove_bos/eval_rand42_500_clean",
             "R_iso_7b_seed1": "results_for_control_vectors_7b/LogiQA/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/eval_rand42_500_clean",
         },
     },

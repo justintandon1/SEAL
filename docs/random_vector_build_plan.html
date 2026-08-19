@@ -1190,12 +1190,35 @@ python scripts/report_stats.py</code></pre>
       batch-25 / 80&nbsp;GB suite, now that batching is validated (§14) — are
       what settle it.
     </div>
-    <p class="muted">
-      R_iso_7b_seed1 on LogiQA is generating as this section is written; its
-      arm banks under <code>results_for_control_vectors_7b/LogiQA/</code> and
-      pairs against any correctly-run 7B LogiQA baseline via the explicit
-      <code>eval_rand42_500_clean</code> selection.
+    <h3>LogiQA at 7B — a complete null, with the mechanism still visible</h3>
+    <p>
+      Run 2026-08-19 against the PR&nbsp;#69 arms (7B baseline and S_logic on
+      the same <code>eval_rand42_500_clean</code> selection; 0/500 problem
+      mismatches). All three arms are statistically interchangeable — S_logic
+      and R_iso land on <em>the same 243/500</em>, with exactly 49 discordant
+      problems in each direction (p&nbsp;=&nbsp;1.0000).
     </p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Arm</th><th class="num">Acc</th><th class="num">Answered</th><th class="num">Mean tok</th><th class="num">&Delta; tok</th><th class="num">At cap</th></tr></thead>
+      <tbody>
+        <tr><td>7B baseline</td><td class="num">49.0%</td><td class="num">88.0%</td><td class="num">2186</td><td class="num">—</td><td class="num">11.8%</td></tr>
+        <tr><td>7B S_logic</td><td class="num">48.6%</td><td class="num">90.2%</td><td class="num">1845</td><td class="num">−15.6%</td><td class="num">9.4%</td></tr>
+        <tr><td><strong>R_iso_7b_seed1</strong></td><td class="num"><strong>48.6%</strong></td><td class="num">83.6%</td><td class="num"><strong>2552</strong></td><td class="num"><strong>+16.8%</strong></td><td class="num">15.8%</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      The token column is the finding: <strong>the vectors still steer at 7B —
+      only the accuracy payoff is gone.</strong> S_logic compresses reasoning
+      by 15.6% and gains nothing; the random direction lengthens it by 16.8%
+      and loses nothing. With the 7B capping only ~12% of the time, the §12
+      mechanism has nothing to rescue — compression no longer converts into
+      recovered answers. This is the budget-bound interpretation demonstrated
+      at scale, for free: enough headroom, and the accuracy effect evaporates
+      while the steering itself remains measurable on the token axis.
+    </p>
+
 
     <h2 id="answers"><span class="step">16</span>What this does and doesn't answer</h2>
     <p>
