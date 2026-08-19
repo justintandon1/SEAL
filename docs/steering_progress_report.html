@@ -1313,25 +1313,14 @@ finished pile:  (93.15% &minus; 95.24%) &times; 336/500  =   &minus;2.08 &times;
     <!-- ================================================================ -->
     <h2 id="next"><span class="n">14</span>Next steps: controls and ablations</h2>
 
-    <p>The findings above make the controls the critical path, not a nicety. If the effect is
+    <p>The findings above make the controls the critical path, not a nicety. Control A (the norm-matched random vector) has run and did not reproduce the gain &mdash; results in &sect;9; Control B below is what remains. If the effect is
     &ldquo;terser CoT recovers truncated answers,&rdquo; then interventions with nothing to
     do with reasoning may reproduce it &mdash; and we need to know that before claiming a
     reasoning-specific direction.</p>
 
-    <h3>Priority 1 — the two controls, same 500 problems, same harness</h3>
+    <h3>Priority 1 &mdash; the remaining control, same 500 problems, same harness</h3>
 
     <div class="combo-grid">
-      <div class="combo">
-        <div class="combo-head"><span class="pill good">Done</span></div>
-        <h4>A. Norm-matched random vector</h4>
-        <p><em>Run as <code>R_iso_seed1</code> on MATH-500, LogiQA and APPS &mdash;
-        see &sect;9.</em> A random direction in 1536-d at the mean-source norm
-        57.06, layer 20, coef &minus;1.0. The answer: no &mdash; the random
-        direction <em>lengthens</em> the CoT on all three benchmarks and loses
-        2.4&ndash;3.6 points (significant on APPS, p&nbsp;=&nbsp;0.006), the
-        mirror image of the SEAL arms. Seeds 2&ndash;3 remain queued: the
-        rank-sum framing needs three draws.</p>
-      </div>
       <div class="combo">
         <div class="combo-head"><span class="pill todo">Queued</span></div>
         <h4>B. Null-keyword vector from non-reasoning text</h4>
