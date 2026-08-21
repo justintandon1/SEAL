@@ -1,0 +1,24 @@
+{
+  "dataset": "LogiQA",
+  "model": null,
+  "unit": "words",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.49,
+    "avg_total": 1755.558,
+    "median_total": 635.5,
+    "avg_thinking": 1755.558
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.486,
+    "avg_total": 1478.06,
+    "median_total": 591.0,
+    "avg_thinking": 1478.06
+  },
+  "delta": {
+    "accuracy_pts": -0.40000000000000036,
+    "total_reduction_pct": 15.806826091761138,
+    "thinking_reduction_pct": 15.806826091761138
+  }
+}

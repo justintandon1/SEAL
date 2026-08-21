@@ -1,0 +1,24 @@
+{
+  "dataset": "MATH-500",
+  "model": null,
+  "unit": "words",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.85,
+    "avg_total": 1885.12,
+    "median_total": 1192.5,
+    "avg_thinking": 1885.12
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.876,
+    "avg_total": 1632.636,
+    "median_total": 1091.5,
+    "avg_thinking": 1632.636
+  },
+  "delta": {
+    "accuracy_pts": 2.6000000000000023,
+    "total_reduction_pct": 13.39352401969105,
+    "thinking_reduction_pct": 13.39352401969105
+  }
+}
