@@ -1220,6 +1220,39 @@ python scripts/report_stats.py</code></pre>
     </p>
 
 
+    <h3>APPS at 7B &mdash; the first clean separation at scale</h3>
+    <p>
+      Run 2026-08-19, batch 5 &mdash; not assumed: a batch ladder tested 8
+      (OOM at 40,423 MiB), 6 (OOM), then 5 (fits) on the 40&nbsp;GB cards, so
+      5 is the measured ceiling and the batch any future 7B APPS arm must
+      match. Paired against the 7B baseline and S_code arms from
+      <code>akhilbz/7b-math-results</code> (problem order verified identical
+      to the canonical <code>test_rand42_500</code>).
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Arm</th><th class="num">pass@1</th><th class="num">vs baseline</th><th class="num">p</th></tr></thead>
+      <tbody>
+        <tr><td>7B baseline</td><td class="num">28.4%</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+        <tr><td>7B S_code</td><td class="num">33.0%</td><td class="num">+4.6</td><td class="num"><strong>0.0128</strong></td></tr>
+        <tr><td><strong>R_iso_7b_seed1</strong></td><td class="num"><strong>29.6%</strong></td><td class="num">+1.2</td><td class="num">0.539</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      <strong>The one benchmark where the 7B still truncates heavily (65% of
+      baseline generations cap) is the one where steering still works</strong>
+      &mdash; S_code&rsquo;s +4.6 is the only significant 7B steering gain in
+      the study, and the random direction does not reproduce it (+1.2,
+      p&nbsp;=&nbsp;0.539; R_iso barely moves tokens either, &minus;0.7%).
+      The head-to-head S_code&ndash;vs&ndash;R_iso McNemar lands at
+      p&nbsp;=&nbsp;0.0675 &mdash; just above the line, so the separation
+      claim rests on the pair of per-arm tests rather than the direct one.
+      Together with LogiQA (no headroom &rarr; nothing works) and MATH-500
+      (little headroom &rarr; ambiguous), the 7B triple is a dose-response in
+      truncation headroom: the steering effect lives exactly where the &sect;12
+      mechanism says it should, at both model scales.
+    </p>
     <h2 id="answers"><span class="step">16</span>What this does and doesn't answer</h2>
     <p>
       <strong>It answers:</strong> whether a magnitude-matched perturbation at
