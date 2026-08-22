@@ -32,6 +32,9 @@ results/
   results_for_combo_vectors/    # runs using the combined vector (S_combo = results/general/S_combo.pt)
     MATH500/ LogiQA/ APPS/      #   <benchmark>/s_combo/<run>/  + visualization/
 
+  results_for_7b_combo_vectors/ # 7B S_combo (DeepSeek-R1-Distill-Qwen-7B)
+    MATH500/ LogiQA/ APPS/      # steered-only; baselines are the 7B S_logic unsteered folders
+
   archive/
     logiqa_300_mixed_language/  # superseded 300-problem, ~half-Chinese LogiQA set
 ```

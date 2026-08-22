@@ -1,0 +1,45 @@
+{
+  "name": "S_combo_7b",
+  "created": "2026-08-20",
+  "recipe": "S_combo = scale * sum_d weight_d * (S_d / ||S_d||)",
+  "sign_convention": "vector = mean(check \u222a switch) \u2212 mean(other); apply by ADDING coef * vector with coef = -1.0 (same as build_general_vector.py)",
+  "apply_coef": -1.0,
+  "sha256": "2695da60794adea4ecfacd99b79ada30775dbb6ac89b81d210a3219e20ebaff0",
+  "weights": {
+    "math": 1.0,
+    "code": 1.0,
+    "logic": 1.0
+  },
+  "sources": {
+    "math": "results/MATH_train/DeepSeek-R1-Distill-Qwen-7B/baseline_10000/vector_500_500/layer_20_transition_reflection_steervec.pt",
+    "code": "vectors/apps_v_code_7b.pt",
+    "logic": "vectors/logiqa2_v_logic.pt"
+  },
+  "scaling": {
+    "mode": "mean-source",
+    "weighted_sum_norm": 2.776067,
+    "target_norm": 85.037409,
+    "scale_factor": 30.632328,
+    "source_norms": {
+      "math": 82.4412,
+      "code": 78.8154,
+      "logic": 93.8556
+    }
+  },
+  "vector_dim": 3584,
+  "vector_norm": 85.037422,
+  "cosine_with_sources": {
+    "math": 0.944508,
+    "code": 0.938449,
+    "logic": 0.89311
+  },
+  "cosine_with_comparisons": {},
+  "span_of_sources": {
+    "singular_values": [
+      1.6033,
+      0.5512,
+      0.3542
+    ],
+    "top_direction_share": 0.8569
+  }
+}

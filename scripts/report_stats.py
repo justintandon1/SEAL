@@ -192,6 +192,39 @@ BENCHMARKS: Dict[str, dict] = {
             "R_iso_7b_seed1": "results_for_control_vectors_7b/APPS/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/test_rand42_500",
         },
     },
+    # Justin 7B S_combo. Steered-only; baselines are the unsteered folders from
+    # the 7B S_logic cell (MATH 0.850 / LogiQA 0.490 / APPS 0.284) — not
+    # Akhilesh's math500_7b 0.844 MATH job. Do not add S_logic as an arm here.
+    "math500_7b_s_combo": {
+        "label": "MATH-500 7B, S_combo cell (Omni-MATH rule grader)",
+        "eval_file": "math_eval.jsonl",
+        "scorer": "math",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_logic_vectors/MATH500/baseline/base_remove_bos/rand42_500",
+            "S_combo": "results_for_7b_combo_vectors/MATH500/s_combo_7b/workspace_vectors_S_combo_7b/coef_-1.0_remove_bos/rand42_500",
+        },
+    },
+    "logiqa_7b_s_combo": {
+        "label": "LogiQA clean-500 7B, S_combo cell (reasoning grader)",
+        "eval_file": "predictions.jsonl",
+        "scorer": "logiqa",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_logic_vectors/LogiQA/baseline/base_remove_bos/eval_rand42_500_clean",
+            "S_combo": "results_for_7b_combo_vectors/LogiQA/s_combo_7b/workspace_vectors_S_combo_7b/coef_-1.0_remove_bos/eval_rand42_500_clean",
+        },
+    },
+    "apps_7b_s_combo": {
+        "label": "APPS test rand42-500 7B, S_combo cell (pass@1)",
+        "eval_file": "code_eval.jsonl",
+        "scorer": "code",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_logic_vectors/APPS/baseline/base_remove_bos/test_rand42_500",
+            "S_combo": "results_for_7b_combo_vectors/APPS/s_combo_7b/workspace_vectors_S_combo_7b/coef_-1.0_remove_bos/test_rand42_500",
+        },
+    },
     "mbpp": {
         "label": "MBPP test-500 (pass@1, tests executed)",
         "eval_file": "code_eval.jsonl",

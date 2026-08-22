@@ -1,0 +1,21 @@
+{
+  "apps_split": "test",
+  "apps_task_file": null,
+  "batch_size": 2,
+  "benchmark": "apps",
+  "max_examples": 500,
+  "max_tokens": 10000,
+  "model_name_or_path": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "n_examples": 500,
+  "random_sample": true,
+  "release": "release_v1",
+  "remove_bos": true,
+  "sample_seed": 42,
+  "start": null,
+  "steering": true,
+  "steering_coef": -1.0,
+  "steering_layer": 20,
+  "steering_vector": "/workspace/vectors/S_combo_7b.pt",
+  "stratify_by_difficulty": false,
+  "use_chat_format": true
+}

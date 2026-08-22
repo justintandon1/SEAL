@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEAL Steering Transfer · S_combo · DeepSeek-R1-Distill-Qwen-7B</title>
+<style>
+  :root {
+    --bg:#f7f7f4;
+    --paper:#fff;
+    --ink:#202832;
+    --muted:#606a76;
+    --line:#d9dee5;
+    --blue:#1f65b7;
+    --blue-soft:#eef5ff;
+    --green:#2a7a50;
+    --green-soft:#edf8f2;
+    --orange:#b7641e;
+    --orange-soft:#fff4ea;
+    --purple:#6551a8;
+    --purple-soft:#f2efff;
+    --teal:#1a7a72;
+    --code:#f1f3f5;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.48;
+  }
+  main { max-width:1040px; margin:0 auto; padding:44px 28px 56px; }
+  .page {
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:42px 44px;
+    box-shadow:0 22px 60px -50px rgba(32,40,50,.6);
+  }
+  .eyebrow {
+    color:var(--teal);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  h1 {
+    margin:0;
+    max-width:850px;
+    font-size:clamp(32px,4.6vw,50px);
+    line-height:1.05;
+    letter-spacing:-.055em;
+  }
+  .dek { margin:22px 0 28px; color:var(--muted); font-size:19px; max-width:850px; }
+  h2 { margin:34px 0 14px; font-size:22px; letter-spacing:-.025em; }
+  p { margin:0 0 12px; }
+  a { color:var(--blue); }
+  code {
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--code);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:1px 5px;
+    font-size:.9em;
+  }
+  .takeaway {
+    border-left:4px solid var(--teal);
+    background:#eef8f7;
+    border-radius:0 12px 12px 0;
+    padding:15px 18px;
+    margin-bottom:30px;
+    max-width:900px;
+    font-size:17px;
+  }
+  .takeaway strong { color:var(--teal); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:0 0 20px; }
+  @media (max-width:900px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  .stat { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:#fbfcfd; }
+  .stat .label { display:block; font-weight:750; margin-bottom:10px; font-size:15px; }
+  .stat .num { display:block; color:var(--blue); font-size:30px; line-height:1; font-weight:850; letter-spacing:-.03em; }
+  .stat .num.green { color:var(--green); }
+  .stat .num.orange { color:var(--orange); }
+  .stat .small { display:block; color:var(--muted); font-size:13.5px; margin-top:8px; }
+  .stat.code .num { color:var(--orange); }
+  .stat.logic .num { color:var(--purple); }
+  .table-wrap {
+    width:100%;
+    overflow-x:auto;
+    border:1px solid var(--line);
+    border-radius:14px;
+    -webkit-overflow-scrolling:touch;
+  }
+  table.res {
+    width:100%;
+    border-collapse:collapse;
+    margin:0;
+    font-size:13px;
+    min-width:920px;
+  }
+  table.res th, table.res td {
+    text-align:right;
+    padding:9px 9px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  table.res th:first-child, table.res td:first-child { text-align:left; }
+  table.res th:nth-child(2), table.res td:nth-child(2) { text-align:left; }
+  table.res thead th {
+    background:#eef8f7;
+    color:var(--teal);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  table.res tbody tr:last-child td { border-bottom:none; }
+  table.res .dom { font-weight:750; }
+  .up { color:var(--green); font-weight:750; }
+  .down { color:var(--orange); font-weight:750; }
+  .sub { color:var(--muted); font-size:12.5px; }
+  .note {
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    border-radius:14px;
+    padding:16px 20px;
+    margin-top:14px;
+    font-size:14.5px;
+    color:var(--muted);
+  }
+  .note strong { color:var(--ink); }
+  .note ul { margin:8px 0 0; padding-left:20px; }
+  .note li { margin-bottom:6px; }
+  .dash {
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    margin:16px 0 20px;
+    background:#fbfcfd;
+  }
+  .dash img { display:block; width:100%; height:auto; }
+  .dash p {
+    margin:0;
+    padding:10px 16px;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+    font-size:13px;
+  }
+  footer { margin-top:28px; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <div class="eyebrow">SEAL · Reasoning Steering · 7B Scale-Up</div>
+    <h1>Scaling the combo vector to DeepSeek-R1-Distill-Qwen-7B</h1>
+    <p class="dek">
+      A 7B <code>S_combo</code> built from the three packed domain vectors
+      (S_math + S_code + S_logic): equal weights on unit-normalized sources,
+      then <code>--norm mean-source</code>, same recipe as
+      <a href="s_combo_construction.html">the 1.5B combo construction</a>.
+      Evaluated steered-only on MATH-500, LogiQA clean-500, and APPS against
+      this cell's unsteered baseline. Companion to the
+      <a href="steering_transfer_results_7b.html">7B MATH / APPS vector report</a>
+      and the 1.5B <a href="steering_progress_report.html">progress report</a>
+      S_combo tables.
+    </p>
+
+    <div class="takeaway">
+      <strong>Result:</strong> 7B S_combo raises accuracy on all three benches
+      against the unsteered baseline, and shortens generations. On MATH-500
+      it raised accuracy from <strong>85.0%</strong> to <strong>89.6%</strong>
+      (+4.6 points). On LogiQA clean-500, <strong>49.0%</strong> &rarr;
+      <strong>52.4%</strong> (+3.4 points), with a higher answer rate
+      (88.0% &rarr; 91.0%). On APPS, pass@1 went from
+      <strong>28.4%</strong> to <strong>30.2%</strong> (+1.8 points). Pair
+      these numbers against <em>this cell's</em> unsteered folders
+      (<code>results_for_7b_logic_vectors/…/baseline/</code>), not Akhilesh's
+      MATH baseline 84.4% or the dirty math&rarr;LogiQA 500.
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="label">Math &middot; MATH-500</span>
+        <span class="num green">+4.6 pts</span>
+        <span class="small">85.0% &rarr; 89.6% &nbsp;·&nbsp; tokens &minus;21.5%</span>
+      </div>
+      <div class="stat logic">
+        <span class="label">Logic &middot; LogiQA <span class="sub">(clean-500)</span></span>
+        <span class="num green">+3.4 pts</span>
+        <span class="small">49.0% &rarr; 52.4% &nbsp;·&nbsp; tokens &minus;22.9%</span>
+      </div>
+      <div class="stat code">
+        <span class="label">Code &middot; APPS</span>
+        <span class="num">+1.8 pts</span>
+        <span class="small">28.4% &rarr; 30.2% pass@1 &nbsp;·&nbsp; tokens &minus;5.9%</span>
+      </div>
+    </div>
+
+    <h2>Full results</h2>
+    <div class="table-wrap">
+    <table class="res">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Eval set</th>
+          <th>Samples<br><span class="sub">base / steer</span></th>
+          <th>Acc<br>base</th>
+          <th>Acc<br>steered</th>
+          <th>&Delta; acc</th>
+          <th>Tokens<br>base</th>
+          <th>Tokens<br>steered</th>
+          <th>&Delta; len</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dom">Math (MATH-500)</td>
+          <td>held-out test, random 500</td>
+          <td>500 / 500</td>
+          <td>85.0%</td>
+          <td>89.6%</td>
+          <td class="up">+4.6</td>
+          <td>3,456</td>
+          <td>2,714</td>
+          <td class="down">&minus;21.5%</td>
+        </tr>
+        <tr>
+          <td class="dom">Logic (LogiQA)</td>
+          <td>clean English-500</td>
+          <td>500 / 500</td>
+          <td>49.0%</td>
+          <td>52.4%</td>
+          <td class="up">+3.4</td>
+          <td>2,186</td>
+          <td>1,685</td>
+          <td class="down">&minus;22.9%</td>
+        </tr>
+        <tr>
+          <td class="dom">Code (APPS)</td>
+          <td>test, random 500</td>
+          <td>500 / 500</td>
+          <td>28.4%</td>
+          <td>30.2%</td>
+          <td class="up">+1.8</td>
+          <td>7,852</td>
+          <td>7,391</td>
+          <td class="down">&minus;5.9%</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="note">
+      <strong>Methodology.</strong> Vector is the equal-weight unit-norm sum of
+      the three packed 7B domain vectors, rescaled with
+      <code>--norm mean-source</code> so <code>coef = &minus;1.0</code> is a
+      like-for-like intervention (see
+      <a href="s_combo_construction.html"><code>s_combo_construction.html</code></a>).
+      Applied by adding <code>coef &times; vector</code> at layer 20.
+      Same 7B protocol as the other 7B vector evals: chat,
+      <code>--remove_bos</code>, greedy, <code>max_tokens=10000</code>, n=500
+      seed 42. Steered-only; unsteered baseline folders are reused, not
+      regenerated.
+      <ul>
+        <li>Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-7B</code> (hidden_size 3584).</li>
+        <li>Packed vector <code>vectors/S_combo_7b.pt</code>: shape <code>[3584]</code>,
+          fp32, ‖S‖ ≈ 85.04, SHA256 <code>2695da60…aff0</code>. Cosine vs sources:
+          math +0.9445 / code +0.9384 / logic +0.8931. Pairwise source cosines
+          all &gt; 0.</li>
+        <li>LogiQA uses <code>data/LogiQA/eval_rand42_500_clean.json</code> plus
+          <code>--logiqa_english_only</code>. Do not pair with
+          <code>results_for_7b_math_vectors/LogiQA/</code> (legacy
+          <code>eval_rand42_500.json</code>, 16 train overlaps).</li>
+        <li>MATH-500 baseline here is <strong>85.0%</strong> from this cell's
+          unsteered job. Akhilesh's 7B MATH baseline on main is 84.4% &mdash;
+          close, different run.
+          <code>scripts/report_stats.py</code> keeps them as separate benchmarks
+          (<code>math500_7b</code> vs <code>math500_7b_s_combo</code>).</li>
+        <li>APPS is pass@1 on the test split, random 500, seed 42. Length columns
+          are mean generated tokens from the 7B tokenizer
+          (<code>add_special_tokens=False</code>), same as
+          <code>scripts/report_stats.py</code>. Accuracy is from
+          <code>metrics.json</code>. Cap hits (n ≥ 9990): MATH 11.6% → 5.6%;
+          LogiQA 11.8% → 8.8%; APPS 65.0% → 56.6%.</li>
+      </ul>
+    </div>
+
+    <h2>Dashboards</h2>
+    <p class="sub" style="margin:-6px 0 14px;">
+      Accuracy, length, and distribution from <code>visualize_results.py</code>
+      with the 7B tokenizer. PNGs also live under
+      <code>results/results_for_7b_combo_vectors/&lt;bench&gt;/figures/</code>.
+    </p>
+    <div class="dash">
+      <img src="figures/7b_s_combo/math_dashboard.png" alt="S_combo 7B on MATH-500 dashboard">
+      <p>S_combo on MATH-500: 85.0% &rarr; 89.6%</p>
+    </div>
+    <div class="dash">
+      <img src="figures/7b_s_combo/logiqa_dashboard.png" alt="S_combo 7B on LogiQA dashboard">
+      <p>S_combo on LogiQA clean-500: 49.0% &rarr; 52.4%</p>
+    </div>
+    <div class="dash">
+      <img src="figures/7b_s_combo/apps_dashboard.png" alt="S_combo 7B on APPS dashboard">
+      <p>S_combo on APPS: 28.4% &rarr; 30.2% pass@1</p>
+    </div>
+
+    <footer>
+      Model: <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-7B</code> &middot; Vector:
+      equal-weight mean-source combo of 7B S_math / S_code / S_logic &middot;
+      Layer 20, &alpha; = &minus;1.0
+      &middot; Artifacts: <code>results/results_for_7b_combo_vectors/</code>
+      (steered only; baselines stay under
+      <code>results/results_for_7b_logic_vectors/…/baseline/</code>).
+    </footer>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "dataset": "LogiQA clean-500",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "unit": "tokens",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.49,
+    "avg_total": 2185.594,
+    "median_total": 780.0,
+    "avg_thinking": 2185.594
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.524,
+    "avg_total": 1685.032,
+    "median_total": 655.0,
+    "avg_thinking": 1685.032
+  },
+  "delta": {
+    "accuracy_pts": 3.400000000000003,
+    "total_reduction_pct": 22.90278981366165,
+    "thinking_reduction_pct": 22.90278981366165
+  }
+}
