@@ -1,0 +1,20 @@
+{
+  "batch_size": 16,
+  "dataset": "MATH500",
+  "logiqa_english_only": false,
+  "logiqa_eval_selection": null,
+  "max_examples": 500,
+  "max_tokens": 10000,
+  "mmlu_subject": "philosophy",
+  "model_name_or_path": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  "n_examples": 500,
+  "random_sample": true,
+  "remove_bos": true,
+  "sample_seed": 42,
+  "start": null,
+  "steering": false,
+  "steering_coef": 0.0,
+  "steering_layer": -1,
+  "steering_vector": null,
+  "use_chat_format": true
+}

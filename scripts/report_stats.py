@@ -155,14 +155,35 @@ BENCHMARKS: Dict[str, dict] = {
         "label": "LogiQA clean-500 7B (reasoning grader applied to every arm)",
         "eval_file": "predictions.jsonl",
         "scorer": "logiqa",
+        "model": MODEL_7B,
         "arms": {
-            # baseline and S_logic land with PR #69; until it merges they
-            # report as "not run" rather than erroring. Pairing is pinned by
-            # the explicit eval_rand42_500_clean selection (verified 0/500
-            # problem mismatches across all three arms).
+            # Pairing is pinned by eval_rand42_500_clean (PR #69). Do not mix
+            # with logiqa_7b_legacy (dirty eval_rand42_500.json).
             "baseline": "results_for_7b_logic_vectors/LogiQA/baseline/base_remove_bos/eval_rand42_500_clean",
             "S_logic": "results_for_7b_logic_vectors/LogiQA/logic_vector_7b/workspace_vectors_logiqa2_v_logic/coef_-1.0_remove_bos/eval_rand42_500_clean",
             "R_iso_7b_seed1": "results_for_control_vectors_7b/LogiQA/R_iso_7b_seed1/results_control_R_iso_7b_seed1/coef_-1.0_remove_bos/eval_rand42_500_clean",
+        },
+    },
+    # Justin 7B S_logic MATH/APPS transfer. Own baselines (MATH 0.850, APPS
+    # 0.284) — not Akhilesh's math500_7b 0.844 MATH job.
+    "math500_7b_s_logic": {
+        "label": "MATH-500 7B, S_logic cell (Omni-MATH rule grader)",
+        "eval_file": "math_eval.jsonl",
+        "scorer": "math",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_logic_vectors/MATH500/baseline/base_remove_bos/rand42_500",
+            "S_logic": "results_for_7b_logic_vectors/MATH500/logic_vector_7b/workspace_vectors_logiqa2_v_logic/coef_-1.0_remove_bos/rand42_500",
+        },
+    },
+    "apps_7b_s_logic": {
+        "label": "APPS test rand42-500 7B, S_logic cell (pass@1)",
+        "eval_file": "code_eval.jsonl",
+        "scorer": "code",
+        "model": MODEL_7B,
+        "arms": {
+            "baseline": "results_for_7b_logic_vectors/APPS/baseline/base_remove_bos/test_rand42_500",
+            "S_logic": "results_for_7b_logic_vectors/APPS/logic_vector_7b/workspace_vectors_logiqa2_v_logic/coef_-1.0_remove_bos/test_rand42_500",
         },
     },
     # 7B S_math → LogiQA transfer, run before the clean selection existed.

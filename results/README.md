@@ -22,6 +22,9 @@ results/
     APPS/                       # code benchmark — transfer
     LogiQA_train/               # vector-extraction artifacts
 
+  results_for_7b_logic_vectors/ # 7B S_logic (DeepSeek-R1-Distill-Qwen-7B)
+    LogiQA/ MATH500/ APPS/      # in-domain + transfer; see README in that tree
+
   results_for_code_vectors/     # runs using the APPS-derived code vector (S_code = vectors/apps_v_code.pt)
     MATH500/ APPS/ GSM/ MBPP/   # imported from Andwwy/v_code-SEAL (see its README)
     LogiQA/                     # in-repo run on the clean English-500 set

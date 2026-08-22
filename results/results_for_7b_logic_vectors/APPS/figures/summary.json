@@ -1,0 +1,24 @@
+{
+  "dataset": "APPS",
+  "model": null,
+  "unit": "words",
+  "baseline": {
+    "n": 500,
+    "accuracy": 0.284,
+    "avg_total": 5312.346,
+    "median_total": 6127.5,
+    "avg_thinking": 5312.346
+  },
+  "steered": {
+    "n": 500,
+    "accuracy": 0.326,
+    "avg_total": 4793.21,
+    "median_total": 5494.5,
+    "avg_thinking": 4793.21
+  },
+  "delta": {
+    "accuracy_pts": 4.200000000000004,
+    "total_reduction_pct": 9.772255045134482,
+    "thinking_reduction_pct": 9.772255045134482
+  }
+}
